@@ -3,28 +3,37 @@ const path = require('path');
 const app = express();
 const connectDB = require('./mongoDb/connection');
 const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
+
 const userRoute = require('./routes/userRoutes');
-const session = require("express-session")
+const session = require("express-session");
 const adminRoutes = require('./routes/adminRoute');
-const User = require('./models/user'); // Make sure this line is at the top
+const User = require('./models/user');
+const passport = require('./config/passport');
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 connectDB();
-// Move body parser middleware above routes
+
+// Body parser middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Session middleware
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,          
-    secure: false,           
-    maxAge: 1000 * 60 * 60   
-  }
+  saveUninitialized: false
 }));
+
+// Passport middleware
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Middleware to set res.locals.user for all views
 app.use(async (req, res, next) => {
   if (req.session && req.session.userId) {
     try {
@@ -38,6 +47,8 @@ app.use(async (req, res, next) => {
   }
   next();
 });
+
+// Static files
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/', userRoute); 
 app.use('/admin', adminRoutes);

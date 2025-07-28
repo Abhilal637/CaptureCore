@@ -130,7 +130,7 @@ exports.postOtpVerify = async (req, res) => {
   
           try{
               await transporter.sendMail({
-                  from: 'akcreations404@gmail.com',
+                  from: 'capturecore792@gmail.com',
                   to:email,
                   subject:'Your OTP Code',
                   // BUG FIX: Fixed template literal syntax
