@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="UTF-8">
+  <title>Wishlist</title>
+  <link rel="stylesheet" href="/css/wishlist.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+    
+      <!-- OR if you have Tailwind installed locally -->
+      <link href="/path/to/your/tailwind.css" rel="stylesheet" >
+</head>
+<body>
+  <%- include('../partial/user/navbar') %>
+
+  <div class="background">
+    <!-- Header/Navbar -->
+   
+    
+
+    <div class="header">
+      <div class="header-title">WISHLIST</div>
+      <div class="header-breadcrumb">Home / Wishlist</div>
+    </div>
+    <div class="wishlist-container">
+      <table class="wishlist-table">
+        <thead>
+          <tr>
+            <th>PRODUCT</th>
+            <th>DETAILS</th>
+            <th>PRICE</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=80&h=80" alt="Sony Alpha" class="product-img">
+            </td>
+            <td>SONY ALPHA</td>
+            <td class="price">$1500.00</td>
+            <td><a href="#" class="remove-btn">&times;</a></td>
+          </tr>
+          <tr>
+            <td>
+              <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=80&h=80" alt="G-Master 35 MM Lens" class="product-img">
+            </td>
+            <td>G-MASTER 35 MM LENS</td>
+            <td class="price">$870.00</td>
+            <td><a href="#" class="remove-btn">&times;</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="wishlist-actions">
+        <button class="update-btn">UPDATE CART</button>
+        <button class="continue-btn">CONTINUE SHOPPING</button>
+      </div>
+      <div class="subscribe-section">
+        <div class="subscribe-box">
+          <div class="subscribe-title">SUBSCRIBE US NOW</div>
+          <div class="subscribe-desc">Get latest news, updates and special offers in your inbox.</div>
+          <form class="subscribe-form">
+            <input type="email" placeholder="Your Email Address Here" required>
+            <button type="submit">SUBSCRIBE</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <footer>
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-title">MiniStore.</div>
+          <div>Mail: capturecore@info.com</div>
+          <div>Address: 123 Main St, City, Country</div>
+          <div>Follow us:
+            <a href="#">FB</a>
+            <a href="#">TW</a>
+            <a href="#">IN</a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <div class="footer-title">QUICK LINKS</div>
+          <div><a href="#">Home</a></div>
+          <div><a href="#">Shop</a></div>
+          <div><a href="#">About</a></div>
+          <div><a href="#">Contact</a></div>
+        </div>
+        <div class="footer-section">
+          <div class="footer-title">HELP & INFO</div>
+          <div><a href="#">How to Order</a></div>
+          <div><a href="#">Shipping & Delivery</a></div>
+          <div><a href="#">Contact Us</a></div>
+          <div><a href="#">FAQs</a></div>
+        </div>
+        <div class="footer-section">
+          <div class="footer-title">CONTACT US</div>
+          <div>123 Main St, City</div>
+          <div>capturecore@info.com</div>
+          <div>+123 456 7890</div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; Copyright 2024 MiniStore. Design by <a href="#">TemplateCreator</a>
+      </div>a
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!-- Navigation Bar -->
+<nav class="sticky top-0 z-50 bg-white shadow">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+      
+      <!-- Logo (clickable) -->
+      <a href="/" class="text-xl font-bold">CaptureCore</a>
+  
+      <!-- Nav Links -->
+      <div class="hidden md:flex space-x-6">
+          <a href="/" class="hover:text-gray-600">Home</a>
+          <a href="/shop" class="hover:text-gray-600">Shop</a>
+          <a href="/about" class="hover:text-gray-600">About</a>
+          <a href="/contact" class="hover:text-gray-600">Contact</a>
+      </div>
+  
+      <!-- Icons with proper routes -->
+      <div class="flex items-center space-x-4">
+          <input id="searchInput" type="text" placeholder="Search" class="w-40 h-8 rounded-full border border-gray-200 p-3 bg-white shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 hidden">
+          <a href="#" id="searchToggle" class="text-xl hover:text-gray-600">🔍</a>
+          
+          <!-- User Profile/Login Logic -->
+          <% if (user) { %>
+              <!-- Logged in user - show profile dropdown -->
+              <div class="relative">
+                  <button id="profileToggle" class="text-xl hover:text-gray-600 focus:outline-none">👤</button>
+                  <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
+                      <a href="/account/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                      <a href="/account/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Orders</a>
+                      <a href="/account/wallet" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wallet</a>
+                      <div class="border-t border-gray-100"></div>
+                      <form action="/logout" method="POST" class="block">
+                          <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                      </form>
+                  </div>
+              </div>
+          <% } else { %>
+              <!-- Not logged in - show login/signup links -->
+              <div class="flex items-center space-x-2">
+                  <a href="/login" class="text-sm px-3 py-1 text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors">Login</a>
+                  <a href="/signup" class="text-sm px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors">Sign Up</a>
+              </div>
+          <% } %>
+          
+          <a href="/cart" class="text-xl hover:text-gray-600">🛒</a>
+      </div>
+  
+      <!-- Hamburger (mobile) -->
+      <div class="md:hidden text-2xl cursor-pointer" id="mobileMenuToggle">
+          ☰
+      </div>
+  </div>
+</nav>
+
+<!-- JavaScript for Navigation -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Search toggle functionality
+      const searchToggle = document.getElementById('searchToggle');
+      const searchInput = document.getElementById('searchInput');
+      
+      if (searchToggle && searchInput) {
+          searchToggle.addEventListener('click', function(e) {
+              e.preventDefault();
+              searchInput.classList.toggle('hidden');
+              if (!searchInput.classList.contains('hidden')) {
+                  searchInput.focus();
+              }
+          });
+          
+          // Hide search when clicking outside
+          document.addEventListener('click', function(e) {
+              if (!searchToggle.contains(e.target) && !searchInput.contains(e.target)) {
+                  searchInput.classList.add('hidden');
+              }
+          });
+      }
+
+      // Profile dropdown functionality (only if user is logged in)
+      const profileToggle = document.getElementById('profileToggle');
+      const profileDropdown = document.getElementById('profileDropdown');
+      
+      if (profileToggle && profileDropdown) {
+          profileToggle.addEventListener('click', function(e) {
+              e.preventDefault();
+              profileDropdown.classList.toggle('hidden');
+          });
+          
+          // Hide dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+              if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+                  profileDropdown.classList.add('hidden');
+              }
+          });
+      }
+
+      // Mobile menu toggle (basic functionality)
+      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+      if (mobileMenuToggle) {
+          mobileMenuToggle.addEventListener('click', function() {
+              // Add mobile menu functionality here if needed
+              console.log('Mobile menu clicked');
+          });
+      }
+  });
+</script>

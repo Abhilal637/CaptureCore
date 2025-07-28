@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Product with Cropping</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.min.css" />
+  <script src="https://unpkg.com/cropperjs/dist/cropper.min.js"></script>
+  <style>
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .crop-container {
+      width: 100%;
+      max-width: 600px;
+      height: 400px;
+      margin: 20px 0;
+    }
+    .crop-container img {
+      display: block;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">Add New Product</h2>
+    <form id="productForm" class="space-y-4">
+      <input type="text" name="name" required placeholder="Product Name" class="w-full border p-2 rounded" />
+      <textarea name="description" placeholder="Description" class="w-full border p-2 rounded"></textarea>
+      <input type="number" name="price" placeholder="Price" step="0.01" required class="w-full border p-2 rounded" />
+      <input type="file" id="imageInput" multiple accept="image/*" class="w-full border p-2" />
+      <div class="mt-4">
+        <p class="text-gray-600 mb-2">Cropped Images:</p>
+        <div id="preview" class="flex gap-2 flex-wrap min-h-[100px] border-2 border-dashed border-gray-300 p-4 rounded">
+          <p class="text-gray-500">Select images to start cropping...</p>
+        </div>
+      </div>
+      <button type="button" id="submitBtn" class="bg-green-600 text-white px-6 py-2 rounded" disabled>
+        Submit (0 images)
+      </button>
+    </form>
+  </div>
+
+  <!-- Crop Modal -->
+  <div id="cropModal" class="modal" style="display: none;">
+    <div class="bg-white p-6 rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-semibold">Crop Image</h3>
+        <span id="imageCounter" class="text-gray-600"></span>
+      </div>
+      
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-2">Aspect Ratio:</label>
+        <select id="aspectRatioSelect" class="border p-2 rounded">
+          <option value="1">1:1 (Square)</option>
+          <option value="1.33">4:3 (Landscape)</option>
+          <option value="0.75">3:4 (Portrait)</option>
+          <option value="1.78">16:9 (Wide)</option>
+          <option value="0">Free Crop</option>
+        </select>
+      </div>
+      
+      <div class="crop-container">
+        <img id="cropImage" />
+      </div>
+      
+      <div class="flex justify-between items-center mt-6">
+        <button id="skipImage" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+          Skip This Image
+        </button>
+        <div class="flex gap-2">
+          <button id="cancelCrop" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+            Cancel All
+          </button>
+          <button id="confirmCrop" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+            Crop & Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cropper = null;
+    let currentIndex = 0;
+    let selectedFiles = [];
+    let croppedImages = [];
+
+    const imageInput = document.getElementById('imageInput');
+    const cropModal = document.getElementById('cropModal');
+    const cropImage = document.getElementById('cropImage');
+    const aspectRatioSelect = document.getElementById('aspectRatioSelect');
+    const preview = document.getElementById('preview');
+    const imageCounter = document.getElementById('imageCounter');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Handle file selection
+    imageInput.addEventListener('change', function(e) {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      
+      selectedFiles = files;
+      croppedImages = [];
+      currentIndex = 0;
+      clearPreview();
+      startCropping();
+    });
+
+    function startCropping() {
+      if (currentIndex >= selectedFiles.length) {
+        // All images processed
+        closeCropModal();
+        updateSubmitButton();
+        return;
+      }
+      
+      const file = selectedFiles[currentIndex];
+      imageCounter.textContent = `Image ${currentIndex + 1} of ${selectedFiles.length}`;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        cropImage.src = e.target.result;
+        showCropModal();
+        
+        // Initialize cropper after image loads
+        cropImage.onload = function() {
+          initializeCropper();
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function initializeCropper() {
+      // Destroy existing cropper
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+      
+      // Create new cropper
+      const aspectRatio = parseFloat(aspectRatioSelect.value) || NaN;
+      
+      cropper = new Cropper(cropImage, {
+        aspectRatio: aspectRatio,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 0.8,
+        restore: false,
+        guides: true,
+        center: true,
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        ready: function() {
+          console.log('Cropper is ready');
+        }
+      });
+    }
+
+    function showCropModal() {
+      cropModal.style.display = 'flex';
+    }
+
+    function closeCropModal() {
+      cropModal.style.display = 'none';
+      if (cropper) {
+        cropper.destroy();
+        cropper = null;
+      }
+    }
+
+    // Aspect ratio change
+    aspectRatioSelect.addEventListener('change', function() {
+      if (cropper) {
+        const aspectRatio = parseFloat(this.value) || NaN;
+        cropper.setAspectRatio(aspectRatio);
+      }
+    });
+
+    // Confirm crop
+    document.getElementById('confirmCrop').addEventListener('click', function() {
+      if (!cropper) return;
+      
+      const canvas = cropper.getCroppedCanvas({
+        width: 800,
+        height: 800,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high'
+      });
+      
+      canvas.toBlob(function(blob) {
+        const imageData = {
+          blob: blob,
+          name: selectedFiles[currentIndex].name,
+          url: URL.createObjectURL(blob)
+        };
+        
+        croppedImages.push(imageData);
+        addToPreview(imageData);
+        
+        currentIndex++;
+        startCropping();
+      }, 'image/jpeg', 0.9);
+    });
+
+    // Skip image
+    document.getElementById('skipImage').addEventListener('click', function() {
+      currentIndex++;
+      startCropping();
+    });
+
+    // Cancel all
+    document.getElementById('cancelCrop').addEventListener('click', function() {
+      closeCropModal();
+      clearPreview();
+      croppedImages.forEach(img => URL.revokeObjectURL(img.url));
+      croppedImages = [];
+      selectedFiles = [];
+      currentIndex = 0;
+      imageInput.value = '';
+      updateSubmitButton();
+    });
+
+    function addToPreview(imageData) {
+      // Remove placeholder text if exists
+      const placeholder = preview.querySelector('p');
+      if (placeholder) {
+        placeholder.remove();
+      }
+      
+      const container = document.createElement('div');
+      container.className = 'relative group';
+      
+      const img = document.createElement('img');
+      img.src = imageData.url;
+      img.className = 'w-20 h-20 object-cover rounded border-2 border-gray-300 cursor-move';
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.innerHTML = '×';
+      removeBtn.className = 'absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs opacity-0 group-hover:opacity-100 transition-opacity';
+      removeBtn.onclick = function(e) {
+        e.preventDefault();
+        removeImage(container, imageData);
+      };
+      
+      container.appendChild(img);
+      container.appendChild(removeBtn);
+      preview.appendChild(container);
+      
+      updateSubmitButton();
+    }
+
+    function removeImage(container, imageData) {
+      URL.revokeObjectURL(imageData.url);
+      const index = croppedImages.indexOf(imageData);
+      if (index > -1) {
+        croppedImages.splice(index, 1);
+      }
+      container.remove();
+      
+      if (croppedImages.length === 0) {
+        clearPreview();
+      }
+      updateSubmitButton();
+    }
+
+    function clearPreview() {
+      preview.innerHTML = '<p class="text-gray-500">Select images to start cropping...</p>';
+    }
+
+    function updateSubmitButton() {
+      const count = croppedImages.length;
+      submitBtn.textContent = `Submit (${count} image${count !== 1 ? 's' : ''})`;
+      submitBtn.disabled = count === 0;
+      
+      if (count > 0) {
+        submitBtn.classList.remove('bg-gray-400');
+        submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+      } else {
+        submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        submitBtn.classList.add('bg-gray-400');
+      }
+    }
+
+    // Submit form
+    submitBtn.addEventListener('click', async function() {
+      if (croppedImages.length === 0) {
+        alert('Please crop at least one image');
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('name', document.querySelector('input[name="name"]').value);
+      formData.append('description', document.querySelector('textarea[name="description"]').value);
+      formData.append('price', document.querySelector('input[name="price"]').value);
+      
+      croppedImages.forEach((imageData, index) => {
+        formData.append('images', imageData.blob, `cropped_${index}_${imageData.name}`);
+      });
+      
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading...';
+        
+        // Simulate upload (replace with your actual endpoint)
+        console.log('Form data prepared:', formData);
+        alert(`Ready to upload ${croppedImages.length} cropped images!`);
+        
+        // Clean up URLs
+        croppedImages.forEach(img => URL.revokeObjectURL(img.url));
+        
+        // Reset form
+        document.getElementById('productForm').reset();
+        clearPreview();
+        croppedImages = [];
+        updateSubmitButton();
+        
+      } catch (error) {
+        alert('Upload failed: ' + error.message);
+        submitBtn.disabled = false;
+        updateSubmitButton();
+      }
+    });
+
+    // Initialize
+    updateSubmitButton();
+  </script>
+</body>
+</html>

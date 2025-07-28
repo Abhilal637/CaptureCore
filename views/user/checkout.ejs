@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Checkout - CaptureCore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <%- include('partial/navbar') %>
+  
+
+
+  <!-- Page Header -->
+  <div class="text-center py-10 bg-gray-100">
+    <h1 class="text-3xl font-semibold tracking-wide">Checkout</h1>
+    <p class="text-gray-500 text-sm">Home / Checkout</p>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-12 grid md:grid-cols-2 gap-12">
+    
+    <!-- Billing Details -->
+    <section>
+      <h2 class="text-xl font-semibold mb-6">Billing Details</h2>
+      <form action="/order" method="POST" class="space-y-4">
+        <input type="text" name="firstName" placeholder="First Name" class="w-full border p-2 rounded">
+        <input type="text" name="lastName" placeholder="Last Name" class="w-full border p-2 rounded">
+        <input type="text" name="company" placeholder="Company Name (optional)" class="w-full border p-2 rounded">
+        <input type="text" name="country" placeholder="Country" class="w-full border p-2 rounded">
+        <input type="text" name="street" placeholder="Street Address" class="w-full border p-2 rounded">
+        <input type="text" name="city" placeholder="Town / City" class="w-full border p-2 rounded">
+        <input type="text" name="state" placeholder="State" class="w-full border p-2 rounded">
+        <input type="text" name="zip" placeholder="ZIP Code" class="w-full border p-2 rounded">
+        <input type="tel" name="phone" placeholder="Phone" class="w-full border p-2 rounded">
+        <input type="email" name="email" placeholder="Email Address" class="w-full border p-2 rounded">
+      </form>
+    </section>
+
+    <!-- Order Summary -->
+    <section>
+      <h2 class="text-xl font-semibold mb-6">Your Order</h2>
+      <div class="bg-white shadow rounded p-6 space-y-4">
+
+        <!-- Product 1 -->
+<div class="flex justify-between border-b pb-2">
+  <div>
+    <p class="font-medium">Sony Alpha A7 III</p>
+    <p class="text-sm text-gray-500">x 1</p>
+  </div>
+  <p class="text-right">₹150000</p>
+</div>
+
+
+<!-- Product 2 -->
+<div class="flex justify-between border-b pb-2">
+  <div>
+    <p class="font-medium">Canon 50mm Lens</p>
+    <p class="text-sm text-gray-500">x 2</p>
+  </div>
+  <p class="text-right">₹16000</p>
+</div>
+
+<!-- Cart Totals -->
+<div class="border-t pt-4 space-y-2">
+  <div class="flex justify-between">
+    <span>Subtotal</span>
+    <span>₹166000</span>
+  </div>
+  <div class="flex justify-between font-semibold">
+    <span>Total</span>
+    <span>₹166050</span>
+  </div>
+</div>
+
+     
+
+        <!-- Cart Totals -->
+        <div class="border-t pt-4 space-y-2">
+          <div class="flex justify-between">
+            
+          <div class="flex justify-between font-semibold">
+            
+          </div>
+        </div>
+
+        <!-- Shipping -->
+        <div class="mt-4">
+          <h4 class="text-sm font-semibold mb-2">Shipping Method</h4>
+          <div class="space-y-2 text-sm">
+            <label><input type="radio" name="shipping" value="standard" checked> Standard Delivery - ₹50</label><br>
+            <label><input type="radio" name="shipping" value="express"> Express Delivery - ₹150</label>
+          </div>
+        </div>
+
+        <!-- Place Order Button -->
+        <form action="/checkout" method="POST" class="pt-6">
+          <button type="submit" class="w-full bg-black text-white py-3 rounded hover:bg-gray-800">
+           Go to checkout
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white mt-12 py-8 border-t">
+    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-4 gap-8 text-sm text-gray-600">
+      <div>
+        <h4 class="font-semibold">CaptureCore</h4>
+        <p>Minimalist camera gear hub for professionals & creators.</p>
+      </div>
+      <div>
+        <h4 class="font-semibold">Quick Links</h4>
+        <ul>
+          <li><a href="/shop">Shop</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold">Help & Info</h4>
+        <ul>
+          <li><a href="#">Return Policy</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms & Conditions</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold">Contact Us</h4>
+        <p>support@capturecore.in</p>
+        <p>+91 12345 67890</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

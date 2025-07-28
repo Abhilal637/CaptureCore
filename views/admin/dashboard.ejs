@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+<%- include('../partial/admin/sidebar') %>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <!-- <h1 class="text-2xl font-semibold">Hello, <%= admin?.name || 'John' %> 👋</h1> -->
+        <div class="flex items-center gap-4">
+          <input type="text" placeholder="Search..." class="border border-gray-300 rounded px-3 py-1 text-sm" />
+          <img src="https://i.pravatar.cc/40" alt="Admin" class="w-10 h-10 rounded-full" />
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white shadow rounded p-4">
+          <h2 class="text-sm text-gray-500">Total Users</h2>
+          <p class="text-2xl font-bold">750K</p>
+        </div>
+        <div class="bg-white shadow rounded p-4">
+          <h2 class="text-sm text-gray-500">Total Orders</h2>
+          <p class="text-2xl font-bold">7,500</p>
+        </div>
+        <div class="bg-white shadow rounded p-4">
+          <h2 class="text-sm text-gray-500">Total Sales</h2>
+          <p class="text-2xl font-bold">7,500</p>
+        </div>
+        <div class="bg-white shadow rounded p-4">
+          <h2 class="text-sm text-gray-500">Total Customers</h2>
+          <p class="text-2xl font-bold">7,500</p>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Donut Chart -->
+        <div class="bg-white rounded shadow p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-lg">This Week</h3>
+          </div>
+          <canvas id="donutChart" class="w-full max-w-xs mx-auto"></canvas>
+          <ul class="text-sm mt-4 space-y-1">
+            <li><span class="text-blue-600 font-bold">●</span> English - 251K</li>
+            <li><span class="text-cyan-400 font-bold">●</span> French - 176K</li>
+            <li><span class="text-cyan-300 font-bold">●</span> Accessories - 176K</li>
+          </ul>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="bg-white rounded shadow p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-lg">Orders Update</h3>
+            <span class="text-sm text-gray-500">This Week</span>
+          </div>
+          <canvas id="barChart" class="w-full"></canvas>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Chart.js Scripts -->
+  <script>
+    // Donut
+    new Chart(document.getElementById("donutChart"), {
+      type: 'doughnut',
+      data: {
+        labels: ["English", "French", "Accessories"],
+        datasets: [{
+          data: [251000, 176000, 176000],
+          backgroundColor: ["#3B82F6", "#06B6D4", "#99F6E4"],
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // Bar
+    new Chart(document.getElementById("barChart"), {
+      type: 'bar',
+      data: {
+        labels: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+        datasets: [
+          {
+            label: 'Blue',
+            data: [40, 50, 60, 70, 60, 50, 40],
+            backgroundColor: "#3B82F6"
+          },
+          {
+            label: 'Cyan',
+            data: [70, 90, 100, 110, 130, 90, 80],
+            backgroundColor: "#06B6D4"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

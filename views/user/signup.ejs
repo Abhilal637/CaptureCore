@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Signup | CaptureCore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  
+  <style>
+    body { font-family: 'Helvetica Neue', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#f8f8f8] text-[#333] text-sm">
+  <%- include('../partial/user/navbar') %>
+
+
+  <!-- Header -->
+  <header class="bg-[#f1f5f7] py-12 text-center">
+    <h1 class="text-3xl font-light tracking-wide">SIGNUP</h1>
+    <p class="text-xs text-gray-500 mt-1">Home / Signup</p>
+  </header>
+
+  <!-- Signup Form -->
+  <main class="py-16 px-4">
+    <div class="max-w-md mx-auto bg-white p-6 sm:p-10 shadow-sm">
+      <% if (error) { %>
+        <p class="text-red-500 text-center mb-4"><%= error %></p>
+      <% } %>
+      <form action="/signup" method="POST" class="space-y-5">
+        <div>
+          <input type="text" name="name" placeholder="name" required
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+        </div>
+        <div>
+          <input type="email" name="email" placeholder="EMAIL ADDRESS" required
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+        </div>
+        <div>
+          <input type="text" name="phone" placeholder="PHONE NUMBER" required
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+        </div>
+        <div>
+          <input type="password" name="password" placeholder="PASSWORD" required
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+        </div>
+        <div>
+          <input type="password" name="confirm_password" placeholder="CONFIRM PASSWORD" required
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+        </div>
+        <div>
+          <button type="submit"
+            class="bg-black text-white text-xs tracking-wide px-5 py-2 hover:bg-gray-800 transition-all w-full">
+            SIGN UP
+          </button>
+        </div>
+        <p class="text-center text-[11px] text-gray-600 mt-2">
+          ALREADY HAVE AN ACCOUNT?
+          <a href="/login" class="text-black underline ml-1">LOGIN</a>
+        </p>
+      </form>
+
+      <!-- SSO Signup Buttons -->
+      <div class="mt-8 space-y-3">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-300"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">Or sign up with</span>
+          </div>
+        </div>
+        
+        <a href="/auth/google" class="flex items-center justify-center gap-3 w-full border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 text-sm transition-colors">
+          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-5 h-5">
+          <span>Continue with Google</span>
+        </a>
+        
+        <a href="/auth/facebook" class="flex items-center justify-center gap-3 w-full border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50 text-sm transition-colors">
+          <img src="https://www.svgrepo.com/show/475656/facebook-color.svg" alt="Facebook" class="w-5 h-5">
+          <span>Continue with Facebook</span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  
+
+  <!-- Footer -->
+  <footer class="bg-white mt-20 text-[11px] text-gray-500">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      <div>
+        <h4 class="text-black font-medium mb-2">CaptureCore</h4>
+        <p>Mail: capturecore@info.com</p>
+        <p>Address: 123 Main St, City, Country</p>
+        <div class="flex space-x-2 mt-2 text-sm">
+          <a href="#" class="hover:underline">FB</a>
+          <a href="#" class="hover:underline">TW</a>
+          <a href="#" class="hover:underline">IN</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-black font-medium mb-2">QUICK LINKS</h4>
+        <ul class="space-y-1">
+          <li><a href="#" class="hover:underline">Home</a></li>
+          <li><a href="#" class="hover:underline">Shop</a></li>
+          <li><a href="#" class="hover:underline">About</a></li>
+          <li><a href="#" class="hover:underline">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-black font-medium mb-2">HELP & INFO</h4>
+        <ul class="space-y-1">
+          <li><a href="#" class="hover:underline">How to Order</a></li>
+          <li><a href="#" class="hover:underline">Shipping & Delivery</a></li>
+          <li><a href="#" class="hover:underline">Contact Us</a></li>
+          <li><a href="#" class="hover:underline">FAQs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-black font-medium mb-2">CONTACT US</h4>
+        <p>123 Main St, City</p>
+        <p>capturecore@info.com</p>
+        <p>+123 456 7890</p>
+      </div>
+    </div>
+    <div class="border-t border-gray-200 py-4 text-center text-[10px] text-gray-500">
+      &copy; 2024 CaptureCore. Design by <a href="#" class="underline">TemplateCreator</a>
+    </div>
+  </footer>
+
+</body>
+</html>

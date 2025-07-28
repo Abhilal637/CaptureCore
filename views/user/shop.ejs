@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CaptureCore - Camera Equipment Shop</title>
+    <link rel="stylesheet" href="/css/user/shop.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="/path/to/your/tailwind.css" rel="stylesheet" >
+
+
+</head>
+<body>
+     <%- include('../partial/user/navbar') %>
+
+
+   
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Shop Content -->
+        <div class="shop-content">
+            <h1 class="shop-title">SHOP</h1>
+            
+            <!-- Product Grid -->
+            <div class="product-grid">
+                <% 
+                const products = [
+                    { id: 1, name: 'iPhone 6', image: '/images/camera1.jpg' },
+                    { id: 2, name: 'iPhone 5T', image: '/images/camera2.jpg' },
+                    { id: 3, name: 'iPhone 4', image: '/images/camera3.jpg' },
+                    { id: 4, name: 'Sony WH-CH', image: '/images/camera4.jpg' },
+                    { id: 5, name: 'Tamiy watch', image: '/images/lens1.jpg' },
+                    { id: 6, name: 'Nikon SB-700 Watch', image: '/images/lens2.jpg' },
+                    { id: 7, name: 'Shooting Watch', image: '/images/camera5.jpg' },
+                    { id: 8, name: 'Black Watch', image: '/images/lens3.jpg' },
+                    { id: 9, name: 'iPhone 11', image: '/images/camera6.jpg' }
+                ];
+                %>
+                
+                <% products.forEach(product => { %>
+                    <div class="product-card" data-id="<%= product.id %>">
+                        <div class="product-image" style="background-image: url('<%= product.image %>')"></div>
+                        <div class="product-title"><%= product.name %></div>
+                    </div>
+                <% }); %>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <span class="prev">‹</span>
+                <span class="page active">1</span>
+                <span class="page">2</span>
+                <span class="page">3</span>
+                <span class="next">›</span>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Categories -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Categories</h3>
+                <ul class="sidebar-links">
+                    <li><a href="/category/cameras">Cameras</a></li>
+                    <li><a href="/category/lenses">Lenses</a></li>
+                    <li><a href="/category/accessories">Accessories</a></li>
+                    <li><a href="/category/tripods">Tripods</a></li>
+                </ul>
+            </div>
+
+            <!-- Brands -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Brands</h3>
+                <ul class="sidebar-links">
+                    <li><a href="/brand/canon">Canon</a></li>
+                    <li><a href="/brand/nikon">Nikon</a></li>
+                    <li><a href="/brand/sony">Sony</a></li>
+                    <li><a href="/brand/fujifilm">Fujifilm</a></li>
+                    <li><a href="/brand/panasonic">Panasonic</a></li>
+                </ul>
+            </div>
+
+            <!-- Filter by Price -->
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Filter by Price</h3>
+                <ul class="sidebar-links">
+                    <li><a href="/price/0-500">$0 - $500</a></li>
+                    <li><a href="/price/500-1000">$500 - $1000</a></li>
+                    <li><a href="/price/1000-2000">$1000 - $2000</a></li>
+                    <li><a href="/price/2000+">$2000+</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="newsletter-container">
+            <h2 class="newsletter-title">Subscribe Us Now</h2>
+            <p class="newsletter-text">Get email updates about our latest shop and special offers.</p>
+            <form class="newsletter-form">
+                <input type="email" placeholder="Enter your email" class="newsletter-input">
+                <button type="submit" class="newsletter-btn">Subscribe</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="featured-section">
+        <h2 class="section-title">View More</h2>
+        <div class="featured-grid">
+            <% 
+            const featuredProducts = [
+                { name: 'Professional Camera', image: '/images/featured1.jpg' },
+                { name: 'Telephoto Lens', image: '/images/featured2.jpg' },
+                { name: 'Camera Lens', image: '/images/featured3.jpg' },
+                { name: 'Wide Angle Lens', image: '/images/featured4.jpg' },
+                { name: 'Vintage Camera', image: '/images/featured5.jpg' }
+            ];
+            %>
+            
+            <% featuredProducts.forEach(product => { %>
+                <div class="featured-item">
+                    <div class="featured-image" style="background-image: url('<%= product.image %>')"></div>
+                </div>
+            <% }); %>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3 class="footer-title">CaptureCore</h3>
+                <div class="social-links">
+                    <a href="#" class="social-link">📘</a>
+                    <a href="#" class="social-link">📷</a>
+                    <a href="#" class="social-link">🐦</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h4 class="footer-subtitle">Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/shop">Shop</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/blog">Blog</a></li>
+                    <li><a href="/support">Support</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4 class="footer-subtitle">Help & Info</h4>
+                <ul class="footer-links">
+                    <li><a href="/shipping">Shipping Info</a></li>
+                    <li><a href="/returns">Returns</a></li>
+                    <li><a href="/warranty">Warranty</a></li>
+                    <li><a href="/faq">FAQ</a></li>
+                    <li><a href="/privacy">Privacy Policy</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4 class="footer-subtitle">Contact Us</h4>
+                <div class="contact-info">
+                    <p>📍 123 Camera Street<br>Photography City, PC 12345</p>
+                    <p>📞 +1 (555) 123-4567</p>
+                    <p>✉️ info@capturecore.com</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2024 CaptureCore. All rights reserved. | Designed by CaptureCore Team</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#f8f8f8] text-gray-800 font-sans">
+   <%- include('../partial/user/navbar') %>
+
+
+  <!-- Header -->
+  <header class="bg-[#ecf0f1] text-center py-12">
+    <h1 class="text-3xl font-light tracking-wide mb-1">LOGIN</h1>
+    <p class="text-sm text-gray-500">Home / Login</p>
+  </header>
+
+  <!-- Login Form -->
+  <main class="flex justify-center py-16 bg-white">
+  <div class="w-full max-w-md px-6">
+    <form method="POST" action="/login" class="space-y-5">
+      <div>
+        <label class="text-xs block mb-2 tracking-wide" for="email">EMAIL</label>
+        <input type="text" name="email" id="email" placeholder="EMAIL" required
+          class="w-full border border-gray-400 px-4 py-2 text-sm">
+      </div>
+
+      <div>
+        <label class="text-xs block mb-2 tracking-wide" for="password">PASSWORD</label>
+        <input type="password" name="password" id="password" placeholder="PASSWORD" required
+          class="w-full border border-gray-400 px-4 py-2 text-sm">
+      </div>
+
+      <div class="text-left">
+        <a href="/forgot-password" class="text-xs text-gray-600 underline">FORGET PASSWORD</a>
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="bg-black text-white px-10 py-2 text-sm tracking-widest">LOGIN</button>
+      </div>
+
+      <div class="text-center text-xs text-gray-600">
+        DON'T HAVE AN ACCOUNT? <a href="/signup" class="underline">SIGNUP</a>
+
+        
+
+<div class="text-center my-4">
+  <p class="text-xs text-gray-600">OR LOGIN WITH</p>
+  <a href="/auth/google" class="inline-block mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 text-sm">
+    <svg class="inline w-4 h-4 mr-2" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.9C34.5 33 30 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l6-5.8C34.6 6.4 29.7 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.8-8 19.8-20 0-1.3-.1-2.7-.3-4z"/></svg>
+    Continue with Google
+  </a>
+</div>
+      </div>
+    </form>
+  </div>
+</main>
+
+
+
+  <!-- Footer -->
+  <footer class="bg-white text-sm text-gray-700 mt-20">
+    <div class="max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div>
+        <h2 class="font-bold mb-2 tracking-widest text-black">CaptureCore</h2>
+        <p class="text-xs text-gray-600">Mail: capturecore@info.com</p>
+        <p class="text-xs text-gray-600">Address: 123 Main St, City, Country</p>
+        <div class="text-xs text-gray-600 mt-2">Follow us:
+          <a href="#" class="ml-2">FB</a>
+          <a href="#" class="ml-2">TW</a>
+          <a href="#" class="ml-2">IN</a>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="font-bold mb-2 text-black tracking-widest text-xs">QUICK LINKS</h2>
+        <ul class="space-y-1 text-xs">
+          <li><a href="#" class="hover:underline">HOME</a></li>
+          <li><a href="#" class="hover:underline">ABOUT</a></li>
+          <li><a href="#" class="hover:underline">SHOP</a></li>
+          <li><a href="#" class="hover:underline">BLOG</a></li>
+          <li><a href="#" class="hover:underline">CONTACT</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="font-bold mb-2 text-black tracking-widest text-xs">HELP & INFO</h2>
+        <ul class="space-y-1 text-xs">
+          <li><a href="#" class="hover:underline">TRACK YOUR ORDER</a></li>
+          <li><a href="#" class="hover:underline">RETURNS & POLICIES</a></li>
+          <li><a href="#" class="hover:underline">SHIPPING & DELIVERY</a></li>
+          <li><a href="#" class="hover:underline">CONTACT</a></li>
+          <li><a href="#" class="hover:underline">FAQS</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="font-bold mb-2 text-black tracking-widest text-xs">CONTACT US</h2>
+        <p class="text-xs text-gray-600">123 Main St, City</p>
+        <p class="text-xs text-gray-600">capturecore@info.com</p>
+        <p class="text-xs text-gray-600">+123 456 7890</p>
+      </div>
+    </div>
+    <div class="text-center text-[10px] py-4 text-gray-400 border-t">
+      &copy; 2024 CaptureCore. Design by <a href="#" class="underline">TemplateCreator</a>
+    </div>
+  </footer>
+</body>
+</html>

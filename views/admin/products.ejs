@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin – Product Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <%- include('../partial/admin/sidebar') %>
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">PRODUCTS</h1>
+        <a href="/admin/products/add" class="px-6 py-3 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all" id="addProductBtn">+ Add Product</a>
+      </div>
+      <!-- Product Table -->
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
+              <th class="p-3">ID</th>
+              <th class="p-3">Name</th>
+              <th class="p-3">Description</th>
+              <th class="p-3">Price</th>
+              <th class="p-3">Images</th>
+              <th class="p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (products && products.length) { %>
+              <% products.forEach(product => { %>
+                <tr class="border-b hover:bg-gray-50">
+                  <td class="p-3 text-blue-700 font-mono font-bold bg-blue-50 rounded">#<%= product._id %></td>
+                  <td class="p-3"><%= product.name %></td>
+                  <td class="p-3"><%= product.description %></td>
+                  <td class="p-3">₹<%= product.price %></td>
+                  <td class="p-3 flex gap-2">
+                    <% if (product.images && product.images.length) { %>
+                      <% product.images.forEach(img => { %>
+                        <img src="/uploads/products/<%= img.split('/uploads/products/')[1] || img %>" alt="Product Image" class="w-12 h-12 object-cover rounded" />
+                      <% }) %>
+                    <% } %>
+                  </td>
+                  <td class="p-3">
+                    <a href="/admin/products/edit/<%= product._id %>" class="bg-blue-600 text-white px-3 py-1 text-xs rounded hover:bg-blue-700">Edit</a>
+                    <a href="/admin/products/delete/<%= product._id %>" onclick="return confirm('Delete this product?')" class="bg-red-600 text-white px-3 py-1 text-xs rounded hover:bg-red-700">Delete</a>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr><td colspan="6" class="text-center p-4">No products found.</td></tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

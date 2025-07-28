@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#f6f6fa] font-sans">
+  <div class="flex min-h-screen">
+    
+    <!-- Sidebar -->
+    <div class="w-1/4 bg-gray-800 text-white flex items-center justify-center">
+      <h1 class="text-4xl font-bold">Admin<br><span class="text-sm font-normal text-gray-300">login</span></h1>
+    </div>
+
+    <!-- Main login box -->
+    <div class="w-3/4 flex items-center justify-center">
+      <div class="bg-white shadow-lg rounded-lg p-10 w-full max-w-md">
+        <h2 class="text-center text-2xl font-bold mb-2 text-[#3d0000]">ADMIN LOGIN</h2>
+        <p class="text-center text-gray-600 mb-6">Enter your email and password to sign in</p>
+        
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="mb-4 p-2 bg-red-100 text-red-700 rounded text-center">
+            <%= error %>
+          </div>
+        <% } %>
+
+        <form action="/admin/login" method="POST" class="space-y-5">
+          <!-- Email -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+            <input type="email" name="email" id="email" required
+              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:outline-none"
+              placeholder="Your email address">
+          </div>
+
+          <!-- Password -->
+          <div>
+            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+            <input type="password" name="password" id="password" required
+              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:outline-none"
+              placeholder="Your password">
+          </div>
+
+          <!-- Remember me -->
+          <div class="flex items-center space-x-2">
+            <input id="remember" name="remember" type="checkbox"
+              class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+            <label for="remember" class="text-sm text-gray-700">Remember me</label>
+          </div>
+
+          <!-- Submit button -->
+          <div>
+            <button type="submit"
+              class="w-full bg-black text-white py-2 rounded-full hover:bg-gray-900 transition">
+              LOGIN
+            </button>
+          </div>
+        </form>
+
+        
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

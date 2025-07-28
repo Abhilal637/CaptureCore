@@ -1,0 +1,32 @@
+<!-- Main Content -->
+<div class="max-w-6xl mx-auto px-4 py-10 flex gap-10">
+    <!-- Sidebar -->
+    <aside class="w-48">
+        <h2 class="text-2xl font-medium text-gray-800 mb-8">Account</h2>
+        <ul class="space-y-4">
+            <li>
+                <a href="/account/profile" 
+                   class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= currentPage === 'profile' ? 'text-gray-800 font-medium' : '' %>">
+                    👤 Profile
+                </a>
+            </li>
+            <li>
+                <a href="/account/password" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Password</a>
+            </li>
+            <li>
+                <a href="/account/orders" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Order</a>
+            </li>
+            <li>
+                <a href="/account/address" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Manage Address</a>
+            </li>
+            <li>
+                <a href="/account/wallet" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Wallet</a>
+            </li>
+        </ul>
+        <form action="/logout" method="POST" class="mt-6">
+            <button type="submit" 
+                    class="bg-gray-800 text-white px-4 py-2 text-xs uppercase hover:bg-gray-700 transition-colors">
+                LOGOUT
+            </button>
+        </form>
+    </aside>
