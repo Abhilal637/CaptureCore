@@ -37,7 +37,10 @@ const userSchema = new mongoose.Schema({
   },
   
   lastLogin: { type: Date },
-  loginCount: { type: Number, default: 0 }
+  loginCount: { type: Number, default: 0 },
+  
+resetToken: String,
+resetTokenExpiry: Date
 }, { 
   timestamps: true
 });
@@ -56,5 +59,7 @@ userSchema.methods.updateLoginInfo = function() {
   this.loginCount += 1;
   return this;
 };
+
+
 
 module.exports = mongoose.model('User', userSchema);

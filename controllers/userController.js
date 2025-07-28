@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const otpService = require('../utils/otpHelper');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
+const crypto= require('crypto')
 
 
 // Configure your transporter (use your real credentials)
@@ -16,7 +17,7 @@ const transporter = nodemailer.createTransport({
 
 // Regex patterns
 const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*()_+\-=]{8,}$/; // min 8 chars, at least 1 letter & 1 number
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/; // min 8 chars, at least 1 letter & 1 number
 const phoneRegex = /^\d{10,15}$/;
 const nameRegex = /^[A-Za-z\s]{2,50}$/;
 
@@ -162,20 +163,33 @@ exports.postlogin = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (!user) {
+            // Increment login attempts
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
             return res.render('user/login', { error: 'Invalid email or password' });
         }
         if (!user.isVerified) {
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
             return res.render('user/login', { error: 'Please verify your email first' });
         }
+        
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
+            // Increment login attempts
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
             return res.render('user/login', { error: 'Invalid email or password' });
         }
+        
+        // Successful login - reset attempts and set session
+        req.session.loginAttempts = 0;
         req.session.userId = user.id;
+        req.session.lastActivity = Date.now();
+        req.session.regenerated = false; // Allow session regeneration
+        
         console.log('Login successful, redirecting to home...');
         res.redirect('/');
     } catch (err) {
         console.error('Login error:', err);
+        req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
         return res.render('user/login', { error: 'Login failed. Please try again.' });
     }
 };
@@ -201,9 +215,97 @@ exports.getProfile = async (req, res) => {
     }
 };
 
+
+exports.getforgetPassword = (req, res) => {
+    res.render('user/forgot-password', {message: null})
+}
+exports.postForgetPassword = async (req, res) => {
+    const {email} = req.body
+    const user = await User.findOne({email})
+    if(!user){
+        return res.render('user/forgot-password', {message: "Email not found"})
+    }
+    const token = crypto.randomBytes(32).toString('hex')
+    user.resetToken = token
+    user.resetTokenExpiry = Date.now() + 3600000
+
+    await user.save()
+
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+            user: process.env.EMAIL,
+            pass: process.env.EMAIL_PASS
+        }
+    })
+
+    const resetURL = `http://localhost:3000/reset-password/${token}`;
+
+    await transporter.sendMail({
+        to: user.email,
+        subject: 'Password Reset',
+        html: `<p>You requested a password reset</p>
+        <p><a href="${resetURL}">Click here to reset your password</a></p>`
+    })
+
+    res.render('user/forgot-password', {message: 'Reset link sent to your email'})
+}
+
+exports.getResetPassword = async (req, res) => {
+    const token = req.params.token
+    const user = await User.findOne({
+        resetToken: token,
+        resetTokenExpiry: {$gt: Date.now()}
+    })
+
+    if(!user){
+        return res.send('Token is invalid or expired')
+    }
+    res.render('user/reset-password', {userId: user._id, token})
+}
+
+
+exports.postResetPassword = async (req, res) => {
+    const {password} = req.body
+    const token = req.params.token;
+    
+    // Password validation
+    if (!password || !passwordRegex.test(password)) {
+        return res.render('user/reset-password', { 
+            userId: req.body.userId, 
+            token, 
+            error: 'Password must be at least 8 characters, include a letter and a number.' 
+        });
+    }
+    
+    const user = await User.findOne({
+        resetToken: token,
+        resetTokenExpiry: {$gt: Date.now()}
+    })
+    if(!user){
+        return res.send('Token is invalid or expired')
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    user.password = hashed;
+    user.resetToken = undefined
+    user.resetTokenExpiry = undefined
+    await user.save()
+
+    res.redirect('/login')
+}
+
+
+
 exports.logout = (req, res) => {
-    req.session.destroy(() => {
+    // Clear all session data
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Logout error:', err);
+        }
+        // Clear the session cookie
         res.clearCookie('connect.sid');
-        res.redirect('/login');
+        // Redirect to login with success message
+        res.redirect('/login?message=logged_out');
     });
 }

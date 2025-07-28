@@ -12,6 +12,7 @@ passport.use(new GoogleStrategy({
       // First, check if user exists with this Google ID
       const existingUser = await User.findOne({ googleId: profile.id });
       if (existingUser) {
+        console.log('Found existing user with Google ID:', existingUser.email);
         await existingUser.updateLoginInfo();
         await existingUser.save();
         return done(null, existingUser);
@@ -23,6 +24,7 @@ passport.use(new GoogleStrategy({
       });
 
       if (emailUser && profile.emails?.[0]?.value) {
+        console.log('Found existing user with email, linking Google account:', emailUser.email);
         // Link Google account to existing user
         emailUser.googleId = profile.id;
         emailUser.isVerified = true;
@@ -32,6 +34,7 @@ passport.use(new GoogleStrategy({
         return done(null, emailUser);
       }
 
+      console.log('Creating new user with Google OAuth...');
       const newUser = new User({
         googleId: profile.id,
         name: profile.displayName,
@@ -45,9 +48,15 @@ passport.use(new GoogleStrategy({
       });
 
       await newUser.save();
+      console.log('New user saved successfully:', newUser.email);
       done(null, newUser);
     } catch (err) {
       console.error('Google OAuth error:', err);
+      console.error('Error details:', {
+        name: err.name,
+        message: err.message,
+        code: err.code
+      });
       done(err, null);
     }
   }
