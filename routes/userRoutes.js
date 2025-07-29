@@ -73,6 +73,9 @@ router.get('/auth/google/callback',
     }
 );
 
+
+router.get('/shop', userController.getProducts);
+router.get('/product/:id', userController.getProductDetails);
 // Logout routes (require authentication)
 router.get('/logout', isUserLoggedIn, userController.logout);
 router.post('/logout', isUserLoggedIn, userController.logout);

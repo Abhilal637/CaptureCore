@@ -98,6 +98,49 @@ exports.unblockUser = async (req, res) => {
   }
 };
 
+
+
+exports.postAddProduct= async(req,res)=>{
+  try{
+    const {name,descrption,price,cateogry}=req.body
+    const uploadImages=[]
+
+    for(const file of req.files){
+      const uploadPromise= new Promise ((resolve, reject)=>{
+        const stream = cloudinary.uploader.upload_stream({
+          folder:"products",
+          resource_type:'image'
+        },
+        (error,result)=>{
+          if(eroor)return reject(error);
+          uploadImages.push(result.secure_url)
+          resolve()
+        }
+      )
+      streamifier.createReadStream(file.buffer).pipe(stream)
+      })
+      await uploadPromise
+    }
+
+    const newProduct = new product({
+      name,
+       description,
+      price,
+      category,
+      images: uploadedImages,
+      isBlocked: false,
+      isListed: true,
+      isDeleted: false
+    })
+    await newProduct.save();
+    res.redirect('/admin/product')
+
+  }catch(err){
+    console.log('upload error',err);
+    res.status(500).send('upload failed')
+  }
+}
+
 exports.logout = (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid', { path: '/' });

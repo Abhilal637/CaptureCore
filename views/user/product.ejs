@@ -3,147 +3,377 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Product Page - CaptureCore</title>
+  <title><%= product.name %> - CaptureCore</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  <style>
+    .image-gallery img {
+      transition: transform 0.3s ease;
+    }
+    .image-gallery img:hover {
+      transform: scale(1.05);
+    }
+    .stock-indicator {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 10;
+    }
+    .in-stock { background: #10b981; color: white; }
+    .low-stock { background: #f59e0b; color: white; }
+    .out-of-stock { background: #ef4444; color: white; }
+    .rating-stars {
+      color: #fbbf24;
+    }
+    .breadcrumb-item:not(:last-child)::after {
+      content: '>';
+      margin: 0 8px;
+      color: #6b7280;
+    }
+  </style>
 </head>
-<body class="bg-white text-gray-800">
+<body class="bg-gray-50 text-gray-800">
     <%- include('../partial/user/navbar') %>
 
-  
-
   <main class="max-w-7xl mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div>
-        <img src="https://via.placeholder.com/600x400" alt="Product" class="w-full h-auto rounded-md shadow" />
+    <!-- Breadcrumbs -->
+    <nav class="mb-6">
+      <div class="flex items-center text-sm text-gray-600">
+        <a href="/" class="hover:text-blue-600">Home</a>
+        <span class="breadcrumb-item"></span>
+        <a href="/shop" class="hover:text-blue-600">Shop</a>
+        <span class="breadcrumb-item"></span>
+        <% if (product.category) { %>
+          <a href="/shop?category=<%= product.category._id %>" class="hover:text-blue-600"><%= product.category.name %></a>
+          <span class="breadcrumb-item"></span>
+        <% } %>
+        <span class="text-gray-900 font-medium"><%= product.name %></span>
+      </div>
+    </nav>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Product Images -->
+      <div class="space-y-4">
+        <div class="relative">
+          <!-- Main Image -->
+          <div class="aspect-square bg-white rounded-lg shadow-md overflow-hidden">
+            <a href="<%= product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg' %>" 
+               data-lightbox="product-gallery" 
+               data-title="<%= product.name %>">
+              <img src="<%= product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg' %>" 
+                   alt="<%= product.name %>" 
+                   class="w-full h-full object-cover cursor-zoom-in" 
+                   id="mainImage" />
+            </a>
+            
+            <!-- Stock Indicator -->
+            <div class="stock-indicator <%= product.stock > 10 ? 'in-stock' : product.stock > 0 ? 'low-stock' : 'out-of-stock' %>">
+              <%= product.stock > 10 ? 'In Stock' : product.stock > 0 ? 'Low Stock' : 'Out of Stock' %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Thumbnail Gallery -->
+        <% if (product.images && product.images.length > 1) { %>
+          <div class="grid grid-cols-4 gap-2">
+            <% product.images.forEach((image, index) => { %>
+              <div class="aspect-square bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer border-2 <%= index === 0 ? 'border-blue-500' : 'border-transparent' %>"
+                   onclick="changeMainImage('<%= image %>', this)">
+                <img src="<%= image %>" 
+                     alt="<%= product.name %> - Image <%= index + 1 %>" 
+                     class="w-full h-full object-cover" />
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
       </div>
 
-      <div>
-        <h2 class="text-xl md:text-2xl font-semibold mb-2 uppercase">SONY Cinema Line FX3 Full-frame Camera</h2>
-        <p class="text-xl text-blue-600 font-bold mb-2">$870.00</p>
-        <div class="flex items-center mb-4">
-          <span class="text-yellow-400 mr-1">★ ★ ★ ★ ☆</span>
-          <span class="text-sm text-gray-500">(2 reviews)</span>
-        </div>
-        <p class="mb-4 text-sm md:text-base">4K 120P | S-CineTone | Dual Base ISO | Compact & Lightweight | Made for Filmmakers</p>
-
-        <label class="block mb-1 font-medium">Color:</label>
-        <select class="border border-gray-300 rounded w-full mb-4 p-2">
-          <option>Gray</option>
-          <option>Black</option>
-        </select>
-
-        <div class="flex items-center gap-2 mb-4">
-          <button class="px-3 py-1 border rounded">-</button>
-          <input type="text" value="1" class="w-12 text-center border rounded" />
-          <button class="px-3 py-1 border rounded">+</button>
+      <!-- Product Info -->
+      <div class="space-y-6">
+        <!-- Product Title and Rating -->
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= product.name %></h1>
+          
+          <!-- Rating -->
+          <div class="flex items-center mb-4">
+            <div class="rating-stars text-xl">
+              ★★★★★
+            </div>
+            <span class="ml-2 text-sm text-gray-600">(0 reviews)</span>
+            <span class="ml-4 text-sm text-gray-500">|</span>
+            <span class="ml-4 text-sm text-gray-500">SKU: <%= product._id %></span>
+          </div>
         </div>
 
-        <div class="flex flex-col sm:flex-row gap-3">
-          <button class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Buy Now</button>
-          <button class="border border-gray-300 px-6 py-2 rounded hover:bg-gray-100">Add to Cart</button>
+        <!-- Price Section -->
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl font-bold text-blue-600">$<%= product.price %></span>
+            <% if (product.discounted) { %>
+              <span class="text-xl text-gray-400 line-through">$<%= product.originalPrice %></span>
+              <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-medium">
+                <%= Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) %>% OFF
+              </span>
+            <% } %>
+          </div>
+          
+          <!-- Coupon/Discount -->
+          <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+            <div class="flex items-center">
+              <span class="text-green-600 mr-2">🎉</span>
+              <span class="text-sm text-green-800">Use code <strong>WELCOME10</strong> for 10% off</span>
+            </div>
+          </div>
         </div>
 
-        <p class="text-sm text-gray-600 mt-4">SKU: 1373 | Category: SONY | Tags: Sony, Camera</p>
+        <!-- Stock Status -->
+        <div class="space-y-3">
+          <% if (product.stock > 10) { %>
+            <div class="flex items-center text-green-600">
+              <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              <span>In Stock (<%= product.stock %> available)</span>
+            </div>
+          <% } else if (product.stock > 0) { %>
+            <div class="flex items-center text-orange-600">
+              <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+              <span>Low Stock - Only <%= product.stock %> left!</span>
+            </div>
+          <% } else { %>
+            <div class="flex items-center text-red-600">
+              <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+              <span>Out of Stock</span>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Product Description -->
+        <div>
+          <h3 class="text-lg font-semibold mb-2">Description</h3>
+          <p class="text-gray-700 leading-relaxed"><%= product.description %></p>
+        </div>
+
+        <!-- Quantity and Add to Cart -->
+        <div class="space-y-4">
+          <div class="flex items-center gap-4">
+            <label class="text-sm font-medium">Quantity:</label>
+            <div class="flex items-center border rounded-lg">
+              <button onclick="changeQuantity(-1)" class="px-3 py-2 hover:bg-gray-100">-</button>
+              <input type="number" id="quantity" value="1" min="1" max="<%= product.stock %>" 
+                     class="w-16 text-center border-none focus:outline-none" 
+                     data-max-stock="<%= product.stock || 0 %>" />
+              <button onclick="changeQuantity(1)" class="px-3 py-2 hover:bg-gray-100">+</button>
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <% if (product.stock > 0) { %>
+              <button class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                Add to Cart
+              </button>
+              <button class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors">
+                Buy Now
+              </button>
+            <% } else { %>
+              <button class="flex-1 bg-gray-400 text-white py-3 px-6 rounded-lg cursor-not-allowed" disabled>
+                Sold Out
+              </button>
+              <button class="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg hover:bg-gray-600 transition-colors">
+                Notify When Available
+              </button>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Product Highlights/Specs -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h3 class="text-lg font-semibold mb-3">Highlights & Specifications</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Category:</span>
+              <span class="font-medium"><%= product.category ? product.category.name : 'Uncategorized' %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Brand:</span>
+              <span class="font-medium">CaptureCore</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Warranty:</span>
+              <span class="font-medium">1 Year</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Shipping:</span>
+              <span class="font-medium">Free Delivery</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Return Policy:</span>
+              <span class="font-medium">30 Days</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Product ID:</span>
+              <span class="font-medium"><%= product._id %></span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="mt-10">
-      <div class="flex flex-wrap space-x-4 border-b mb-4 text-sm md:text-base">
-        <button class="tab-btn active-tab py-2 px-4 border-b-2 border-blue-600 font-semibold" onclick="showTab('desc')">DESCRIPTION</button>
-        <button class="tab-btn py-2 px-4 text-gray-500 hover:text-gray-700" onclick="showTab('info')">ADDITIONAL INFORMATION</button>
-        <button class="tab-btn py-2 px-4 text-gray-500 hover:text-gray-700" onclick="showTab('reviews')">REVIEWS (2)</button>
-      </div>
+    <!-- Reviews Section -->
+    <div class="mt-12">
+      <div class="border-t pt-8">
+        <h2 class="text-2xl font-bold mb-6">Customer Reviews</h2>
+        
+        <!-- Review Summary -->
+        <div class="bg-white rounded-lg p-6 mb-6 shadow-sm">
+          <div class="flex items-center gap-8">
+            <div class="text-center">
+              <div class="text-4xl font-bold text-blue-600">0.0</div>
+              <div class="rating-stars text-xl">★★★★★</div>
+              <div class="text-sm text-gray-600 mt-1">0 reviews</div>
+            </div>
+            <div class="flex-1">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">5 stars</span>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-400 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                  <span class="text-sm text-gray-600">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">4 stars</span>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-400 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                  <span class="text-sm text-gray-600">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">3 stars</span>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-400 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                  <span class="text-sm text-gray-600">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">2 stars</span>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-400 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                  <span class="text-sm text-gray-600">0%</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm">1 star</span>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-400 h-2 rounded-full" style="width: 0%"></div>
+                  </div>
+                  <span class="text-sm text-gray-600">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div id="desc" class="tab-content block">
-        <ul class="list-disc list-inside space-y-1 text-sm md:text-base">
-          <li>Full-frame back-illuminated sensor</li>
-          <li>Up to 4K 120p with 10-bit 4:2:2</li>
-          <li>Dual native ISO: 800 and 12,800</li>
-          <li>Compact and lightweight body</li>
-          <li>Advanced autofocus with Eye Tracking</li>
-        </ul>
-      </div>
+        <!-- Write Review Button -->
+        <div class="text-center py-8">
+          <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+            Write a Review
+          </button>
+        </div>
 
-      <div id="info" class="tab-content hidden">
-        <ul class="list-disc list-inside space-y-1 text-sm md:text-base">
-          <li>Sensor: 35.6 x 23.8 mm</li>
-          <li>Weight: Approx. 715g</li>
-          <li>Dimensions: 129.7 x 77.8 x 84.5 mm</li>
-        </ul>
-      </div>
-
-      <div id="reviews" class="tab-content hidden">
-        <ul class="space-y-4 text-sm md:text-base">
-          <li><strong>John D.</strong>: Excellent image quality and very compact.</li>
-          <li><strong>Emily R.</strong>: Love the dual ISO and color science!</li>
-        </ul>
+        <!-- No Reviews Message -->
+        <div class="text-center py-8 text-gray-500">
+          <p>No reviews yet. Be the first to review this product!</p>
+        </div>
       </div>
     </div>
 
     <!-- Related Products -->
-    <h3 class="text-xl font-semibold mt-10 mb-4">Related Products</h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="text-center">
-        <img src="https://via.placeholder.com/150" alt="iPhone 13" class="w-full mb-2"/>
-        <p>iPhone 13 - <span class="text-blue-600 font-semibold">$1100</span></p>
+    <% if (related && related.length > 0) { %>
+      <div class="mt-12 border-t pt-8">
+        <h2 class="text-2xl font-bold mb-6">Related Products</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <% related.forEach(relatedProduct => { %>
+            <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer group" 
+                 onclick="window.location.href='/product/<%= relatedProduct._id %>'">
+              <div class="relative aspect-square overflow-hidden rounded-t-lg">
+                <img src="<%= relatedProduct.images && relatedProduct.images[0] ? relatedProduct.images[0] : '/images/placeholder.jpg' %>" 
+                     alt="<%= relatedProduct.name %>" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"/>
+                
+                <!-- Stock indicator for related products -->
+                <div class="stock-indicator <%= relatedProduct.stock > 10 ? 'in-stock' : relatedProduct.stock > 0 ? 'low-stock' : 'out-of-stock' %>">
+                  <%= relatedProduct.stock > 10 ? 'In Stock' : relatedProduct.stock > 0 ? 'Low Stock' : 'Out of Stock' %>
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="font-medium text-gray-900 mb-2 line-clamp-2"><%= relatedProduct.name %></h3>
+                <div class="flex items-center justify-between">
+                  <span class="text-lg font-bold text-blue-600">$<%= relatedProduct.price %></span>
+                  <div class="rating-stars text-sm">★★★★★</div>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
       </div>
-      <div class="text-center">
-        <img src="https://via.placeholder.com/150" alt="Heavy Watch" class="w-full mb-2"/>
-        <p>Heavy Watch - <span class="text-blue-600 font-semibold">$600</span></p>
-      </div>
-      <div class="text-center">
-        <img src="https://via.placeholder.com/150" alt="Spotted Watch" class="w-full mb-2"/>
-        <p>Spotted Watch - <span class="text-blue-600 font-semibold">$799</span></p>
-      </div>
-      <div class="text-center">
-        <img src="https://via.placeholder.com/150" alt="Black Watch" class="w-full mb-2"/>
-        <p>Black Watch - <span class="text-blue-600 font-semibold">$650</span></p>
-      </div>
-    </div>
+    <% } %>
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-gray-900 text-white py-8 mt-12">
-    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-6 text-sm">
-      <div>
-        <h5 class="text-lg font-semibold mb-2">CaptureCore</h5>
-        <p>Professional tools for creatives</p>
-      </div>
-      <div>
-        <h5 class="text-lg font-semibold mb-2">Quick Links</h5>
-        <ul class="space-y-1">
-          <li><a href="#" class="hover:underline">Home</a></li>
-          <li><a href="#" class="hover:underline">Shop</a></li>
-          <li><a href="#" class="hover:underline">About</a></li>
-          <li><a href="#" class="hover:underline">Contact</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5 class="text-lg font-semibold mb-2">Help & Info</h5>
-        <ul class="space-y-1">
-          <li><a href="#" class="hover:underline">Track Order</a></li>
-          <li><a href="#" class="hover:underline">Shipping</a></li>
-          <li><a href="#" class="hover:underline">Returns</a></li>
-          <li><a href="#" class="hover:underline">FAQ</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5 class="text-lg font-semibold mb-2">Contact</h5>
-        <p>Email: info@capturecore.com</p>
-        <p>Phone: +91 12345 67890</p>
-      </div>
-    </div>
-  </footer>
-
   <script>
-    function showTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600'));
-      document.getElementById(tabId).classList.remove('hidden');
-      event.target.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+    // Get product stock from data attribute
+    const productStock = parseInt(document.getElementById('quantity').getAttribute('data-max-stock') || '0');
+    
+    // Image gallery functionality
+    function changeMainImage(imageSrc, thumbnailElement) {
+      // Update main image
+      document.getElementById('mainImage').src = imageSrc;
+      
+      // Update lightbox link
+      const lightboxLink = document.querySelector('[data-lightbox="product-gallery"]');
+      lightboxLink.href = imageSrc;
+      
+      // Update thumbnail selection
+      document.querySelectorAll('.image-gallery .border-2').forEach(thumb => {
+        thumb.classList.remove('border-blue-500');
+        thumb.classList.add('border-transparent');
+      });
+      thumbnailElement.classList.remove('border-transparent');
+      thumbnailElement.classList.add('border-blue-500');
     }
+
+    // Quantity controls
+    function changeQuantity(delta) {
+      const quantityInput = document.getElementById('quantity');
+      const currentValue = parseInt(quantityInput.value);
+      const maxStock = productStock;
+      
+      let newValue = currentValue + delta;
+      
+      if (newValue < 1) newValue = 1;
+      if (newValue > maxStock) newValue = maxStock;
+      
+      quantityInput.value = newValue;
+    }
+
+    // Initialize lightbox
+    lightbox.option({
+      'resizeDuration': 200,
+      'wrapAround': true,
+      'albumLabel': 'Image %1 of %2'
+    });
+
+    // Stock validation
+    document.getElementById('quantity').addEventListener('change', function() {
+      const value = parseInt(this.value);
+      const maxStock = productStock;
+      
+      if (value < 1) this.value = 1;
+      if (value > maxStock) this.value = maxStock;
+    });
   </script>
 </body>
 </html>

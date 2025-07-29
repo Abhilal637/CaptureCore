@@ -1,9 +1,12 @@
 const User= require('../models/user');
+const Product = require('../models/product');
 const bcrypt = require('bcrypt')
 const otpService = require('../utils/otpHelper');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
-const crypto= require('crypto')
+const crypto= require('crypto');
+const mongoose = require('mongoose');
+const Category = require('../models/category');
 
 
 // Configure your transporter (use your real credentials)
@@ -294,6 +297,133 @@ exports.postResetPassword = async (req, res) => {
 
     res.redirect('/login')
 }
+
+
+exports.getProducts = async (req, res) => {
+    try {
+        const { search = '', sort = '', category = '', priceRange = '', page = 1 } = req.query;
+        const limit = 8;
+        const skip = (page - 1) * limit;
+
+        console.log('=== DEBUG: getProducts ===');
+        console.log('Query parameters:', req.query);
+        console.log('Category filter:', category);
+
+        let query = {
+            isBlocked: false,
+            isListed: true,
+            isDeleted: false
+        };
+
+        if (search) {
+            query.name = { $regex: search, $options: 'i' };
+        }
+        if (category) {
+            // Ensure category is a valid ObjectId before querying
+            if (mongoose.Types.ObjectId.isValid(category)) {
+                query.category = category;
+                console.log('Valid category ID, filtering by:', category);
+            } else {
+                console.log('Invalid category ID:', category);
+            }
+        }
+        if (priceRange && priceRange.includes('_')) {
+            const [min, max] = priceRange.split('_').map(Number);
+            if (!isNaN(min) && !isNaN(max)) {
+                query.price = { $gte: min, $lte: max };
+            }
+        }
+
+        console.log('Final query:', JSON.stringify(query, null, 2));
+
+        const sortOptionsMap = {
+            'price-asc': { price: 1 },
+            'price-desc': { price: -1 },
+            'az': { name: 1 },
+            'za': { name: -1 },
+            'popularity': { salesCount: -1 },
+            'rating': { avgRating: -1 },
+            'new': { createdAt: -1 },
+            'featured': { isFeatured: -1 }
+        };
+        let sortOption = sortOptionsMap[sort] || {};
+
+        const total = await Product.countDocuments(query);
+        console.log('Total products found:', total);
+        
+        const products = await Product.find(query)
+            .populate('category') // Populate category details
+            .sort(sortOption)
+            .skip(skip)
+            .limit(limit);
+
+        console.log('Products returned:', products.length);
+        if (products.length > 0) {
+            console.log('Sample product:', {
+                name: products[0].name,
+                category: products[0].category ? products[0].category.name : 'No category',
+                categoryId: products[0].category ? products[0].category._id : 'No ID'
+            });
+        }
+
+        // Fetch all categories for the sidebar
+        const categories = await Category.find({ isDeleted: false });
+        console.log('Categories found:', categories.length);
+        categories.forEach(cat => {
+            console.log(`- ${cat.name} (ID: ${cat._id})`);
+        });
+
+        res.render('user/shop', { 
+            products, 
+            total, 
+            currentPage: parseInt(page), 
+            limit, 
+            query: req.query,
+            categories 
+        });
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.render('user/shop', { 
+            products: [], 
+            total: 0, 
+            currentPage: 1, 
+            limit: 8, 
+            query: req.query,
+            error: 'Failed to load products',
+            categories: []
+        });
+    }
+};
+
+exports.getProductDetails = async (req, res) => {
+    try {
+        
+        const product = await Product.findById(req.params.id).populate('category');
+
+        if (!product || product.isBlocked || !product.isListed || product.isDeleted) {
+            return res.redirect('/products');
+        }
+
+        
+        const related = await Product.find({
+            _id: { $ne: product._id },
+            category: product.category._id, 
+            isBlocked: false,
+            isListed: true,
+            isDeleted: false
+        }).populate('category') 
+          .limit(4);
+
+        res.render('user/product', { product, related });
+    } catch (err) {
+        console.error('Error fetching product details:', err);
+        res.redirect('/products');
+    }
+};
+
+
+
+
 
 
 

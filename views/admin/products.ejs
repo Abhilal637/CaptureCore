@@ -32,21 +32,23 @@
           <tbody>
             <% if (products && products.length) { %>
               <% products.forEach(product => { %>
-                <tr class="border-b hover:bg-gray-50">
+                <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/admin/products/edit/<%= product._id %>'">
                   <td class="p-3 text-blue-700 font-mono font-bold bg-blue-50 rounded">#<%= product._id %></td>
                   <td class="p-3"><%= product.name %></td>
                   <td class="p-3"><%= product.description %></td>
                   <td class="p-3">₹<%= product.price %></td>
                   <td class="p-3 flex gap-2">
                     <% if (product.images && product.images.length) { %>
-                      <% product.images.forEach(img => { %>
-                        <img src="/uploads/products/<%= img.split('/uploads/products/')[1] || img %>" alt="Product Image" class="w-12 h-12 object-cover rounded" />
+                      <% product.images.slice(0, 2).forEach(img => { %>
+                        <img src="<%= img %>" alt="Product Image" class="w-12 h-12 object-cover rounded border" onerror="this.src='/images/placeholder.jpg'" />
                       <% }) %>
+                    <% } else { %>
+                      <span class="text-gray-400 text-xs">No images</span>
                     <% } %>
                   </td>
                   <td class="p-3">
-                    <a href="/admin/products/edit/<%= product._id %>" class="bg-blue-600 text-white px-3 py-1 text-xs rounded hover:bg-blue-700">Edit</a>
-                    <a href="/admin/products/delete/<%= product._id %>" onclick="return confirm('Delete this product?')" class="bg-red-600 text-white px-3 py-1 text-xs rounded hover:bg-red-700">Delete</a>
+                    <a href="/admin/products/edit/<%= product._id %>" class="bg-blue-600 text-white px-3 py-1 text-xs rounded hover:bg-blue-700" onclick="event.stopPropagation()">Edit</a>
+                    <a href="/admin/products/delete/<%= product._id %>" onclick="event.stopPropagation(); return confirm('Delete this product?')" class="bg-red-600 text-white px-3 py-1 text-xs rounded hover:bg-red-700">Delete</a>
                   </td>
                 </tr>
               <% }) %>

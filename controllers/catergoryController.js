@@ -32,18 +32,32 @@ exports.addCategory = async (req, res) => {
     try {
         const name = req.body.name && req.body.name.trim();
         const description = req.body.description && req.body.description.trim();
-        if (!name || !description) return res.redirect('/admin/category');
-
         
-        const existing = await category.findOne({ name: name });
-        if (existing) {
-            return res.status(400).send("Category name already exists");
+        if (!name || !description) {
+            return res.status(400).send("Category name and description are required");
         }
 
-        await category.create({ name, description, active: true });
+        // Check for existing category (case-insensitive)
+        const existingCategory = await category.findOne({ 
+            name: { $regex: new RegExp(`^${name}$`, 'i') },
+            isDeleted: false 
+        });
+        
+        if (existingCategory) {
+            return res.status(400).send('Category already exists.');
+        }
+
+        await category.create({ 
+            name: name, 
+            description: description, 
+            active: true,
+            isDeleted: false
+        });
+        
         res.redirect('/admin/category');
     } catch (err) {
-        res.status(500).send("error adding category");
+        console.error('Error adding category:', err);
+        res.status(500).send("Error adding category: " + err.message);
     }
 }
 
@@ -70,16 +84,35 @@ exports.editcategory= async(req,res)=>{
   }
 }
 
-exports.updateCategory= async(req,res)=>{
+exports.updateCategory = async(req,res)=>{
   try{
     const { name, description, active } = req.body;
-    await category.findByIdAndUpdate(req.params.id, {
-      name: name && name.trim(),
-      description: description && description.trim(),
-      active: active === "true"
+    const categoryId = req.params.id;
+    
+    if (!name || !description) {
+        return res.status(400).send("Category name and description are required");
+    }
+
+    // Check for existing category with same name (excluding current category)
+    const existingCategory = await category.findOne({ 
+        name: { $regex: new RegExp(`^${name}$`, 'i') },
+        _id: { $ne: categoryId },
+        isDeleted: false 
     });
-    res.redirect('/admin/category')
+    
+    if (existingCategory) {
+        return res.status(400).send('Category name already exists.');
+    }
+
+    await category.findByIdAndUpdate(categoryId, {
+        name: name.trim(),
+        description: description.trim(),
+        active: active === "true"
+    });
+    
+    res.redirect('/admin/category');
   }catch(err){
-    res.status(500).send("error updating category")
+    console.error('Error updating category:', err);
+    res.status(500).send("Error updating category: " + err.message);
   }
 }
