@@ -37,21 +37,16 @@
             <% }); %>
           </ul>
         </div>
+         <h3 class="font-semibold mb-2">BRANDS</h3>
 
-        <div>
-          <h3 class="font-semibold mb-2">TAGS</h3>
-          <div class="flex flex-wrap gap-2 text-sm text-gray-500">
-            <span class="bg-gray-200 px-2 py-1 rounded">DSLR</span>
-            <span class="bg-gray-200 px-2 py-1 rounded">Canon</span>
-            <span class="bg-gray-200 px-2 py-1 rounded">Sony</span>
-            <span class="bg-gray-200 px-2 py-1 rounded">iPhone</span>
-          </div>
-        </div>
+       <div class="flex flex-col gap-2 text-sm text-gray-500">
+  <span class="bg-gray-200 px-2 py-1 rounded w-fit">DSLR</span>
+  <span class="bg-gray-200 px-2 py-1 rounded w-fit">Canon</span>
+  <span class="bg-gray-200 px-2 py-1 rounded w-fit">Sony</span>
+  
+</div>
 
-        <div>
-          <h3 class="font-semibold mb-2">FILTER BY PRICE</h3>
-          <p class="text-sm text-gray-600">$0 - $5000</p>
-        </div>
+        
       </aside>
 
       <!-- Product Grid -->
@@ -66,10 +61,16 @@
               <% } %>
             <% } %>
           </p>
-          <form action="/shop" method="GET" class="flex gap-2">
+
+          <!-- 🔽 Sort & Search Form -->
+          <form action="/shop" method="GET" class="flex gap-2 items-center">
             <% if (query.category) { %>
               <input type="hidden" name="category" value="<%= query.category %>" />
             <% } %>
+            <% if (query.search) { %>
+              <input type="hidden" name="search" value="<%= query.search %>" />
+            <% } %>
+
             <input
               type="text"
               name="search"
@@ -80,6 +81,18 @@
             <button type="submit" class="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700">
               Search
             </button>
+
+            <select name="sort" onchange="this.form.submit()" class="border px-2 py-1 text-sm rounded">
+              <option value="">Sort by</option>
+              <option value="price-asc" <%= query.sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
+              <option value="price-desc" <%= query.sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
+              <option value="az" <%= query.sort === 'az' ? 'selected' : '' %>>Name: A to Z</option>
+              <option value="za" <%= query.sort === 'za' ? 'selected' : '' %>>Name: Z to A</option>
+              <option value="popularity" <%= query.sort === 'popularity' ? 'selected' : '' %>>Most Popular</option>
+              <option value="rating" <%= query.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
+              <option value="new" <%= query.sort === 'new' ? 'selected' : '' %>>Newest</option>
+              <option value="featured" <%= query.sort === 'featured' ? 'selected' : '' %>>Featured</option>
+            </select>
           </form>
         </div>
 
@@ -94,9 +107,8 @@
           <div class="grid grid-cols-3 gap-6">
             <% products.forEach(product => { %>
               <div class="bg-white shadow p-2 hover:shadow-lg transition-shadow cursor-pointer" onclick="window.location.href='/product/<%= product._id %>'">
-                
                 <img src="<%= product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg' %>" 
-                   alt="<%= product.name %>" 
+                     alt="<%= product.name %>" 
                      class="w-full h-64 object-cover" />
                 <h4 class="mt-2 font-semibold text-sm"><%= product.name %></h4>
                 <p class="<%= product.discounted ? 'line-through text-gray-400' : 'text-green-600' %> text-sm">
@@ -109,22 +121,20 @@
             <% }); %>
           </div>
 
-          <!-- Pagination -->
+          <!-- 🔁 Pagination -->
           <% if (total > limit) { %>
             <div class="flex justify-center mt-10 space-x-2 text-gray-500">
               <% if (currentPage > 1) { %>
-                <a href="/shop?page=<%= currentPage - 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %>" 
-                   class="hover:text-black">&laquo;</a>
+                <a href="/shop?page=<%= currentPage - 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&laquo;</a>
               <% } %>
-              
+
               <% for (let i = 1; i <= Math.ceil(total / limit); i++) { %>
-                <a href="/shop?page=<%= i %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %>" 
+                <a href="/shop?page=<%= i %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
                    class="<%= currentPage === i ? 'font-semibold text-black' : 'hover:text-black' %>"><%= i %></a>
               <% } %>
-              
+
               <% if (currentPage < Math.ceil(total / limit)) { %>
-                <a href="/shop?page=<%= currentPage + 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %>" 
-                   class="hover:text-black">&raquo;</a>
+                <a href="/shop?page=<%= currentPage + 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&raquo;</a>
               <% } %>
             </div>
           <% } %>

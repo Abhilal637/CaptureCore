@@ -4,24 +4,27 @@
   <meta charset="UTF-8">
   <title>Add Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CropperJS CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body class="bg-gray-100">
   <div class="flex h-screen">
+    <% include('../partial/admin/sidebar') %>
 
-   <% include('../partial/admin/sidebar') %>
     <!-- Main Content -->
     <main class="flex-1 p-8 overflow-y-auto">
       <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
         <h1 class="text-2xl font-semibold mb-6">Add New Product</h1>
 
-        <form class="space-y-4">
-          <input type="text" placeholder="Product Name" required class="w-full border p-2 rounded" />
-          <textarea placeholder="Description" required class="w-full border p-2 rounded"></textarea>
-          <input type="number" placeholder="Price" required class="w-full border p-2 rounded" />
+        <form id="productForm" action="/admin/products/add" method="POST" enctype="multipart/form-data" class="space-y-4">
+          <input type="text" name="name" placeholder="Product Name" required class="w-full border p-2 rounded" />
+          <textarea name="description" placeholder="Description" required class="w-full border p-2 rounded"></textarea>
+          <input type="number" name="price" placeholder="Price" required class="w-full border p-2 rounded" />
 
           <!-- Category Select and Add -->
           <div class="flex flex-col sm:flex-row gap-2">
-            <select required class="w-full border p-2 rounded">
+            <select name="category" required class="w-full border p-2 rounded">
               <option value="">Select Category</option>
               <option value="Camera">Camera</option>
               <option value="Lens">Lens</option>
@@ -30,22 +33,160 @@
               <option value="Lighting">Lighting</option>
               <option value="Audio">Audio</option>
             </select>
-            <input type="text" placeholder="Or enter new category" class="w-full border p-2 rounded" />
+            <input type="text" name="newCategory" placeholder="Or enter new category" class="w-full border p-2 rounded" />
           </div>
 
-          <input type="number" placeholder="Stock" required class="w-full border p-2 rounded" />
+          <input type="number" name="stock" placeholder="Stock" required class="w-full border p-2 rounded" />
 
+          <!-- Image Upload & Cropping -->
           <div>
             <label class="block text-sm mb-1">Upload Images (min 3)</label>
-            <input type="file" multiple class="w-full border p-2 rounded" />
+            <input type="file" id="imageInput" accept="image/*" multiple class="w-full border p-2 rounded" />
+            <div id="croppedImagesPreview" class="flex flex-wrap gap-4 mt-4"></div>
           </div>
 
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <button type="submit" disabled class="bg-blue-600 text-white px-4 py-2 rounded opacity-50 hover:bg-blue-700 disabled:cursor-not-allowed">
             Submit
           </button>
         </form>
       </div>
     </main>
   </div>
+
+  <!-- Cropping Modal -->
+  <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white p-4 rounded shadow max-w-lg w-full">
+      <div>
+        <img id="cropImage" class="max-h-[400px] mx-auto" />
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="cancelCrop" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
+        <button id="confirmCrop" class="px-4 py-2 bg-blue-600 text-white rounded">Crop</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cropper;
+    let croppedImages = [];
+    let imageQueue = [];
+
+    const imageInput = document.getElementById('imageInput');
+    const cropModal = document.getElementById('cropModal');
+    const cropImage = document.getElementById('cropImage');
+    const confirmCrop = document.getElementById('confirmCrop');
+    const cancelCrop = document.getElementById('cancelCrop');
+    const croppedImagesPreview = document.getElementById('croppedImagesPreview');
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const productForm = document.getElementById('productForm');
+
+    imageInput.addEventListener('change', function () {
+      if (!this.files.length) return;
+      imageQueue = Array.from(this.files);
+      imageInput.value = '';
+      if (imageQueue.length > 0) showCropperForNext();
+    });
+
+    function showCropperForNext() {
+      const file = imageQueue.shift();
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        cropImage.src = e.target.result;
+        cropModal.classList.remove('hidden');
+        cropper = new Cropper(cropImage, {
+          aspectRatio: 1,
+          viewMode: 1,
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    confirmCrop.addEventListener('click', () => {
+      const canvas = cropper.getCroppedCanvas();
+      if (!canvas) return;
+
+      canvas.toBlob((blob) => {
+        croppedImages.push(blob);
+        renderCroppedImages();
+        updateSubmitState();
+
+        cropper.destroy();
+        cropModal.classList.add('hidden');
+
+        if (imageQueue.length > 0) {
+          showCropperForNext();
+        }
+      });
+    });
+
+    cancelCrop.addEventListener('click', () => {
+      cropper.destroy();
+      cropModal.classList.add('hidden');
+      imageQueue = [];
+      imageInput.value = '';
+    });
+
+    function renderCroppedImages() {
+      croppedImagesPreview.innerHTML = '';
+      croppedImages.forEach((blob, index) => {
+        const url = URL.createObjectURL(blob);
+        const div = document.createElement('div');
+        div.className = 'relative';
+        div.innerHTML = `
+          <img src="${url}" class="w-24 h-24 object-cover rounded border" />
+          <button data-index="${index}" class="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded">✕</button>
+        `;
+        croppedImagesPreview.appendChild(div);
+      });
+    }
+
+    croppedImagesPreview.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const index = e.target.getAttribute('data-index');
+        croppedImages.splice(index, 1);
+        renderCroppedImages();
+        updateSubmitState();
+      }
+    });
+
+    function updateSubmitState() {
+      const valid = croppedImages.length >= 3;
+      submitBtn.disabled = !valid;
+      submitBtn.classList.toggle('opacity-50', !valid);
+    }
+
+    productForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  if (croppedImages.length < 3) {
+    alert('Please crop at least 3 images before submitting.');
+    return;
+  }
+
+  const formData = new FormData(productForm);
+  croppedImages.forEach((blob, index) => {
+    formData.append('images', blob, `image_${index}.jpg`);
+  });
+
+  fetch('/admin/products/add', {
+    method: 'POST',
+    body: formData
+  }).then(res => {
+    if (res.ok) {
+      alert('Product added successfully!');
+      window.location.href = '/admin/products'; // ✅ Redirect after success
+    } else {
+      res.text().then(msg => alert('Upload failed: ' + msg));
+    }
+  }).catch(err => {
+    console.error(err);
+    alert('Error uploading product');
+  });
+});
+
+
+    updateSubmitState();
+  </script>
 </body>
 </html>
