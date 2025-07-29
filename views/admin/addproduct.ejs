@@ -1,279 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Add Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <h2 class="text-2xl font-bold mb-4">Add New Product</h2>
-    
-    <!-- Step 1: Basic Info Form -->
-    <form id="productForm" class="space-y-4">
-      <input type="text" name="name" placeholder="Product Name" required class="w-full border p-2 rounded" />
-      <textarea name="description" placeholder="Description" class="w-full border p-2 rounded"></textarea>
-      <input type="number" name="price" step="0.01" placeholder="Price" required class="w-full border p-2 rounded" />
-      
-      <div class="flex gap-2">
-        <select name="category" id="categorySelect" required class="flex-1 border p-2 rounded">
-          <option value="">Select Category</option>
-          <option value="Camera">Camera</option>
-          <option value="Lens">Lens</option>
-          <option value="Gimbal">Gimbal</option>
-          <option value="Accessories">Accessories</option>
-          <option value="Lighting">Lighting</option>
-          <option value="Audio">Audio</option>
-        </select>
-        <input type="text" id="newCategory" placeholder="Or enter new category" class="flex-1 border p-2 rounded" />
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+
+   <% include('../partial/admin/sidebar') %>
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto">
+      <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-semibold mb-6">Add New Product</h1>
+
+        <form class="space-y-4">
+          <input type="text" placeholder="Product Name" required class="w-full border p-2 rounded" />
+          <textarea placeholder="Description" required class="w-full border p-2 rounded"></textarea>
+          <input type="number" placeholder="Price" required class="w-full border p-2 rounded" />
+
+          <!-- Category Select and Add -->
+          <div class="flex flex-col sm:flex-row gap-2">
+            <select required class="w-full border p-2 rounded">
+              <option value="">Select Category</option>
+              <option value="Camera">Camera</option>
+              <option value="Lens">Lens</option>
+              <option value="Gimbal">Gimbal</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Lighting">Lighting</option>
+              <option value="Audio">Audio</option>
+            </select>
+            <input type="text" placeholder="Or enter new category" class="w-full border p-2 rounded" />
+          </div>
+
+          <input type="number" placeholder="Stock" required class="w-full border p-2 rounded" />
+
+          <div>
+            <label class="block text-sm mb-1">Upload Images (min 3)</label>
+            <input type="file" multiple class="w-full border p-2 rounded" />
+          </div>
+
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Submit
+          </button>
+        </form>
       </div>
-      
-      <input type="number" name="stock" placeholder="Stock" required class="w-full border p-2 rounded" />
-      
-      <label class="block text-sm font-medium text-gray-700">Upload Images (min 3)</label>
-      <input type="file" name="images" multiple accept="image/*" required class="w-full border p-2" id="imageInput" />
-      
-      <!-- Image Preview and Crop Section -->
-      <div id="imagePreviewSection" class="hidden">
-        <h3 class="text-lg font-semibold mb-4">Crop Images</h3>
-        <div id="imagePreviews" class="grid grid-cols-3 gap-4 mb-4"></div>
-        <button type="button" id="cropButton" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-          Crop Images
-        </button>
-      </div>
-      
-      <!-- Submit Button -->
-      <button type="submit" id="submitButton" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 hidden">
-        Submit Product
-      </button>
-    </form>
+    </main>
   </div>
-
-  <!-- Crop Modal -->
-  <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg max-w-4xl w-full mx-4">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold">Crop Image</h3>
-        <button id="closeCropModal" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
-      </div>
-      <div class="mb-4">
-        <img id="cropImage" src="" alt="Crop" style="max-width: 100%; max-height: 400px;">
-      </div>
-      <div class="flex justify-end gap-2">
-        <button id="cancelCrop" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
-        <button id="applyCrop" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Apply Crop</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let cropper = null;
-    let currentImageIndex = 0;
-    let croppedImages = [];
-    let originalFiles = [];
-
-    // Handle custom category input
-    const categorySelect = document.getElementById('categorySelect');
-    const newCategoryInput = document.getElementById('newCategory');
-    
-    newCategoryInput.addEventListener('input', function() {
-      if (this.value.trim()) {
-        categorySelect.value = this.value;
-      }
-    });
-    
-    categorySelect.addEventListener('change', function() {
-      if (this.value) {
-        newCategoryInput.value = '';
-      }
-    });
-
-    // Handle image upload
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-      const files = Array.from(e.target.files);
-      
-      if (files.length < 3) {
-        alert('Please select at least 3 images');
-        return;
-      }
-      
-      originalFiles = files;
-      croppedImages = [];
-      
-      // Show preview section
-      document.getElementById('imagePreviewSection').classList.remove('hidden');
-      document.getElementById('submitButton').classList.add('hidden');
-      
-      // Create previews
-      const previewContainer = document.getElementById('imagePreviews');
-      previewContainer.innerHTML = '';
-      
-      files.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const previewDiv = document.createElement('div');
-          previewDiv.className = 'relative';
-          previewDiv.innerHTML = `
-            <img src="${e.target.result}" alt="Preview ${index + 1}" class="w-full h-32 object-cover rounded border">
-            <div class="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">${index + 1}</div>
-          `;
-          previewContainer.appendChild(previewDiv);
-        };
-        reader.readAsDataURL(file);
-      });
-    });
-
-    // Handle crop button
-    document.getElementById('cropButton').addEventListener('click', function() {
-      if (originalFiles.length === 0) return;
-      
-      currentImageIndex = 0;
-      croppedImages = [];
-      openCropModal();
-    });
-
-    // Open crop modal
-    function openCropModal() {
-      if (currentImageIndex >= originalFiles.length) {
-        // All images cropped
-        document.getElementById('cropModal').classList.add('hidden');
-        document.getElementById('submitButton').classList.remove('hidden');
-        return;
-      }
-
-      const file = originalFiles[currentImageIndex];
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const cropImage = document.getElementById('cropImage');
-        cropImage.src = e.target.result;
-        
-        document.getElementById('cropModal').classList.remove('hidden');
-        
-        // Initialize cropper
-        if (cropper) {
-          cropper.destroy();
-        }
-        
-        cropper = new Cropper(cropImage, {
-          aspectRatio: 1,
-          viewMode: 1,
-          dragMode: 'move',
-          autoCropArea: 1,
-          restore: false,
-          guides: true,
-          center: true,
-          highlight: false,
-          cropBoxMovable: true,
-          cropBoxResizable: true,
-          toggleDragModeOnDblclick: false,
-        });
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // Apply crop
-    document.getElementById('applyCrop').addEventListener('click', function() {
-      if (!cropper) return;
-      
-      const canvas = cropper.getCroppedCanvas({
-        width: 800,
-        height: 800,
-        imageSmoothingEnabled: true,
-        imageSmoothingQuality: 'high',
-      });
-      
-      canvas.toBlob(function(blob) {
-        croppedImages.push(blob);
-        currentImageIndex++;
-        
-        if (currentImageIndex < originalFiles.length) {
-          openCropModal();
-        } else {
-          // All images cropped
-          document.getElementById('cropModal').classList.add('hidden');
-          document.getElementById('submitButton').classList.remove('hidden');
-          updatePreviews();
-        }
-      }, 'image/jpeg', 0.9);
-    });
-
-    // Cancel crop
-    document.getElementById('cancelCrop').addEventListener('click', function() {
-      document.getElementById('cropModal').classList.add('hidden');
-      if (cropper) {
-        cropper.destroy();
-        cropper = null;
-      }
-    });
-
-    // Close crop modal
-    document.getElementById('closeCropModal').addEventListener('click', function() {
-      document.getElementById('cropModal').classList.add('hidden');
-      if (cropper) {
-        cropper.destroy();
-        cropper = null;
-      }
-    });
-
-    // Update previews with cropped images
-    function updatePreviews() {
-      const previewContainer = document.getElementById('imagePreviews');
-      previewContainer.innerHTML = '';
-      
-      croppedImages.forEach((blob, index) => {
-        const url = URL.createObjectURL(blob);
-        const previewDiv = document.createElement('div');
-        previewDiv.className = 'relative';
-        previewDiv.innerHTML = `
-          <img src="${url}" alt="Cropped ${index + 1}" class="w-full h-32 object-cover rounded border">
-          <div class="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">✓</div>
-        `;
-        previewContainer.appendChild(previewDiv);
-      });
-    }
-
-    // Handle form submission
-    document.getElementById('productForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      if (croppedImages.length < 3) {
-        alert('Please crop at least 3 images');
-        return;
-      }
-      
-      const formData = new FormData();
-      
-      // Add form fields
-      formData.append('name', this.name.value);
-      formData.append('description', this.description.value);
-      formData.append('price', this.price.value);
-      formData.append('category', this.category.value);
-      formData.append('stock', this.stock.value);
-      
-      // Add cropped images
-      croppedImages.forEach((blob, index) => {
-        formData.append('images', blob, `image${index}.jpg`);
-      });
-      
-      // Submit form
-      fetch('/admin/products/add', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => {
-        if (response.ok) {
-          window.location.href = '/admin/products';
-        } else {
-          throw new Error('Failed to add product');
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error adding product. Please try again.');
-      });
-    });
-  </script>
 </body>
 </html>

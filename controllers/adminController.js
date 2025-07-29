@@ -137,7 +137,7 @@ exports.postAddProduct= async(req,res)=>{
 
   }catch(err){
     console.log('upload error',err);
-    res.status(500).send('upload failed')
+    res.status(500).send('upload faile')
   }
 }
 

@@ -11,10 +11,9 @@
     </style>
 </head>
 <body class="bg-gray-50">
-  <%- include('../partial/user/navbar') %>
+    <%- include('../partial/user/navbar') %>
 
-
-    <!-- Main Content -->
+    <!-- Hero Section -->
     <section class="bg-gray-100 py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 gap-12 items-center">
@@ -23,24 +22,22 @@
                         YOUR PRODUCTS<br>
                         ARE GREAT
                     </h1>
-                    <button class="bg-black text-white px-8 py-3 hover:bg-gray-800 transition-colors">
+                    <button class="bg-black text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors">
                         SHOP NOW
                     </button>
                 </div>
                 <div class="flex justify-center">
-                    <div class="relative">
-                        <img src="<a href="https://ibb.co/CKhCK8JH"><img src="https://i.ibb.co/7t2MtCg1/download-15.jpg" alt="download-15" border="0"></a>
-                    </div>
+                    <img src="https://i.ibb.co/7t2MtCg1/download-15.jpg" alt="CaptureCore Product" class="rounded-lg shadow-xl max-h-96">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features -->
+    <!-- Features Section -->
     <section class="py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8">
-                <div class="text-center">
+                <div class="text-center p-6 rounded-lg hover:bg-gray-50 transition-colors">
                     <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
@@ -49,7 +46,7 @@
                     <h3 class="font-semibold text-gray-900 mb-2">Free shipping</h3>
                     <p class="text-sm text-gray-600">On orders over $100</p>
                 </div>
-                <div class="text-center">
+                <div class="text-center p-6 rounded-lg hover:bg-gray-50 transition-colors">
                     <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -58,7 +55,7 @@
                     <h3 class="font-semibold text-gray-900 mb-2">Quality products</h3>
                     <p class="text-sm text-gray-600">Professional grade equipment</p>
                 </div>
-                <div class="text-center">
+                <div class="text-center p-6 rounded-lg hover:bg-gray-50 transition-colors">
                     <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
@@ -67,7 +64,7 @@
                     <h3 class="font-semibold text-gray-900 mb-2">Secure payment</h3>
                     <p class="text-sm text-gray-600">Safe & secure checkout</p>
                 </div>
-                <div class="text-center">
+                <div class="text-center p-6 rounded-lg hover:bg-gray-50 transition-colors">
                     <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -80,184 +77,108 @@
         </div>
     </section>
 
-    <!-- Products Section -->
-    <section class="py-16 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-8">PRODUCTS</h2>
-            <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <img src="/public/images/download__6_-removebg-preview.png" alt="Camera" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-medium text-gray-900">FIMO Camera</h3>
-                        <p class="text-gray-600 text-sm mt-1">$1,299.00</p>
-                    </div>
+   <!-- Products Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8">PRODUCTS</h2>
+        <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Product 1 -->
+            <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="/public/images/download__6_-removebg-preview.png" alt="FIMO Camera" class="w-full h-48 object-contain p-4">
+                <div class="p-4">
+                    <h3 class="font-medium text-gray-900">FIMO Camera</h3>
+                    <p class="text-gray-600 text-sm mt-1">$1,299.00</p>
                 </div>
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <img src="/public/images/lenses/1c6c13cf-b6ae-4668-b706-b0c20de4ba5a.jpg" alt="Lens" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-medium text-gray-900">Prime Lens Canon EF 50mm F1.4</h3>
-                        <p class="text-gray-600 text-sm mt-1">$799.00</p>
-                    </div>
+            </a>
+
+            <!-- Product 2 -->
+            <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="/public/images/lenses/1c6c13cf-b6ae-4668-b706-b0c20de4ba5a.jpg" alt="Prime Lens" class="w-full h-48 object-contain p-4">
+                <div class="p-4">
+                    <h3 class="font-medium text-gray-900">Prime Lens Canon EF 50mm F1.4</h3>
+                    <p class="text-gray-600 text-sm mt-1">$799.00</p>
                 </div>
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <img src="/public/images/Pokecut_1746175624227.jpg" alt="Camera Body" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-medium text-gray-900">Mirrorless Body</h3>
-                        <p class="text-gray-600 text-sm mt-1">$1,899.00</p>
-                    </div>
+            </a>
+
+            <!-- Product 3 -->
+            <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="/public/images/Pokecut_1746175624227.jpg" alt="Mirrorless Body" class="w-full h-48 object-contain p-4">
+                <div class="p-4">
+                    <h3 class="font-medium text-gray-900">Mirrorless Body</h3>
+                    <p class="text-gray-600 text-sm mt-1">$1,899.00</p>
                 </div>
-                <div class="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                    <img src="/public/images/Pokecut_1746175897971.jpg" alt="Portrait" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-medium text-gray-900">Portrait Session</h3>
-                        <p class="text-gray-600 text-sm mt-1">$299.00</p>
-                    </div>
+            </a>
+
+            <!-- Product 4 -->
+            <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="/public/images/Pokecut_1746175897971.jpg" alt="Portrait Session" class="w-full h-48 object-cover">
+                <div class="p-4">
+                    <h3 class="font-medium text-gray-900">Portrait Session</h3>
+                    <p class="text-gray-600 text-sm mt-1">$299.00</p>
                 </div>
-            </div>
+            </a>
         </div>
-    </section>
+    </div>
+</section>
+<!-- Updated Banner to Match Hero -->
+<section class="py-16 bg-gray-100 text-gray-900">  <!-- Changed to gray-100 and text to gray-900 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl font-bold mb-4">NEW YEAR SALE</h2>
+        <p class="text-xl mb-6">Up to 40% off on selected items</p>
+        <button class="bg-black text-white px-8 py-3 rounded-md hover:bg-gray-800 transition-colors">
+            SHOP SALE ITEMS
+        </button>
+    </div>
+</section>
 
     <!-- Gallery Section -->
     <section class="py-16 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-2xl font-bold text-gray-900 mb-8">GALLERY</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="relative group">
+                <div class="relative group overflow-hidden rounded-lg">
                     <img src="https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=300&h=300&fit=crop" 
-                         alt="Gallery 1" class="w-full h-64 object-cover rounded-lg">
-                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                        alt="Gallery 1" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-white font-medium">View</span>
+                    </div>
                 </div>
-                <div class="relative group">
+                <div class="relative group overflow-hidden rounded-lg">
                     <img src="https://images.unsplash.com/photo-1601976284894-b64171b6bf17?w=300&h=300&fit=crop" 
-                         alt="Gallery 2" class="w-full h-64 object-cover rounded-lg">
-                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                        alt="Gallery 2" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-white font-medium">View</span>
+                    </div>
                 </div>
-                <div class="relative group">
+                <div class="relative group overflow-hidden rounded-lg">
                     <img src="https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=300&h=300&fit=crop" 
-                         alt="Gallery 3" class="w-full h-64 object-cover rounded-lg">
-                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                        alt="Gallery 3" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-white font-medium">View</span>
+                    </div>
                 </div>
-                <div class="relative group">
+                <div class="relative group overflow-hidden rounded-lg">
                     <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=300&h=300&fit=crop" 
-                         alt="Gallery 4" class="w-full h-64 object-cover rounded-lg">
-                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+                        alt="Gallery 4" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105">
+                    <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <span class="text-white font-medium">View</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Sale Banner -->
-    <section class="py-16 bg-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid lg:grid-cols-2 gap-8 items-center">
-                <div class="bg-white p-12 rounded-lg text-center">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-4">NEW YEAR SALE</h2>
-                    <button class="bg-black text-white px-8 py-3 hover:bg-gray-800 transition-colors">
-                        SHOP SALE
-                    </button>
-                </div>
-                <div class="flex justify-center">
-                    <img src="https://images.unsplash.com/photo-1601976284894-b64171b6bf17?w=400&h=300&fit=crop" 
-                         alt="Sale Camera" class="w-80 h-60 object-cover rounded-lg shadow-lg">
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Latest News -->
-    <section class="py-16 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-8">LATEST NEWS</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <article class="group">
-                    <img src="https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=400&h=250&fit=crop" 
-                         alt="News 1" class="w-full h-48 object-cover rounded-lg mb-4">
-                    <h3 class="font-semibold text-gray-900 group-hover:text-gray-700 mb-2">
-                        New Camera Technology Unveiled
-                    </h3>
-                    <p class="text-gray-600 text-sm">
-                        Discover the latest innovations in camera technology that are revolutionizing photography.
-                    </p>
-                </article>
-                <article class="group">
-                    <img src="https://images.unsplash.com/photo-1601976284894-b64171b6bf17?w=400&h=250&fit=crop" 
-                         alt="News 2" class="w-full h-48 object-cover rounded-lg mb-4">
-                    <h3 class="font-semibold text-gray-900 group-hover:text-gray-700 mb-2">
-                        Photography Tips for Beginners
-                    </h3>
-                    <p class="text-gray-600 text-sm">
-                        Essential tips and techniques to help you get started with professional photography.
-                    </p>
-                </article>
-                <article class="group">
-                    <img src="https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400&h=250&fit=crop" 
-                         alt="News 3" class="w-full h-48 object-cover rounded-lg mb-4">
-                    <h3 class="font-semibold text-gray-900 group-hover:text-gray-700 mb-2">
-                        Professional Lens Review
-                    </h3>
-                    <p class="text-gray-600 text-sm">
-                        In-depth review of the latest professional lenses for serious photographers.
-                    </p>
-                </article>
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter -->
+    <!-- Newsletter Section -->
     <section class="py-16 bg-gray-900 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-2xl font-bold mb-4">SUBSCRIBE TO NEWSLETTER</h2>
+            <h2 class="text-2xl font-bold mb-4">SUBSCRIBE TO OUR NEWSLETTER</h2>
             <p class="text-gray-300 mb-8">Stay updated with our latest products and offers</p>
             <div class="max-w-md mx-auto flex">
                 <input type="email" placeholder="Enter your email" 
-                       class="flex-1 px-4 py-3 rounded-l-lg text-gray-900 focus:outline-none">
+                    class="flex-1 px-4 py-3 rounded-l-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <button class="bg-blue-600 px-6 py-3 rounded-r-lg hover:bg-blue-700 transition-colors">
                     Subscribe
                 </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Shop Categories -->
-    <section class="py-16 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">SHOP OUR PRODUCTS</h2>
-            <div class="grid md:grid-cols-5 gap-6">
-                <div class="text-center group cursor-pointer">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
-                        <img src="https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=60&h=60&fit=crop" 
-                             alt="Cameras" class="w-12 h-12 object-cover rounded-full">
-                    </div>
-                    <h3 class="font-medium text-gray-900">Cameras</h3>
-                </div>
-                <div class="text-center group cursor-pointer">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
-                        <img src="https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=60&h=60&fit=crop" 
-                             alt="Lenses" class="w-12 h-12 object-cover rounded-full">
-                    </div>
-                    <h3 class="font-medium text-gray-900">Lenses</h3>
-                </div>
-                <div class="text-center group cursor-pointer">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
-                        <img src="https://images.unsplash.com/photo-1601976284894-b64171b6bf17?w=60&h=60&fit=crop" 
-                             alt="Accessories" class="w-12 h-12 object-cover rounded-full">
-                    </div>
-                    <h3 class="font-medium text-gray-900">Accessories</h3>
-                </div>
-                <div class="text-center group cursor-pointer">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
-                        <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=60&h=60&fit=crop" 
-                             alt="Lighting" class="w-12 h-12 object-cover rounded-full">
-                    </div>
-                    <h3 class="font-medium text-gray-900">Lighting</h3>
-                </div>
-                <div class="text-center group cursor-pointer">
-                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-gray-200 transition-colors">
-                        <img src="https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=60&h=60&fit=crop" 
-                             alt="Tripods" class="w-12 h-12 object-cover rounded-full">
-                    </div>
-                    <h3 class="font-medium text-gray-900">Tripods</h3>
-                </div>
             </div>
         </div>
     </section>
@@ -267,45 +188,41 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-4 gap-8">
                 <div>
-                    <h3 class="font-semibold mb-4">CaptureCore</h3>
+                    <h3 class="font-semibold text-xl mb-4">CaptureCore</h3>
                     <p class="text-gray-400 text-sm">
-                       Minimalist camera gear hub for professionals & creators.
+                        Minimalist camera gear hub for professionals & creators.
                     </p>
                 </div>
                 <div>
                     <h4 class="font-medium mb-4">Quick Links</h4>
                     <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-white">Home</a></li>
-                        <li><a href="#" class="hover:text-white">Shop</a></li>
-                        <li><a href="#" class="hover:text-white">About</a></li>
-                        <li><a href="#" class="hover:text-white">Contact</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Home</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Shop</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">About</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="font-medium mb-4">Categories</h4>
                     <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-white">Cameras</a></li>
-                        <li><a href="#" class="hover:text-white">Lenses</a></li>
-                        <li><a href="#" class="hover:text-white">Accessories</a></li>
-                        <li><a href="#" class="hover:text-white">Lighting</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Cameras</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Lenses</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Accessories</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Lighting</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="font-medium mb-4">Support</h4>
                     <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="#" class="hover:text-white">FAQ</a></li>
-                        <li><a href="#" class="hover:text-white">Shipping</a></li>
-                        <li><a href="#" class="hover:text-white">Returns</a></li>
-                        <li><a href="#" class="hover:text-white">Support</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Shipping</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Returns</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Contact Support</a></li>
                     </ul>
                 </div>
             </div>
             <div class="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-                <p>&copy; 2024 CaptureCore. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-</body>
+                <p>&copy; <%= new Date().getFullYear() %> CaptureCore. All rights reserved.</p>
             </div>
         </div>
     </footer>

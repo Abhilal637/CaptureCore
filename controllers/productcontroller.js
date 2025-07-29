@@ -20,7 +20,7 @@ exports.addproduct = async(req,res)=>{
             return res.status(400).send('upload at least 3 images')
         }
         
-        const { name, description, price, category: categoryName } = req.body;
+        const { name, description, price, category: categoryName,stock } = req.body;
         
         // Find or create category
         let category = await Category.findOne({ name: categoryName, isDeleted: false });
@@ -31,6 +31,7 @@ exports.addproduct = async(req,res)=>{
                 description: categoryName,
                 active: true,
                 isDeleted: false
+                
             });
             await category.save();
         }
@@ -57,7 +58,8 @@ exports.addproduct = async(req,res)=>{
             images: imagePaths,
             isBlocked: false,
             isListed: true,
-            isDeleted: false
+            isDeleted: false,
+            stock: stock || 0, // Use provided stock or default to 0
         });
 
         await newProduct.save();

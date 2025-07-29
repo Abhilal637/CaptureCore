@@ -94,8 +94,9 @@
           <div class="grid grid-cols-3 gap-6">
             <% products.forEach(product => { %>
               <div class="bg-white shadow p-2 hover:shadow-lg transition-shadow cursor-pointer" onclick="window.location.href='/product/<%= product._id %>'">
+                
                 <img src="<%= product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg' %>" 
-                     alt="<%= product.name %>" 
+                   alt="<%= product.name %>" 
                      class="w-full h-64 object-cover" />
                 <h4 class="mt-2 font-semibold text-sm"><%= product.name %></h4>
                 <p class="<%= product.discounted ? 'line-through text-gray-400' : 'text-green-600' %> text-sm">

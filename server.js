@@ -27,7 +27,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // set `true` only if using HTTPS
+  cookie: { secure: false,maxAge:1000*60*60} // set `true` only if using HTTPS
 }));
 
 // Passport middleware
