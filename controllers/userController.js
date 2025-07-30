@@ -27,59 +27,96 @@ const nameRegex = /^[A-Za-z\s]{2,50}$/;
 exports.getSignup=(req,res)=>{
     res.render('user/signup', { error: null });
 }
-
 exports.postSignup = async (req, res) => {
-    const name = req.body.name || req.body.username;
-    const { email, password, phone, confirm_password } = req.body;
+  const { name = req.body.username, email, password, phone, confirm_password } = req.body;
 
-    // Regex validation
-    if (!name || !nameRegex.test(name)) {
-        return res.render('user/signup', { error: 'Please enter a valid name (letters and spaces only).' });
+  // Regex patterns
+  const nameRegex = /^[A-Za-z\s]{2,50}$/;
+  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+  const phoneRegex = /^\d{10,15}$/;
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
+  // Validation logic
+  if (!name || !nameRegex.test(name)) {
+    return res.render('user/signup', {
+      error: 'Please enter a valid name (letters and spaces only).',
+      name, email, phone
+    });
+  }
+  if (!email || !emailRegex.test(email)) {
+    return res.render('user/signup', {
+      error: 'Please enter a valid email address.',
+      name, email, phone
+    });
+  }
+  if (!phone || !phoneRegex.test(phone)) {
+    return res.render('user/signup', {
+      error: 'Please enter a valid phone number (10–15 digits).',
+      name, email, phone
+    });
+  }
+  if (!password || !passwordRegex.test(password)) {
+    return res.render('user/signup', {
+      error: 'Password must be at least 8 characters, include a letter and a number.',
+      name, email, phone
+    });
+  }
+  if (password !== confirm_password) {
+    return res.render('user/signup', {
+      error: 'Passwords do not match.',
+      name, email, phone
+    });
+  }
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.render('user/signup', {
+        error: 'Email already exists.',
+        name, email, phone
+      });
     }
-    if (!email || !emailRegex.test(email)) {
-        return res.render('user/signup', { error: 'Please enter a valid email address.' });
-    }
-    if (!phone || !phoneRegex.test(phone)) {
-        return res.render('user/signup', { error: 'Please enter a valid phone number (10-15 digits).' });
-    }
-    if (!password || !passwordRegex.test(password)) {
-        return res.render('user/signup', { error: 'Password must be at least 8 characters, include a letter and a number.' });
-    }
-    if (password !== confirm_password) {
-        return res.render('user/signup', { error: 'Passwords do not match.' });
-    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = otpService.generateOtp();
+    const otpExpiry = Date.now() + 2 * 60 * 1000;
+ 
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      mobile: phone,
+      otp,
+      otpExpiry,
+    });
+
+    await newUser.save();
+
     try {
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.render('user/signup', { error: 'Email already exists.' });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = otpService.generateOtp();
-        const otpExpiry = Date.now() + 2 * 60 * 1000;
-        const newUser = new User({ name, email, password: hashedPassword, otp, otpExpiry, mobile: phone });
-        await newUser.save();
-        // Send OTP via email
-        try {
-            await transporter.sendMail({
-                from: 'capturecore792@gmail.com',
-                to: email,
-                subject: 'Your OTP Code',
-                text: `Your OTP is ${otp}`
-            });
-            console.log('Email sent successfully');
-        } catch (emailErr) {
-            console.error('Email sending failed:', emailErr);
-            return res.render('user/signup', { error: 'Email sending failed: ' + emailErr.message });
-        }
-        res.redirect(`/otp?email=${email}`);
-    } catch (err) {
-        let errorMsg = 'Signup failed';
-        if (err.name === 'ValidationError') {
-            errorMsg = Object.values(err.errors).map(e => e.message).join(', ');
-        }
-        res.render('user/signup', { error: errorMsg });
+      await transporter.sendMail({
+        from: 'capturecore792@gmail.com',
+        to: email,
+        subject: 'Your OTP Code',
+        text: `Your OTP is ${otp}`,
+      });
+    } catch (emailErr) {
+      console.error('Email send failed:', emailErr);
+      return res.render('user/signup', {
+        error: 'Signup succeeded, but failed to send OTP email. Try resending later.',
+        name, email, phone
+      });
     }
-}
+
+    return res.redirect(`/otp?email=${encodeURIComponent(email)}`);
+
+  } catch (err) {
+    console.error('Signup error:', err);
+    return res.render('user/signup', {
+      error: 'Signup failed. Please try again.',
+      name, email, phone
+    });
+  }
+};
 
 exports.getotpVerify= (req,res)=>{
     res.render('user/otp', { email: req.query.email, error: null, message: null });
@@ -118,37 +155,59 @@ exports.postOtpVerify = async (req, res) => {
     }
   };
   
-  exports.resendOtp = async(req,res)=>{
-      const {email} = req.body
-      try {
-        
-          const user = await User.findOne({email})
-          if(!user){
-              return res.render('user/otp', { email, error: 'User not found' });
-          }
-          const otp = otpService.generateOtp()
-          user.otp = otp;
-          // BUG FIX: Added missing assignment to user.otpExpiry
-          user.otpExpiry = Date.now()+2*60*1000
-          await user.save()
-  
-          try{
-              await transporter.sendMail({
-                  from: 'capturecore792@gmail.com',
-                  to:email,
-                  subject:'Your OTP Code',
-                  // BUG FIX: Fixed template literal syntax
-                  text:`Your OTP is ${otp}`
-          })
-          }catch(emailErr){
-              return res.render('user/otp',{email,error:'Email sending failed: ' + emailErr.message})
-          }
-          res.render('user/otp', { email, success: 'OTP resent successfully' });
-      } catch (err) {
-          console.error('Resend OTP error:', err);
-          return res.render('user/otp', { email, error: 'Failed to resend OTP' });
-      }
-  } 
+ exports.resendOtp = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.render('user/otp', {
+        email,
+        error: 'User not found',
+        success: null,
+        message: null
+      });
+    }
+
+    const otp = otpService.generateOtp();
+    user.otp = otp;
+    user.otpExpiry = Date.now() + 2 * 60 * 1000;
+    await user.save();
+
+    try {
+      await transporter.sendMail({
+        from: 'capturecore792@gmail.com',
+        to: email,
+        subject: 'Your OTP Code',
+        text: `Your OTP is ${otp}`,
+      });
+    } catch (emailErr) {
+      return res.render('user/otp', {
+        email,
+        error: 'Email sending failed: ' + emailErr.message,
+        success: null,
+        message: null
+      });
+    }
+
+    return res.render('user/otp', {
+      email,
+      success: 'OTP resent successfully',
+      error: null,
+      message: null
+    });
+  } catch (err) {
+    console.error('Resend OTP error:', err);
+    return res.render('user/otp', {
+      email,
+      error: 'Failed to resend OTP',
+      success: null,
+      message: null
+    });
+  }
+};
+
   
 exports.getLogin=(req,res)=>{
     res.render('user/login', { error: null });
@@ -156,20 +215,29 @@ exports.getLogin=(req,res)=>{
 
 exports.postlogin = async (req, res) => {
     const { email, password } = req.body;
-    // Regex validation
+    
+    // ✅ Regex Validation
     if (!email || !emailRegex.test(email)) {
         return res.render('user/login', { error: 'Please enter a valid email address.' });
     }
+    
     if (!password || !passwordRegex.test(password)) {
         return res.render('user/login', { error: 'Password must be at least 8 characters, include a letter and a number.' });
     }
+    
     try {
         const user = await User.findOne({ email });
+        
         if (!user) {
-            // Increment login attempts
             req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
             return res.render('user/login', { error: 'Invalid email or password' });
         }
+        
+        // ✅ Blocked User Check
+        if (user.blocked) {
+            return res.render('user/login', { error: 'Your account has been blocked by the admin.' });
+        }
+        
         if (!user.isVerified) {
             req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
             return res.render('user/login', { error: 'Please verify your email first' });
@@ -177,16 +245,15 @@ exports.postlogin = async (req, res) => {
         
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
-            // Increment login attempts
             req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
             return res.render('user/login', { error: 'Invalid email or password' });
         }
         
-        // Successful login - reset attempts and set session
+        // ✅ Success - set session
         req.session.loginAttempts = 0;
         req.session.userId = user.id;
         req.session.lastActivity = Date.now();
-        req.session.regenerated = false; // Allow session regeneration
+        req.session.regenerated = false;
         
         console.log('Login successful, redirecting to home...');
         res.redirect('/');
@@ -195,7 +262,7 @@ exports.postlogin = async (req, res) => {
         req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
         return res.render('user/login', { error: 'Login failed. Please try again.' });
     }
-};
+};;
 
 exports.getHome = (req, res) => {
    res.render('user/index');

@@ -24,10 +24,31 @@ function noCache(req, res, next) {
 }
 
 
+const checkBlocked = async (req, res, next) => {
+  if (!req.session.user) return next(); // not logged in, continue
+
+  try {
+    const user = await User.findById(req.session.user._id);
+    if (!user || user. isBlocked) {
+      req.session.destroy(() => {
+        res.redirect('/login?isBlocked=true'); // or show custom "Blocked" page
+      });
+    } else {
+      next();
+    }
+  } catch (err) {
+    console.error('Blocked check failed:', err);
+    res.redirect('/login');
+  }
+};
+
+
+
 
 
 module.exports = {
   adminAuth,
   preventAdminLoginIfLoggedIn,
-  noCache
+  noCache,
+  checkBlocked
 };

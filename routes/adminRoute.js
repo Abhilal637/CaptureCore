@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminControllers = require('../controllers/adminController');
-const { adminAuth, preventAdminLoginIfLoggedIn, noCache } = require('../middleware/adminauthmiddleware');
+const { adminAuth, preventAdminLoginIfLoggedIn, noCache,checkBlocked } = require('../middleware/adminauthmiddleware');
 const categorycontrollers = require('../controllers/catergoryController');
 const productControllers = require('../controllers/productcontroller');
 const upload = require('../middleware/upload');

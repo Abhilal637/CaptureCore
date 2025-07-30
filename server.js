@@ -30,6 +30,11 @@ app.use(session({
   cookie: { secure: false,maxAge:1000*60*60} // set `true` only if using HTTPS
 }));
 
+app.use((req, res, next) => {
+  res.locals.user = req.session.user || null;
+  next();
+});
+// Static files
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());

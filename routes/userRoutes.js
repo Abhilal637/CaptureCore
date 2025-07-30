@@ -8,15 +8,17 @@ const {
     checkSessionTimeout, 
     optionalAuth, 
     loginRateLimit, 
-    sessionSecurity 
+    sessionSecurity ,
+    
 } = require('../middleware/userauthmiddleware');
 const passport = require('passport');
+const { checkBlocked } = require('../middleware/adminauthmiddleware');
 
 // Apply session timeout and no-cache to all routes
 router.use(checkSessionTimeout);
 router.use(noCache);
 
-// Public routes (no authentication required)
+// Public routes (no authentication required)   
 router.get('/', optionalAuth, userController.getHome);
 
 // Authentication routes (prevent logged-in users from accessing)
@@ -39,7 +41,7 @@ router.get('/reset-password/:token', preventLoginIfLoggedIn, userController.getR
 router.post('/reset-password/:token', preventLoginIfLoggedIn, userController.postResetPassword);
 
 // Protected routes (require authentication)
-router.get('/profile', isUserLoggedIn, sessionSecurity, userController.getProfile);
+router.get('/profile', isUserLoggedIn, sessionSecurity,checkBlocked, userController.getProfile);
 
 // Google OAuth routes
 router.get('/auth/google', preventLoginIfLoggedIn, passport.authenticate('google', { 

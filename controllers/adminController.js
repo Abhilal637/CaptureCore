@@ -82,7 +82,7 @@ exports.dashboard = (req, res) => {
 }
 exports.blockUser = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { blocked: true });
+    await User.findByIdAndUpdate(req.params.id, { isBlocked: true });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false });
@@ -91,7 +91,7 @@ exports.blockUser = async (req, res) => {
 
 exports.unblockUser = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { blocked: false });
+    await User.findByIdAndUpdate(req.params.id, { isBlocked: false });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false });
