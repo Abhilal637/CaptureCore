@@ -18,10 +18,9 @@ const { checkBlocked,adminAuth } = require('../middleware/adminauthmiddleware');
 router.use(checkSessionTimeout);
 router.use(noCache);
 
-// Public routes
 router.get('/', optionalAuth, userController.getHome);
 
-// Auth routes
+
 router.get('/signup', preventLoginIfLoggedIn, userController.getSignup);
 router.post('/signup', validator('signup'), preventLoginIfLoggedIn, userController.postSignup);
 
@@ -43,7 +42,7 @@ router.post('/forgot-password', validator('forgot-password'), preventLoginIfLogg
 router.get('/reset-password/:token', preventLoginIfLoggedIn, userController.getResetPassword);
 router.post('/reset-password/:token', validator('reset-password'), preventLoginIfLoggedIn, userController.postResetPassword);
 
-// Profile
+
 router.get('/profile', isUserLoggedIn, sessionSecurity, checkBlocked, userController.getProfile);
 
 // Google OAuth
@@ -77,7 +76,7 @@ router.get('/auth/google/callback',
     }
 );
 
-// Public product browsing
+
 router.get('/shop', userController.getProducts);
 router.get('/product/:id', userController.getProductDetails);
 

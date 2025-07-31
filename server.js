@@ -5,7 +5,6 @@ const connectDB = require('./mongoDb/connection');
 const dotenv = require('dotenv');
 const flash = require('connect-flash');
 
-// Load environment variables
 dotenv.config();
 
 const userRoute = require('./routes/userRoutes');
@@ -20,29 +19,26 @@ app.set('views', path.join(__dirname, 'views'));
 
 connectDB();
 
-// Body parser middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Session middleware
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret_key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false,maxAge:1000*60*60} // set `true` only if using HTTPS
+  cookie: { secure: false,maxAge:1000*60*60*24} 
 }));
 
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   next();
 });
-// Static files
-// Passport middleware
+
 app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Middleware to set res.locals.user for all views
 app.use(async (req, res, next) => {
   if (req.session && req.session.userId) {
     try {
@@ -57,7 +53,7 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Static files
+
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/', userRoute); 
 app.use('/admin', adminRoutes);

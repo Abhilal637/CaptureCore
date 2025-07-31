@@ -74,7 +74,7 @@ adminSchema.methods.incLoginAttempts = function() {
   
   const updates = { $inc: { loginAttempts: 1 } };
   
-  // Lock account after 5 failed attempts for 2 hours
+  
   if (this.loginAttempts + 1 >= 5 && !this.isLocked()) {
     updates.$set = { lockUntil: Date.now() + 2 * 60 * 60 * 1000 };
   }
@@ -82,7 +82,7 @@ adminSchema.methods.incLoginAttempts = function() {
   return this.updateOne(updates);
 };
 
-// Method to reset login attempts
+
 adminSchema.methods.resetLoginAttempts = function() {
   return this.updateOne({
     $unset: { loginAttempts: 1, lockUntil: 1 },

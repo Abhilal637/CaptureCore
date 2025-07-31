@@ -4,15 +4,15 @@ const categorySchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true // e.g., "mirrorless"
+    unique: true // 
   },
   description: {
     type: String,
-    default: "" // Optional details
+    default: "" // 
   },
   active: {
     type: Boolean,
-    default: true // true = Active, false = Inactive
+    default: true // 
   },
   isDeleted: {
     type: Boolean,

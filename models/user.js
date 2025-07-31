@@ -45,7 +45,6 @@ resetTokenExpiry: Date
   timestamps: true
 });
 
-// Method to add authentication provider
 userSchema.methods.addAuthProvider = function(provider) {
   if (!this.authProvider.includes(provider)) {
     this.authProvider.push(provider);
@@ -53,7 +52,6 @@ userSchema.methods.addAuthProvider = function(provider) {
   return this;
 };
 
-// Method to update login information
 userSchema.methods.updateLoginInfo = function() {
   this.lastLogin = new Date();
   this.loginCount += 1;
