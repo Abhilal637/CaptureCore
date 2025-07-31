@@ -5,66 +5,6 @@
   <title>Admin – User Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script>
-    // Block/Unblock confirmation and AJAX
-    async function handleBlock(userId, action) {
-      const confirmMsg = action === 'block' ? 'Block this user?' : 'Unblock this user?';
-      const confirmBtn = action === 'block' ? 'Yes, block' : 'Yes, unblock';
-      const result = await Swal.fire({
-        title: confirmMsg,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: confirmBtn,
-        cancelButtonText: 'Cancel',
-        reverseButtons: true
-      });
-      if (!result.isConfirmed) return;
-      const res = await fetch(`/admin/users/${userId}/${action}`, { method: 'POST' });
-      if (res.ok) {
-        Swal.fire({
-          title: 'Success!',
-          text: `User ${action === 'block' ? 'blocked' : 'unblocked'} successfully.`,
-          icon: 'success',
-          timer: 1200,
-          showConfirmButton: false
-        });
-        // Update the row instantly
-        const row = document.querySelector(`button[onclick*="handleBlock('${userId}'"]`).closest('tr');
-        if (row) {
-          const statusCell = row.querySelector('td:nth-child(7)');
-          const actionsCell = row.querySelector('td:nth-child(8)');
-          if (action === 'block') {
-            statusCell.innerHTML = '<span class="text-red-600 font-semibold">Blocked</span>';
-            actionsCell.innerHTML = `<button onclick="handleBlock('${userId}', 'unblock')" class="bg-green-600 text-white px-3 py-1 text-xs rounded mr-2 hover:bg-green-700">Unblock</button>`;
-          } else {
-            statusCell.innerHTML = '<span class="text-green-600 font-semibold">Active</span>';
-            actionsCell.innerHTML = `<button onclick="handleBlock('${userId}', 'block')" class="bg-red-600 text-white px-3 py-1 text-xs rounded hover:bg-red-700">Block</button>`;
-          }
-        }
-      } else {
-        Swal.fire({
-          title: 'Error!',
-          text: 'Action failed!',
-          icon: 'error',
-          timer: 1500,
-          showConfirmButton: false
-        });
-      }
-    }
-    function clearSearch() {
-      window.location = '/admin/users';
-    }
-     document.addEventListener('DOMContentLoaded', function() {
-    const selectAll = document.getElementById('selectAllUsers');
-    if (selectAll) {
-      selectAll.addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.user-checkbox');
-        checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
-      });
-    }
-  });
-  </script>
- 
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
   <div class="flex min-h-screen">
@@ -76,19 +16,14 @@
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-semibold">USER</h1>
         <form method="get" action="/admin/users" class="flex items-center space-x-2">
-          <input
-            type="text"
-            name="search"
-            value="<%= search || '' %>"
-            placeholder="Search"
-            class="border rounded px-4 py-2 text-sm"
-          />
+          <input type="text" name="search" value="<%= search || '' %>" placeholder="Search" class="border rounded px-4 py-2 text-sm" />
           <% if (search) { %>
             <button type="button" onclick="clearSearch()" class="px-2 py-1 text-xs bg-gray-200 rounded">Clear</button>
           <% } %>
           <button type="submit" class="px-2 py-1 text-xs bg-blue-600 text-white rounded">Search</button>
         </form>
       </div>
+
       <!-- User Table -->
       <div class="bg-white rounded shadow overflow-x-auto">
         <table class="min-w-full text-sm">
@@ -101,7 +36,6 @@
               <th class="p-3">Mobile</th>
               <th class="p-3">Address</th>
               <th class="p-3">Status</th>
-              <th class="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -115,21 +49,16 @@
                   <td class="p-3"><%= user.email %></td>
                   <td class="p-3"><%= user.mobile %></td>
                   <td class="p-3"><%= user.address %></td>
-                  <td class="p-3">
-                    <% if (user.blocked) { %>
-                      <span class="text-red-600 font-semibold">Blocked</span>
-                    <% } else { %>
-                      <span class="text-green-600 font-semibold">Active</span>
-                    <% } %>
-                  </td>
-                  <td class="p-3">
-                    <% if (user.blocked) { %>
-                     <button onclick="handleBlock('<%= user._id %>', 'unblock')" class="bg-[#34a853] text-white px-3 py-1 text-xs rounded mr-2 hover:bg-green-700">Unblock</button>
-
-                    <% } else { %>
-                     <button onclick="handleBlock('<%= user._id %>', 'block')" class="bg-[#1a73e8] text-white px-3 py-1 text-xs rounded hover:bg-blue-700">Block</button>
-
-                    <% } %>
+                  <td class="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="sr-only toggle-user-status" data-id="<%= user._id %>" <%= user.isBlocked ? '' : 'checked' %> />
+                      <div class="w-11 h-6 bg-gray-300 rounded-full shadow-inner relative transition">
+                        <div class="<%= 'dot absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ' + (user.isBlocked ? '' : 'translate-x-5') %>"></div>
+                      </div>
+                    </label>
+                    <span class="ml-2 text-sm font-medium <%= user.isBlocked ? 'text-red-600' : 'text-green-600' %>">
+                      <%= user.isBlocked ? 'Blocked' : 'Active' %>
+                    </span>
                   </td>
                 </tr>
               <% }) %>
@@ -139,6 +68,7 @@
           </tbody>
         </table>
       </div>
+
       <!-- Pagination -->
       <div class="flex justify-between items-center mt-6">
         <form method="get" action="/admin/users" class="flex items-center space-x-2">
@@ -153,5 +83,54 @@
       </div>
     </main>
   </div>
+
+  <script>
+    function clearSearch() {
+      window.location = '/admin/users';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggles = document.querySelectorAll('.toggle-user-status');
+
+      toggles.forEach(toggle => {
+        toggle.addEventListener('change', async function () {
+          const userId = this.getAttribute('data-id');
+          const isBlocked = !this.checked;
+
+          const result = await fetch(`/admin/users/toggle-block/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isBlocked })
+          });
+
+          if (result.ok) {
+            Swal.fire({
+              title: 'Updated!',
+              icon: 'success',
+              timer: 1000,
+              showConfirmButton: false
+            });
+            setTimeout(() => location.reload(), 900);
+          } else {
+            Swal.fire({
+              title: 'Error!',
+              icon: 'error',
+              text: 'Could not update user status.',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          }
+        });
+      });
+
+      const selectAll = document.getElementById('selectAllUsers');
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          const checkboxes = document.querySelectorAll('.user-checkbox');
+          checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+        });
+      }
+    });
+  </script>
 </body>
-</html> 
+</html>

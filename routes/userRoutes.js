@@ -1,49 +1,52 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const passport = require('passport');
+const validator = require('../middleware/validator');
+
 const { 
     isUserLoggedIn, 
     preventLoginIfLoggedIn, 
     noCache, 
     checkSessionTimeout, 
     optionalAuth, 
-    loginRateLimit, 
-    sessionSecurity ,
-    
+    sessionSecurity 
 } = require('../middleware/userauthmiddleware');
-const passport = require('passport');
-const { checkBlocked } = require('../middleware/adminauthmiddleware');
+const { checkBlocked,adminAuth } = require('../middleware/adminauthmiddleware');
 
-// Apply session timeout and no-cache to all routes
+// Global middlewares
 router.use(checkSessionTimeout);
 router.use(noCache);
 
-// Public routes (no authentication required)   
+// Public routes
 router.get('/', optionalAuth, userController.getHome);
 
-// Authentication routes (prevent logged-in users from accessing)
+// Auth routes
 router.get('/signup', preventLoginIfLoggedIn, userController.getSignup);
-router.post('/signup', preventLoginIfLoggedIn, userController.postSignup);
+router.post('/signup', validator('signup'), preventLoginIfLoggedIn, userController.postSignup);
+
+
+
 
 router.get('/login', preventLoginIfLoggedIn, userController.getLogin);
-router.post('/login', preventLoginIfLoggedIn, loginRateLimit, userController.postlogin);
+router.post('/login', preventLoginIfLoggedIn, userController.postlogin);
 
-// OTP verification routes
+// OTP
 router.get('/otp', preventLoginIfLoggedIn, userController.getotpVerify);
-router.post('/otp', preventLoginIfLoggedIn, userController.postOtpVerify);
+router.post('/otp', validator('otp'), preventLoginIfLoggedIn, userController.postOtpVerify);
 router.post('/otp/resend', preventLoginIfLoggedIn, userController.resendOtp);
 
-// Password reset routes
+// Forgot Password
 router.get('/forgot-password', preventLoginIfLoggedIn, userController.getforgetPassword);
-router.post('/forgot-password', preventLoginIfLoggedIn, userController.postForgetPassword);
+router.post('/forgot-password', validator('forgot-password'), preventLoginIfLoggedIn, userController.postForgetPassword);
 
 router.get('/reset-password/:token', preventLoginIfLoggedIn, userController.getResetPassword);
-router.post('/reset-password/:token', preventLoginIfLoggedIn, userController.postResetPassword);
+router.post('/reset-password/:token', validator('reset-password'), preventLoginIfLoggedIn, userController.postResetPassword);
 
-// Protected routes (require authentication)
-router.get('/profile', isUserLoggedIn, sessionSecurity,checkBlocked, userController.getProfile);
+// Profile
+router.get('/profile', isUserLoggedIn, sessionSecurity, checkBlocked, userController.getProfile);
 
-// Google OAuth routes
+// Google OAuth
 router.get('/auth/google', preventLoginIfLoggedIn, passport.authenticate('google', { 
     scope: ['profile', 'email'] 
 }));
@@ -57,7 +60,6 @@ router.get('/auth/google/callback',
     sessionSecurity,
     (req, res) => {
         try {
-            // Successful authentication
             req.session.userId = req.user._id;
             req.session.lastActivity = Date.now();
             req.session.save((err) => {
@@ -75,11 +77,13 @@ router.get('/auth/google/callback',
     }
 );
 
-
+// Public product browsing
 router.get('/shop', userController.getProducts);
 router.get('/product/:id', userController.getProductDetails);
-// Logout routes (require authentication)
+
+
+// Logout
 router.get('/logout', isUserLoggedIn, userController.logout);
 router.post('/logout', isUserLoggedIn, userController.logout);
 
-module.exports = router; 
+module.exports = router;

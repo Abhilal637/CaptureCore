@@ -1,32 +1,39 @@
 const category= require('../models/category');
 
+
 exports.listCategories = async (req, res) => {
-    try{
-        const page = parseInt(req.query.page) || 1;
-        const limit = 10;
-        const skip = (page - 1) * limit;
-        const search = req.query.search ? req.query.search.trim() : '';
-        let query = { active: true };
-        if (search) {
-            query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
-            ];
-        }
-        const total = await category.countDocuments(query);
-        const categories = await category.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit);
-        res.render('admin/category', {
-            categories,
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            limit,
-            search
-        });
-    }catch(err){
-        res.status(500).send("sever error")
-    
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search ? req.query.search.trim() : '';
+
+    let query = { isDeleted: false }; // show all (active + inactive)
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
     }
-}
+
+    const total = await category.countDocuments(query);
+    const categories = await category
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.render('admin/category', {
+      categories,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      limit,
+      search
+    });
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+};
 
 exports.addCategory = async (req, res) => {
     try {
@@ -116,3 +123,24 @@ exports.updateCategory = async(req,res)=>{
     res.status(500).send("Error updating category: " + err.message);
   }
 }
+exports.toggleCategoryStatus = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    const { active } = req.body;
+
+    const cat = await category.findById(categoryId);
+    if (!cat) {
+      return res.status(404).json({ message: 'Category not found.' });
+    }
+
+    cat.active = active;
+    await cat.save();
+    console.log("Received toggle request:", req.params.id, req.body.active);
+
+
+    res.status(200).json({ success: true, message: 'Category status updated successfully.' });
+  } catch (err) {
+    console.error('Error updating category status:', err);
+    res.status(500).json({ message: 'Internal server error.' });
+  }
+};

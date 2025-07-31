@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Product</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <%- include('../partial/admin/sidebar') %>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">Edit Product</h1>
+        <a href="/admin/products" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Back to Products</a>
+      </div>
+
+      <div class="flex justify-center">
+        <form id="productForm" method="POST" action="/admin/products/edit/<%= product._id %>" enctype="multipart/form-data" class="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl flex flex-col gap-4">
+          
+          <label class="font-bold text-lg">Product Name</label>
+          <input type="text" name="name" value="<%= product.name %>" class="border rounded px-4 py-2 text-lg" required />
+
+          <label class="font-bold text-lg">Description</label>
+          <textarea name="description" class="border rounded px-4 py-2 text-lg" required><%= product.description %></textarea>
+
+          <label class="font-bold text-lg">Price ($)</label>
+          <input type="number" name="price" value="<%= product.price %>" class="border rounded px-4 py-2 text-lg" required />
+
+          <label class="font-bold text-lg">Stock</label>
+          <input type="number" name="stock" value="<%= product.stock %>" class="border rounded px-4 py-2 text-lg" required />
+
+       
+          <label class="font-bold text-lg">Product Image</label>
+          <input type="file" accept="image/*" id="imageInput" class="border rounded px-4 py-2 text-lg" />
+          <input type="hidden" name="croppedImage" id="croppedImageInput" />
+
+          <div class="mt-4">
+            <img id="imagePreview" src="<%= product.images?.[0] || '/images/placeholder.jpg' %>" class="max-w-xs max-h-64 rounded shadow" />
+          </div>
+
+          <button type="submit" class="px-4 py-2 text-lg font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-all">
+            Update Product
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- Cropper.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <script>
+    let cropper;
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const croppedImageInput = document.getElementById('croppedImageInput');
+
+    imageInput.addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function () {
+          imagePreview.src = reader.result;
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(imagePreview, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 1,
+            cropend: () => {
+              const canvas = cropper.getCroppedCanvas();
+              croppedImageInput.value = canvas.toDataURL('image/jpeg');
+            }
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    document.getElementById('productForm').addEventListener('submit', (e) => {
+      if (cropper) {
+        const canvas = cropper.getCroppedCanvas();
+        croppedImageInput.value = canvas.toDataURL('image/jpeg');
+      }
+    });
+
+    $('.category-toggle').change(function () {
+  const categoryId = $(this).data('category-id');
+  const newStatus = $(this).prop('checked');
+
+  $.ajax({
+    url: `/admin/category/status/${categoryId}`,
+    method: 'PATCH',
+    data: { active: newStatus },
+    success: function (res) {
+      if (!res.success) {
+        Swal.fire('Error', 'Failed to update category status.', 'error');
+      }
+    },
+    error: function () {
+      Swal.fire('Error', 'Failed to update category status.', 'error');
+    }
+  });
+});
+
+  </script>
+</body>
+</html>

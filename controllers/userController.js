@@ -7,6 +7,8 @@ require('dotenv').config();
 const crypto= require('crypto');
 const mongoose = require('mongoose');
 const Category = require('../models/category');
+const validator = require('../middleware/validator');
+const { isAscii } = require('buffer');
 
 
 // Configure your transporter (use your real credentials)
@@ -30,45 +32,8 @@ exports.getSignup=(req,res)=>{
 exports.postSignup = async (req, res) => {
   const { name = req.body.username, email, password, phone, confirm_password } = req.body;
 
-  // Regex patterns
-  const nameRegex = /^[A-Za-z\s]{2,50}$/;
-  const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-  const phoneRegex = /^\d{10,15}$/;
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
-
-  // Validation logic
-  if (!name || !nameRegex.test(name)) {
-    return res.render('user/signup', {
-      error: 'Please enter a valid name (letters and spaces only).',
-      name, email, phone
-    });
-  }
-  if (!email || !emailRegex.test(email)) {
-    return res.render('user/signup', {
-      error: 'Please enter a valid email address.',
-      name, email, phone
-    });
-  }
-  if (!phone || !phoneRegex.test(phone)) {
-    return res.render('user/signup', {
-      error: 'Please enter a valid phone number (10–15 digits).',
-      name, email, phone
-    });
-  }
-  if (!password || !passwordRegex.test(password)) {
-    return res.render('user/signup', {
-      error: 'Password must be at least 8 characters, include a letter and a number.',
-      name, email, phone
-    });
-  }
-  if (password !== confirm_password) {
-    return res.render('user/signup', {
-      error: 'Passwords do not match.',
-      name, email, phone
-    });
-  }
-
   try {
+    // ✅ Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.render('user/signup', {
@@ -77,10 +42,11 @@ exports.postSignup = async (req, res) => {
       });
     }
 
+    // ✅ Hash password and create new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = otpService.generateOtp();
     const otpExpiry = Date.now() + 2 * 60 * 1000;
- 
+
     const newUser = new User({
       name,
       email,
@@ -92,6 +58,7 @@ exports.postSignup = async (req, res) => {
 
     await newUser.save();
 
+    // ✅ Send OTP email
     try {
       await transporter.sendMail({
         from: 'capturecore792@gmail.com',
@@ -117,6 +84,7 @@ exports.postSignup = async (req, res) => {
     });
   }
 };
+
 
 exports.getotpVerify= (req,res)=>{
     res.render('user/otp', { email: req.query.email, error: null, message: null });
@@ -208,61 +176,67 @@ exports.postOtpVerify = async (req, res) => {
   }
 };
 
-  
-exports.getLogin=(req,res)=>{
-    res.render('user/login', { error: null });
-}
+exports.getLogin = (req, res) => {
+  const error = req.session.loginError;
+  req.session.loginError = null; // Clear it after reading
+  res.render('user/login', { error });
+};
 
-exports.postlogin = async (req, res) => {
-    const { email, password } = req.body;
-    
-    // ✅ Regex Validation
-    if (!email || !emailRegex.test(email)) {
-        return res.render('user/login', { error: 'Please enter a valid email address.' });
-    }
-    
-    if (!password || !passwordRegex.test(password)) {
-        return res.render('user/login', { error: 'Password must be at least 8 characters, include a letter and a number.' });
-    }
-    
-    try {
-        const user = await User.findOne({ email });
-        
-        if (!user) {
+    exports.postlogin = async (req, res) => {
+        const { email, password } = req.body;
+
+        console.log('Login attempt:', { email, password });
+
+        // ✅ Regex Validation
+        if (!email || !emailRegex.test(email)) {
+            return res.render('user/login', { error: 'Please enter a valid email address.' });
+        }
+
+        if (!password || !passwordRegex.test(password)) {
+            return res.render('user/login', {
+                error: 'Password must be at least 8 characters, include a letter and a number.',
+            });
+        }
+
+        try {
+            const user = await User.findOne({ email });
+
+            if (!user) {
+                req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+                return res.render('user/login', { error: 'Invalid email or password' });
+            }
+
+            // ✅ Blocked User Check
+            if (user.isBlocked) {
+                return res.render('user/login', { error: 'Your account has been blocked by the admin.' });
+            }
+
+            if (!user.isVerified) {
+                req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+                return res.render('user/login', { error: 'Please verify your email first' });
+            }
+
+            const match = await bcrypt.compare(password, user.password);
+            if (!match) {
+                req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+                return res.render('user/login', { error: 'Invalid email or password' });
+            }
+
+            // ✅ Success - set session
+            req.session.loginAttempts = 0;
+            req.session.userId = user.id;
+            req.session.lastActivity = Date.now();
+            req.session.regenerated = false;
+
+            console.log('Login successful, redirecting to home...');
+            res.redirect('/');
+        } catch (err) {
+            console.error('Login error:', err);
             req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-            return res.render('user/login', { error: 'Invalid email or password' });
+            return res.render('user/login', { error: 'Login failed. Please try again.' });
         }
-        
-        // ✅ Blocked User Check
-        if (user.blocked) {
-            return res.render('user/login', { error: 'Your account has been blocked by the admin.' });
-        }
-        
-        if (!user.isVerified) {
-            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-            return res.render('user/login', { error: 'Please verify your email first' });
-        }
-        
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-            return res.render('user/login', { error: 'Invalid email or password' });
-        }
-        
-        // ✅ Success - set session
-        req.session.loginAttempts = 0;
-        req.session.userId = user.id;
-        req.session.lastActivity = Date.now();
-        req.session.regenerated = false;
-        
-        console.log('Login successful, redirecting to home...');
-        res.redirect('/');
-    } catch (err) {
-        console.error('Login error:', err);
-        req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-        return res.render('user/login', { error: 'Login failed. Please try again.' });
-    }
-};;
+    };
+
 
 exports.getHome = (req, res) => {
    res.render('user/index');
@@ -367,108 +341,114 @@ exports.postResetPassword = async (req, res) => {
 
 
 exports.getProducts = async (req, res) => {
-    try {
-        const { search = '', sort = '', category = '', priceRange = '', page = 1 } = req.query;
-        const limit = 8;
-        const skip = (page - 1) * limit;
+  try {
+    const { search = '', sort = '', category = '', priceRange = '', page = 1 } = req.query;
+    const limit = 8;
+    const skip = (page - 1) * limit;
 
-        console.log('=== DEBUG: getProducts ===');
-        console.log('Query parameters:', req.query);
-        console.log('Category filter:', category);
+    let query = {
+      isBlocked: false,
+      isListed: true,
+      isDeleted: false,
+      isActive: true
+    };
 
-        let query = {
-            isBlocked: false,
-            isListed: true,
-            isDeleted: false
-        };
-
-        if (search) {
-            query.name = { $regex: search, $options: 'i' };
-        }
-        if (category) {
-            // Ensure category is a valid ObjectId before querying
-            if (mongoose.Types.ObjectId.isValid(category)) {
-                query.category = category;
-                console.log('Valid category ID, filtering by:', category);
-            } else {
-                console.log('Invalid category ID:', category);
-            }
-        }
-        if (priceRange && priceRange.includes('_')) {
-            const [min, max] = priceRange.split('_').map(Number);
-            if (!isNaN(min) && !isNaN(max)) {
-                query.price = { $gte: min, $lte: max };
-            }
-        }
-
-        console.log('Final query:', JSON.stringify(query, null, 2));
-
-        const sortOptionsMap = {
-            'price-asc': { price: 1 },
-            'price-desc': { price: -1 },
-            'az': { name: 1 },
-            'za': { name: -1 },
-            'popularity': { salesCount: -1 },
-            'rating': { avgRating: -1 },
-            'new': { createdAt: -1 },
-            'featured': { isFeatured: -1 }
-        };
-        let sortOption = sortOptionsMap[sort] || {};
-
-        const total = await Product.countDocuments(query);
-        console.log('Total products found:', total);
-        
-        const products = await Product.find(query)
-            .populate('category') // Populate category details
-            .sort(sortOption)
-            .skip(skip)
-            .limit(limit);
-
-        console.log('Products returned:', products.length);
-        if (products.length > 0) {
-            console.log('Sample product:', {
-                name: products[0].name,
-                category: products[0].category ? products[0].category.name : 'No category',
-                categoryId: products[0].category ? products[0].category._id : 'No ID'
-            });
-        }
-
-        // Fetch all categories for the sidebar
-        const categories = await Category.find({ isDeleted: false });
-        console.log('Categories found:', categories.length);
-        categories.forEach(cat => {
-            console.log(`- ${cat.name} (ID: ${cat._id})`);
-        });
-
-        res.render('user/shop', { 
-            products, 
-            total, 
-            currentPage: parseInt(page), 
-            limit, 
-            query: req.query,
-            categories 
-        });
-    } catch (err) {
-        console.error('Error fetching products:', err);
-        res.render('user/shop', { 
-            products: [], 
-            total: 0, 
-            currentPage: 1, 
-            limit: 8, 
-            query: req.query,
-            error: 'Failed to load products',
-            categories: []
-        });
+    if (search) {
+      query.name = { $regex: search, $options: 'i' };
     }
+
+    if (priceRange && priceRange.includes('_')) {
+      const [min, max] = priceRange.split('_').map(Number);
+      if (!isNaN(min) && !isNaN(max)) {
+        query.price = { $gte: min, $lte: max };
+      }
+    }
+
+    // Apply category filter only if it's active
+    if (category && mongoose.Types.ObjectId.isValid(category)) {
+      const cat = await Category.findOne({ _id: category, isDeleted: false, active: true });
+      if (cat) {
+        query.category = category;
+      } else {
+        // If category is inactive or invalid, show no products
+        const categories = await Category.find({ isDeleted: false, active: true });
+        return res.render('user/shop', {
+          products: [],
+          total: 0,
+          currentPage: parseInt(page),
+          limit,
+          query: req.query,
+          categories
+        });
+      }
+    }
+
+    const sortOptionsMap = {
+      'price-asc': { price: 1 },
+      'price-desc': { price: -1 },
+      'az': { name: 1 },
+      'za': { name: -1 },
+      'popularity': { salesCount: -1 },
+      'rating': { avgRating: -1 },
+      'new': { createdAt: -1 },
+      'featured': { isFeatured: -1 }
+    };
+    const sortOption = sortOptionsMap[sort] || {};
+
+    const total = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
+      .populate({
+        path: 'category',
+        match: { active: true, isDeleted: false } // ✅ only populate active categories
+      })
+      .sort(sortOption)
+      .skip(skip)
+      .limit(limit);
+
+    const filteredProducts = products.filter(p => p.category); // Keep only products with active categories
+
+    const categories = await Category.find({ isDeleted: false, active: true });
+
+    return res.render('user/shop', {
+      products: filteredProducts,
+      total: filteredProducts.length,
+      currentPage: parseInt(page),
+      limit,
+      query: req.query,
+      categories
+    });
+
+  } catch (err) {
+    console.error('Error fetching products:', err);
+    res.render('user/shop', {
+      products: [],
+      total: 0,
+      currentPage: 1,
+      limit: 8,
+      query: req.query,
+      error: 'Failed to load products',
+      categories: []
+    });
+  }
 };
+
 
 exports.getProductDetails = async (req, res) => {
     try {
         
         const product = await Product.findById(req.params.id).populate('category');
 
-        if (!product || product.isBlocked || !product.isListed || product.isDeleted) {
-            return res.redirect('/products');
+        if (!product ||
+          product.isBlocked ||
+          !product.isListed ||
+          product.isDeleted ||
+          !product.isActive ||
+          !product.category ||
+          !product.category.active ||
+          product.category.isDeleted
+        ) {
+            return res.redirect('/shop');
         }
 
         
@@ -490,17 +470,33 @@ exports.getProductDetails = async (req, res) => {
 
 
 
+exports.toggleUserBlockStatus = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { isBlocked } = req.body;
 
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isBlocked },
+      { new: true }
+    );
 
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
+    }
 
+    res.status(200).json({ message: 'User status updated.', user });
+  } catch (error) {
+    console.error('Toggle user block error:', error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+};
 
 exports.logout = (req, res) => {
-    // Clear all session data
     req.session.destroy((err) => {
         if (err) {
             console.error('Logout error:', err);
         }
-        // Clear the session cookie
         res.clearCookie('connect.sid');
         // Redirect to login with success message
         res.redirect('/login?message=logged_out');

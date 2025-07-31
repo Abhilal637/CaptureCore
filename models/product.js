@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
   images: [String],
   ratings: { type: Number, default: 0 },
   isDeleted: { type: Boolean, default: false },
+   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   category: {
     type: mongoose.Schema.Types.ObjectId,

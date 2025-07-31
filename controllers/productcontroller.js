@@ -76,63 +76,54 @@ exports.editProduct = async (req, res) => {
     try {
         const prod = await product.findById(req.params.id).populate('category');
         if (!prod) return res.status(404).send("Product not found");
-        res.render('admin/editproduct', { product: prod });
+        res.render('admin/editprodcutpage', { product: prod });
     } catch (err) {
         console.error(err);
         res.status(500).send("error loading product");
     }
 };
-
 exports.updateProduct = async (req, res) => {
-    try {
-        const { name, description, price, category: categoryName } = req.body;
-        
-        // Find or create category
-        let category = await Category.findOne({ name: categoryName, isDeleted: false });
-        if (!category) {
-            category = new Category({
-                name: categoryName,
-                description: categoryName,
-                active: true,
-                isDeleted: false
-            });
-            await category.save();
-        }
-        
-        const updateData = {
-            name: name,
-            description: description,
-            price: price,
-            category: category._id
-        };
-        
-        if (req.files && req.files.length >= 3) {
-            const imagePaths = [];
-            for (let i = 0; i < req.files.length; i++) {
-                const filename = `product=${Date.now()}-edit-${i}.jpeg`;
-                const filepath = path.join(__dirname, '../public/uploads/products', filename);
-                await sharp(req.files[i].buffer)
-                    .resize(800, 800)
-                    .jpeg({ quality: 90 })
-                    .toFile(filepath);
-                imagePaths.push(`/uploads/products/${filename}`);
-            }
-            updateData.images = imagePaths;
-        }
-        await product.findByIdAndUpdate(req.params.id, updateData);
-        res.redirect('/admin/products');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("error updating product");
+  try {
+    const { name, description, stock } = req.body;
+    const productId = req.params.id;
+
+    const updatedFields = {
+      name,
+      description,
+      stock: parseInt(stock),
+    };
+
+    // Handle image update if a new file was uploaded
+    if (req.file) {
+      updatedFields.image = req.file.filename; // assuming multer stores filename
     }
+
+    await product.findByIdAndUpdate(productId, updatedFields, { new: true });
+
+    res.redirect('/admin/products'); // ✅ Redirect after update
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).send('Server Error');
+  }
+};  
+exports.toggleProductStatus = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const currentProduct = await product.findById(productId);
+
+    if (!currentProduct) return res.status(404).send("Product not found");
+
+    const updatedProduct = await product.findByIdAndUpdate(
+      productId,
+      { isActive: !currentProduct.isActive },
+      { new: true }
+    );
+
+    res.redirect('/admin/products');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error toggling product status");
+  }
 };
 
-exports.deleteProduct = async (req, res) => {
-    try {
-        await product.findByIdAndUpdate(req.params.id, { isDeleted: true });    
-        res.redirect('/admin/products');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("error deleting product");
-    }
-}
+

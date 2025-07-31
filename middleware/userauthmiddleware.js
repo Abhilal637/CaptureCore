@@ -7,18 +7,27 @@ function isUserLoggedIn(req, res, next) {
         User.findById(req.session.userId)
             .then(user => {
                 if (user && user.isVerified) {
-                    req.user = user; // Attach user to request
-                    return next();
+                    if (user.isBlocked) {
+                        // If user is blocked by admin, destroy session
+                        req.session.destroy(() => {
+                            return res.redirect('/login?error=user_blocked');
+                        });
+                    } else {
+                        req.user = user; // Attach user to request
+                        return next();
+                    }
                 } else {
                     // User doesn't exist or not verified, clear session
-                    req.session.destroy();
-                    return res.redirect('/login?error=session_expired');
+                    req.session.destroy(() => {
+                        return res.redirect('/login?error=session_expired');
+                    });
                 }
             })
             .catch(err => {
                 console.error('Session validation error:', err);
-                req.session.destroy();
-                return res.redirect('/login?error=session_error');
+                req.session.destroy(() => {
+                    return res.redirect('/login?error=session_error');
+                });
             });
     } else {
         return res.redirect('/login?error=not_authenticated');
@@ -81,30 +90,6 @@ function optionalAuth(req, res, next) {
     }
 }
 
-// Rate limiting for login attempts
-function loginRateLimit(req, res, next) {
-    const maxAttempts = 5;
-    const windowMs = 15 * 60 * 1000; // 15 minutes
-    
-    if (!req.session.loginAttempts) {
-        req.session.loginAttempts = 0;
-        req.session.firstAttemptTime = Date.now();
-    }
-    
-    // Reset if window has passed
-    if (Date.now() - req.session.firstAttemptTime > windowMs) {
-        req.session.loginAttempts = 0;
-        req.session.firstAttemptTime = Date.now();
-    }
-    
-    if (req.session.loginAttempts >= maxAttempts) {
-        return res.render('user/login', { 
-            error: 'Too many login attempts. Please try again in 15 minutes.' 
-        });
-    }
-    
-    next();
-}
 
 // Session security middleware
 function sessionSecurity(req, res, next) {
@@ -130,6 +115,5 @@ module.exports = {
     noCache,
     checkSessionTimeout,
     optionalAuth,
-    loginRateLimit,
     sessionSecurity
 };

@@ -3,6 +3,7 @@ const path = require('path');
 const app = express();
 const connectDB = require('./mongoDb/connection');
 const dotenv = require('dotenv');
+const flash = require('connect-flash');
 
 // Load environment variables
 dotenv.config();
@@ -12,6 +13,7 @@ const session = require("express-session");
 const adminRoutes = require('./routes/adminRoute');
 const User = require('./models/user');
 const passport = require('./config/passport');
+const validator= require('./middleware/validator');
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -36,6 +38,7 @@ app.use((req, res, next) => {
 });
 // Static files
 // Passport middleware
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -66,6 +69,7 @@ app.get('/account/profile', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

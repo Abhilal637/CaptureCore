@@ -1,3 +1,4 @@
+<!-- Updated Admin Product Table View (products.ejs) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,13 +10,15 @@
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <%- include('../partial/admin/sidebar') %>
+
     <!-- Main Content -->
     <main class="flex-1 p-6">
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-semibold">PRODUCTS</h1>
-        <a href="/admin/products/add" class="px-6 py-3 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all" id="addProductBtn">+ Add Product</a>
+        <a href="/admin/products/add" class="px-6 py-3 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all">+ Add Product</a>
       </div>
+
       <!-- Product Table -->
       <div class="bg-white rounded shadow overflow-x-auto">
         <table class="min-w-full text-sm">
@@ -23,20 +26,23 @@
             <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
               <th class="p-3">ID</th>
               <th class="p-3">Name</th>
-              <th class="p-3">Description</th>
+              <th class="p-3">Category</th>
               <th class="p-3">Price</th>
+              <th class="p-3">Stock</th>
               <th class="p-3">Images</th>
+              <th class="p-3">Status</th>
               <th class="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>
             <% if (products && products.length) { %>
               <% products.forEach(product => { %>
-                <tr class="border-b hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/admin/products/edit/<%= product._id %>'">
-                  <td class="p-3 text-blue-700 font-mono font-bold bg-blue-50 rounded">#<%= product._id %></td>
+                <tr class="border-b hover:bg-gray-50">
+                  <td class="p-3 font-mono text-blue-700 font-bold">#<%= product._id %></td>
                   <td class="p-3"><%= product.name %></td>
-                  <td class="p-3"><%= product.description %></td>
+                  <td class="p-3"><%= product.category ? product.category.name : 'N/A' %></td>
                   <td class="p-3">₹<%= product.price %></td>
+                  <td class="p-3"><%= product.stock %></td>
                   <td class="p-3 flex gap-2">
                     <% if (product.images && product.images.length) { %>
                       <% product.images.slice(0, 2).forEach(img => { %>
@@ -46,14 +52,29 @@
                       <span class="text-gray-400 text-xs">No images</span>
                     <% } %>
                   </td>
+
                   <td class="p-3">
-                    <a href="/admin/products/edit/<%= product._id %>" class="bg-blue-600 text-white px-3 py-1 text-xs rounded hover:bg-blue-700" onclick="event.stopPropagation()">Edit</a>
-                    <a href="/admin/products/delete/<%= product._id %>" onclick="event.stopPropagation(); return confirm('Delete this product?')" class="bg-red-600 text-white px-3 py-1 text-xs rounded hover:bg-red-700">Delete</a>
+                    <form action="/admin/products/toggle-status/<%= product._id %>" method="POST">
+                      <label class="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" name="isActive" onchange="this.form.submit()" <%= product.isActive ? 'checked' : '' %> />
+                        <div class="w-11 h-6 bg-gray-300 peer-checked:bg-green-500 rounded-full relative transition-all">
+                          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-full"></div>
+                        </div>
+                        <span class="ml-2 text-xs text-gray-600"><%= product.isActive ? 'Active' : 'Inactive' %></span>
+                      </label>
+                    </form>
+                  </td>
+
+                  <td class="p-3 flex gap-2">
+                    <a href="/admin/products/edit/<%= product._id %>" class="text-blue-500 hover:text-blue-700" title="Edit">
+                      ✏️
+                    </a>
+                    
                   </td>
                 </tr>
               <% }) %>
             <% } else { %>
-              <tr><td colspan="6" class="text-center p-4">No products found.</td></tr>
+              <tr><td colspan="8" class="text-center p-4">No products found.</td></tr>
             <% } %>
           </tbody>
         </table>
@@ -62,3 +83,21 @@
   </div>
 </body>
 </html>
+
+
+<script>
+  function toggleProductStatus(productId, isChecked) {
+    fetch(`/admin/products/${productId}/toggle-active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) alert('Error updating status');
+    })
+    .catch(err => {
+      console.error('Toggle error:', err);
+      alert('Failed to toggle product status');
+    });
+  }
+</script>

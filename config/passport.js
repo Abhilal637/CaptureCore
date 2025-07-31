@@ -9,23 +9,25 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // First, check if user exists with this Google ID
+      // this check if the user already is there or it exists with the google id
       const existingUser = await User.findOne({ googleId: profile.id });
       if (existingUser) {
+        if (existingUser.isBlocked) {
+          return done(null, false, { message: 'Your account has been blocked by the admin.' });
+        }
         console.log('Found existing user with Google ID:', existingUser.email);
         await existingUser.updateLoginInfo();
         await existingUser.save();
         return done(null, existingUser);
       }
 
-      // Check if user already exists with the same email
-      const emailUser = await User.findOne({ 
-        email: profile.emails?.[0]?.value 
-      });
-
+      // this check if the user already is there or it exists with the email
+      const emailUser = await User.findOne({ email: profile.emails?.[0]?.value });
       if (emailUser && profile.emails?.[0]?.value) {
+        if (emailUser.isBlocked) {
+          return done(null, false, { message: 'Your account has been blocked by the admin.' });
+        }
         console.log('Found existing user with email, linking Google account:', emailUser.email);
-        // Link Google account to existing user
         emailUser.googleId = profile.id;
         emailUser.isVerified = true;
         emailUser.addAuthProvider('google');
@@ -34,6 +36,7 @@ passport.use(new GoogleStrategy({
         return done(null, emailUser);
       }
 
+      // here we create a new user
       console.log('Creating new user with Google OAuth...');
       const newUser = new User({
         googleId: profile.id,
@@ -50,17 +53,14 @@ passport.use(new GoogleStrategy({
       await newUser.save();
       console.log('New user saved successfully:', newUser.email);
       done(null, newUser);
+
     } catch (err) {
       console.error('Google OAuth error:', err);
-      console.error('Error details:', {
-        name: err.name,
-        message: err.message,
-        code: err.code
-      });
       done(err, null);
     }
   }
 ));
+
 
 passport.serializeUser((user, done) => {
   try {

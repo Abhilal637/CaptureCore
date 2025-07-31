@@ -1,5 +1,8 @@
 const User = require("../models/user");
+const Product = require("../models/product");
 const bcrypt = require('bcrypt');
+const cloudinary = require("../config/cloudinary");
+const streamifier = require('streamifier');
 
 function setNoCache(res) {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -80,66 +83,70 @@ exports.dashboard = (req, res) => {
   }
   res.render('admin/dashboard',{admin,stats});
 }
-exports.blockUser = async (req, res) => {
+
+
+
+
+exports.postAddProduct = async (req, res) => {
   try {
-    await User.findByIdAndUpdate(req.params.id, { isBlocked: true });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false });
-  }
-};
+    const { name, description, price, category } = req.body;
+    const uploadImages = [];
 
-exports.unblockUser = async (req, res) => {
-  try {
-    await User.findByIdAndUpdate(req.params.id, { isBlocked: false });
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false });
-  }
-};
-
-
-
-exports.postAddProduct= async(req,res)=>{
-  try{
-    const {name,descrption,price,cateogry}=req.body
-    const uploadImages=[]
-
-    for(const file of req.files){
-      const uploadPromise= new Promise ((resolve, reject)=>{
+    for (const file of req.files) {
+      const uploadPromise = new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream({
-          folder:"products",
-          resource_type:'image'
+          folder: "products",
+          resource_type: 'image'
         },
-        (error,result)=>{
-          if(eroor)return reject(error);
-          uploadImages.push(result.secure_url)
-          resolve()
+        (error, result) => {
+          if (error) return reject(error);
+          uploadImages.push(result.secure_url);
+          resolve();
         }
-      )
-      streamifier.createReadStream(file.buffer).pipe(stream)
-      })
-      await uploadPromise
+      );
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    });
+    await uploadPromise;
+  }
+
+  const newProduct = new Product({
+    name,
+    description,
+    price,
+    category,
+    images: uploadImages,
+    isBlocked: false,
+    isListed: true,
+    isDeleted: false
+  });
+  await newProduct.save();
+  res.redirect('/admin/products');
+
+  } catch (err) {
+    console.log('upload error', err);
+    res.status(500).send('upload failed');
+  }
+};
+
+exports.toggleUserBlockStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isBlocked } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    const newProduct = new product({
-      name,
-       description,
-      price,
-      category,
-      images: uploadedImages,
-      isBlocked: false,
-      isListed: true,
-      isDeleted: false
-    })
-    await newProduct.save();
-    res.redirect('/admin/product')
+    user.isBlocked = isBlocked;
+    await user.save();
 
-  }catch(err){
-    console.log('upload error',err);
-    res.status(500).send('upload faile')
+    res.json({ success: true, message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully` });
+  } catch (err) {
+    console.error('Error toggling user block status:', err);
+    res.status(500).json({ error: 'Could not update user status' });
   }
-}
+};
 
 exports.logout = (req, res) => {
   req.session.destroy(() => {
