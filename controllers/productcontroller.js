@@ -22,10 +22,10 @@ exports.addproduct = async(req,res)=>{
         
         const { name, description, price, category: categoryName,stock } = req.body;
         
-        // Find or create category
+        
         let category = await Category.findOne({ name: categoryName, isDeleted: false });
         if (!category) {
-            // Create new category if it doesn't exist
+           // herer we are creating a new category 
             category = new Category({
                 name: categoryName,
                 description: categoryName,
@@ -40,10 +40,8 @@ exports.addproduct = async(req,res)=>{
         for(let i=0;i<req.files.length;i++){
             const filename = `product=${Date.now()}-${i}.jpeg`;
             const filepath = path.join(__dirname,'../public/uploads/products',filename)
-
-            // Process the cropped image (already cropped from frontend)
             await sharp(req.files[i].buffer)
-                .resize(800, 800, { fit: 'cover' }) // Ensure consistent size
+                .resize(800, 800, { fit: 'cover' })
                 .jpeg({quality:90})
                 .toFile(filepath)
 
@@ -54,12 +52,12 @@ exports.addproduct = async(req,res)=>{
             name: name,
             description: description,
             price: price,
-            category: category._id, // Use the ObjectId reference
+            category: category._id,
             images: imagePaths,
             isBlocked: false,
             isListed: true,
             isDeleted: false,
-            stock: stock || 0, // Use provided stock or default to 0
+            stock: stock || 0, //making stock  0 to defailt
         });
 
         await newProduct.save();
@@ -93,14 +91,13 @@ exports.updateProduct = async (req, res) => {
       stock: parseInt(stock),
     };
 
-    // Handle image update if a new file was uploaded
+  
     if (req.file) {
-      updatedFields.image = req.file.filename; // assuming multer stores filename
+      updatedFields.image = req.file.filename;
     }
-
     await product.findByIdAndUpdate(productId, updatedFields, { new: true });
 
-    res.redirect('/admin/products'); // ✅ Redirect after update
+    res.redirect('/admin/products'); 
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).send('Server Error');

@@ -43,7 +43,7 @@ const adminSchema = new mongoose.Schema({
   timestamps: true 
 });
 
-// Hash password before saving
+
 adminSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
@@ -56,19 +56,15 @@ adminSchema.pre('save', async function(next) {
   }
 });
 
-// Method to compare password
 adminSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Method to check if account is locked
 adminSchema.methods.isLocked = function() {
   return !!(this.lockUntil && this.lockUntil > Date.now());
 };
 
-// Method to increment login attempts
 adminSchema.methods.incLoginAttempts = function() {
-  // If we have a previous lock that has expired, restart at 1
   if (this.lockUntil && this.lockUntil < Date.now()) {
     return this.updateOne({
       $unset: { lockUntil: 1 },

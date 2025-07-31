@@ -11,7 +11,7 @@ const validator = require('../middleware/validator');
 const { isAscii } = require('buffer');
 
 
-// Configure your transporter (use your real credentials)
+
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -20,7 +20,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Regex patterns
 const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/; // min 8 chars, at least 1 letter & 1 number
 const phoneRegex = /^\d{10,15}$/;
@@ -33,7 +32,7 @@ exports.postSignup = async (req, res) => {
   const { name = req.body.username, email, password, phone, confirm_password } = req.body;
 
   try {
-    // ✅ Check if user already exists
+   
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.render('user/signup', {
@@ -42,7 +41,7 @@ exports.postSignup = async (req, res) => {
       });
     }
 
-    // ✅ Hash password and create new user
+    
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = otpService.generateOtp();
     const otpExpiry = Date.now() + 2 * 60 * 1000;
@@ -58,7 +57,6 @@ exports.postSignup = async (req, res) => {
 
     await newUser.save();
 
-    // ✅ Send OTP email
     try {
       await transporter.sendMail({
         from: 'capturecore792@gmail.com',
@@ -178,7 +176,7 @@ exports.postOtpVerify = async (req, res) => {
 
 exports.getLogin = (req, res) => {
   const error = req.session.loginError;
-  req.session.loginError = null; // Clear it after reading
+  req.session.loginError = null;
   res.render('user/login', { error });
 };
 
@@ -205,8 +203,6 @@ exports.getLogin = (req, res) => {
                 req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
                 return res.render('user/login', { error: 'Invalid email or password' });
             }
-
-            // ✅ Blocked User Check
             if (user.isBlocked) {
                 return res.render('user/login', { error: 'Your account has been blocked by the admin.' });
             }
@@ -222,7 +218,6 @@ exports.getLogin = (req, res) => {
                 return res.render('user/login', { error: 'Invalid email or password' });
             }
 
-            // ✅ Success - set session
             req.session.loginAttempts = 0;
             req.session.userId = user.id;
             req.session.lastActivity = Date.now();
@@ -312,8 +307,7 @@ exports.getResetPassword = async (req, res) => {
 exports.postResetPassword = async (req, res) => {
     const {password} = req.body
     const token = req.params.token;
-    
-    // Password validation
+   
     if (!password || !passwordRegex.test(password)) {
         return res.render('user/reset-password', { 
             userId: req.body.userId, 
@@ -498,7 +492,7 @@ exports.logout = (req, res) => {
             console.error('Logout error:', err);
         }
         res.clearCookie('connect.sid');
-        // Redirect to login with success message
+        
         res.redirect('/login?message=logged_out');
     });
 }

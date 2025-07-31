@@ -1,7 +1,6 @@
-// middleware/adminAuthMiddleware.js
+
 
 function adminAuth(req, res, next) {
-  // Only allow if admin is logged in
   if (req.session && req.session.isAdmin === true && req.session.admin) {
     return next();
   }
@@ -9,7 +8,6 @@ function adminAuth(req, res, next) {
 }
 
 function preventAdminLoginIfLoggedIn(req, res, next) {
-  // If admin is already logged in, prevent access to login page again
   if (req.session && req.session.isAdmin === true && req.session.admin) {
     return res.redirect('/admin/dashboard');
   }
@@ -25,13 +23,13 @@ function noCache(req, res, next) {
 
 
 const checkBlocked = async (req, res, next) => {
-  if (!req.session.user) return next(); // not logged in, continue
+  if (!req.session.user) return next(); 
 
   try {
     const user = await User.findById(req.session.user._id);
     if (!user || user. isBlocked) {
       req.session.destroy(() => {
-        res.redirect('/login?isBlocked=true'); // or show custom "Blocked" page
+        res.redirect('/login?isBlocked=true'); 
       });
     } else {
       next();
@@ -41,9 +39,6 @@ const checkBlocked = async (req, res, next) => {
     res.redirect('/login');
   }
 };
-
-
-
 
 
 module.exports = {

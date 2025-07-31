@@ -1,4 +1,4 @@
-// middlewares/validateForm.js
+
 const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const phoneRegex = /^\d{10,15}$/;

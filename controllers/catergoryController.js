@@ -8,7 +8,7 @@ exports.listCategories = async (req, res) => {
     const skip = (page - 1) * limit;
     const search = req.query.search ? req.query.search.trim() : '';
 
-    let query = { isDeleted: false }; // show all (active + inactive)
+    let query = { isDeleted: false }; //shows both activve and non active  catregories
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -100,7 +100,6 @@ exports.updateCategory = async(req,res)=>{
         return res.status(400).send("Category name and description are required");
     }
 
-    // Check for existing category with same name (excluding current category)
     const existingCategory = await category.findOne({ 
         name: { $regex: new RegExp(`^${name}$`, 'i') },
         _id: { $ne: categoryId },
