@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Profile | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/css/user/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white font-sans">
+
+  <%- include('../partial/user/navbar') %>
+
+  <div class="max-w-3xl mx-auto py-10 px-4">
+    <h1 class="text-2xl font-semibold mb-6">Edit Profile</h1>
+    
+    <% if (error) { %>
+      <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        ❌ Error: <%= error === 'invalid_file_type' ? 'Please select a valid image file (JPEG, PNG, GIF)' : 'Failed to update profile. Please try again.' %>
+      </div>
+    <% } %>
+
+    <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="bg-gray-50 p-6 shadow rounded space-y-6">
+      <!-- Profile Picture -->
+      <div class="flex items-center gap-6">
+        <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-200">
+          <img id="profilePreview" 
+               src="<%= user?.profilePicture ? '/uploads/' + user.profilePicture : user?.googleProfilePic || 'https://via.placeholder.com/96x96/cccccc/666666?text=Profile' %>" 
+               class="w-full h-full object-cover" 
+               alt="Profile Image">
+        </div>
+        <div>
+          <label for="profileImage" class="block text-sm font-medium text-gray-700">Change Profile Picture</label>
+          <input type="file" name="profileImage" id="profileImage" accept="image/*" class="mt-2 text-sm text-gray-600">
+        </div>
+      </div>
+
+      <!-- Name -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Name</label>
+        <input type="text" name="name" value="<%= user?.name || '' %>" required class="w-full mt-1 px-3 py-2 border rounded">
+      </div>
+
+      <!-- Phone -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Phone</label>
+        <input type="text" name="phone" value="<%= user?.phone || '' %>" class="w-full mt-1 px-3 py-2 border rounded">
+      </div>
+
+      <!-- Email (readonly) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <input type="email" name="email" value="<%= user?.email || '' %>" readonly class="w-full mt-1 px-3 py-2 border rounded bg-gray-100 cursor-not-allowed">
+      </div>
+
+      <!-- Submit -->
+      <div class="text-right">
+        <button type="submit" id="submitBtn" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition">
+          <span id="submitText">Update Profile</span>
+          <span id="loadingText" class="hidden">Updating...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('profileImage');
+    const previewImg = document.getElementById('profilePreview');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const loadingText = document.getElementById('loadingText');
+    
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) {
+        previewImg.src = URL.createObjectURL(file);
+      }
+    });
+    
+    // Handle form submission
+    document.querySelector('form').addEventListener('submit', function() {
+      submitBtn.disabled = true;
+      submitText.classList.add('hidden');
+      loadingText.classList.remove('hidden');
+    });
+  </script>
+
+</body>
+</html>

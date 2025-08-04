@@ -3,10 +3,11 @@ const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
 const phoneRegex = /^\d{10,15}$/;
 const nameRegex = /^[A-Za-z\s]{2,50}$/;
 const productNameRegex = /^[A-Za-z0-9\s]{3,}$/;
+const pincodeRegex = /^\d{6}$/;
 
 module.exports = function (type) {
   return (req, res, next) => {
-    const { name, email, phone, password, confirm_password, price, stock, description } = req.body;
+    const { name, email, password, confirm_password, price, stock, phone, description } = req.body;
 
     switch (type) {
       // === USER VALIDATION ===
@@ -14,31 +15,31 @@ module.exports = function (type) {
         if (!name || !nameRegex.test(name)) {
           return res.render('user/signup', {
             error: 'Please enter a valid name.',
-            name, email, phone
+            name: name || '', email: email || '', phone: phone || ''
           });
         }
         if (!email || !emailRegex.test(email)) {
           return res.render('user/signup', {
             error: 'Please enter a valid email.',
-            name, email, phone
+            name: name || '', email: email || '', phone: phone || ''
           });
         }
         if (!phone || !phoneRegex.test(phone)) {
           return res.render('user/signup', {
             error: 'Invalid phone number.',
-            name, email, phone
+            name: name || '', email: email || '', phone: phone || ''
           });
         }
         if (!password || !passwordRegex.test(password)) {
           return res.render('user/signup', {
             error: 'Password must contain at least 8 characters, a letter and a number.',
-            name, email, phone
+            name: name || '', email: email || '', phone: phone || ''
           });
         }
         if (password !== confirm_password) {
           return res.render('user/signup', {
             error: 'Passwords do not match.',
-            name, email, phone
+            name: name || '', email: email || '', phone: phone || ''
           });
         }
         break;
@@ -94,6 +95,30 @@ module.exports = function (type) {
         }
         if (!stock || isNaN(stock)) {
           return res.status(400).send('Invalid stock value');
+        }
+        break;
+
+      case 'address':
+        const { fullName, addressLine, city, state, pincode } = req.body;
+        const addressPhone = req.body.phone;
+        
+        if (!fullName || !nameRegex.test(fullName)) {
+          return res.status(400).send('Please enter a valid full name');
+        }
+        if (!addressPhone || !phoneRegex.test(addressPhone)) {
+          return res.status(400).send('Please enter a valid phone number');
+        }
+        if (!addressLine || addressLine.trim().length < 5) {
+          return res.status(400).send('Address line must be at least 5 characters long');
+        }
+        if (!city || city.trim().length < 2) {
+          return res.status(400).send('Please enter a valid city');
+        }
+        if (!state || state.trim().length < 2) {
+          return res.status(400).send('Please enter a valid state');
+        }
+        if (!pincode || !pincodeRegex.test(pincode)) {
+          return res.status(400).send('Please enter a valid 6-digit pincode');
         }
         break;
 

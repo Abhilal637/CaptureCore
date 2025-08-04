@@ -5,22 +5,37 @@
         <h2 class="text-2xl font-medium text-gray-800 mb-8">Account</h2>
         <ul class="space-y-4">
             <li>
-                <a href="/account/profile" 
-                   class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= currentPage === 'profile' ? 'text-gray-800 font-medium' : '' %>">
+                <a href="/profile" 
+                   class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= (currentPage || '') === 'profile' ? 'text-gray-800 font-medium' : '' %>">
                     👤 Profile
                 </a>
             </li>
             <li>
-                <a href="/account/password" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Password</a>
+                <a href="/edit-profile" 
+                   class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= (currentPage || '') === 'edit-profile' ? 'text-gray-800 font-medium' : '' %>">
+                    ✏️ Edit Profile
+                </a>
             </li>
             <li>
-                <a href="/account/orders" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Order</a>
+                <a href="/change-password" 
+                   class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= (currentPage || '') === 'change-password' ? 'text-gray-800 font-medium' : '' %>">
+                    🔒 Password
+                </a>
+            </li>
+            <li> 
+                <a href="/edit-email" 
+                   class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= (currentPage || '') === 'edit-email' ? 'text-gray-800 font-medium' : '' %>">
+                    📧 Edit Email
+                </a>
             </li>
             <li>
-                <a href="/account/address" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Manage Address</a>
+                <a href="/account/orders" class="block text-sm text-gray-600 hover:text-gray-800 py-2"> 📦  Order</a>
             </li>
             <li>
-                <a href="/account/wallet" class="block text-sm text-gray-600 hover:text-gray-800 py-2">Wallet</a>
+                <a href="/account/address" class="block text-sm text-gray-600 hover:text-gray-800 py-2"> ***✏️ Manage Address</a>
+            </li>
+            <li>
+                <a href="/account/wallet" class="block text-sm text-gray-600 hover:text-gray-800 py-2"> 💰 Wallet</a>
             </li>
         </ul>
         <form action="/logout" method="POST" class="mt-6">

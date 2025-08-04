@@ -1,108 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  
-  <meta charset="UTF-8">
-  <title>Wishlist</title>
-  <link rel="stylesheet" href="/css/wishlist.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wishlist | CaptureCore</title>
   <script src="https://cdn.tailwindcss.com"></script>
-    
-      <!-- OR if you have Tailwind installed locally -->
-      <link href="/path/to/your/tailwind.css" rel="stylesheet" >
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
+<body class="bg-gray-100 font-sans">
   <%- include('../partial/user/navbar') %>
 
-  <div class="background">
-    <!-- Header/Navbar -->
-   
-    
+  <div class="max-w-4xl mx-auto py-10"> 
+    <div class="flex justify-between items-center mb-10">
+      <h1 class="text-3xl font-bold">My Wishlist</h1>
+      <% if (wishlistItems.length > 0) { %>
+        <button id="clear-all-btn" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors">
+          Clear All (<%= wishlistItems.length %>)
+        </button>
+      <% } %>
+    </div>
 
-    <div class="header">
-      <div class="header-title">WISHLIST</div>
-      <div class="header-breadcrumb">Home / Wishlist</div>
-    </div>
-    <div class="wishlist-container">
-      <table class="wishlist-table">
-        <thead>
-          <tr>
-            <th>PRODUCT</th>
-            <th>DETAILS</th>
-            <th>PRICE</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=80&h=80" alt="Sony Alpha" class="product-img">
-            </td>
-            <td>SONY ALPHA</td>
-            <td class="price">$1500.00</td>
-            <td><a href="#" class="remove-btn">&times;</a></td>
-          </tr>
-          <tr>
-            <td>
-              <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=facearea&w=80&h=80" alt="G-Master 35 MM Lens" class="product-img">
-            </td>
-            <td>G-MASTER 35 MM LENS</td>
-            <td class="price">$870.00</td>
-            <td><a href="#" class="remove-btn">&times;</a></td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="wishlist-actions">
-        <button class="update-btn">UPDATE CART</button>
-        <button class="continue-btn">CONTINUE SHOPPING</button>
+    <% if (wishlistItems.length === 0) { %>
+      <div class="text-center text-gray-500 py-20">
+        <div class="text-6xl mb-4">💔</div>
+        <div class="text-xl mb-2">Your wishlist is empty</div>
+        <div class="text-gray-400">Start adding products to your wishlist!</div>
+        <a href="/shop" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+          Browse Products
+        </a>
       </div>
-      <div class="subscribe-section">
-        <div class="subscribe-box">
-          <div class="subscribe-title">SUBSCRIBE US NOW</div>
-          <div class="subscribe-desc">Get latest news, updates and special offers in your inbox.</div>
-          <form class="subscribe-form">
-            <input type="email" placeholder="Your Email Address Here" required>
-            <button type="submit">SUBSCRIBE</button>
-          </form>
-        </div>
-      </div>
-    </div>
-    <footer>
-      <div class="footer-content">
-        <div class="footer-section">
-          <div class="footer-title">MiniStore.</div>
-          <div>Mail: capturecore@info.com</div>
-          <div>Address: 123 Main St, City, Country</div>
-          <div>Follow us:
-            <a href="#">FB</a>
-            <a href="#">TW</a>
-            <a href="#">IN</a>
+    <% } else { %>
+      <div class="space-y-6">
+        <% wishlistItems.forEach(item => { %>
+          <div class="wishlist-card bg-white rounded-lg shadow-md p-5 flex items-center justify-between" data-id="<%= item._id %>">
+            <!-- Image & Details -->
+            <div class="flex items-center space-x-4">
+              <img src="<%= item.images[0] %>" class="w-24 h-24 object-cover rounded" alt="<%= item.name %>">
+              <div>
+                <h2 class="font-bold text-lg"><%= item.name %></h2>
+                <p class="text-gray-700">₹<%= item.price.toLocaleString('en-IN') %></p>
+                <a href="/product/<%= item._id %>" class="text-sm text-blue-600 underline">Click to view product details</a>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="text-right space-y-2">
+              <button class="text-red-600 hover:underline remove-wishlist-btn" data-product-id="<%= item._id %>">
+                Remove
+              </button>
+              <button class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 add-to-cart-btn" data-product-id="<%= item._id %>">
+                Add to Cart
+              </button>
+            </div>
           </div>
-        </div>
-        <div class="footer-section">
-          <div class="footer-title">QUICK LINKS</div>
-          <div><a href="#">Home</a></div>
-          <div><a href="#">Shop</a></div>
-          <div><a href="#">About</a></div>
-          <div><a href="#">Contact</a></div>
-        </div>
-        <div class="footer-section">
-          <div class="footer-title">HELP & INFO</div>
-          <div><a href="#">How to Order</a></div>
-          <div><a href="#">Shipping & Delivery</a></div>
-          <div><a href="#">Contact Us</a></div>
-          <div><a href="#">FAQs</a></div>
-        </div>
-        <div class="footer-section">
-          <div class="footer-title">CONTACT US</div>
-          <div>123 Main St, City</div>
-          <div>capturecore@info.com</div>
-          <div>+123 456 7890</div>
-        </div>
+        <% }); %>
       </div>
-      <div class="footer-bottom">
-        &copy; Copyright 2024 MiniStore. Design by <a href="#">TemplateCreator</a>
-      </div>a
-    </footer>
+    <% } %> 
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Clear all wishlist items
+      const clearAllBtn = document.getElementById('clear-all-btn');
+      if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', async () => {
+          const confirm = await Swal.fire({
+            title: 'Clear All Items?',
+            text: 'This will remove all items from your wishlist. This action cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, clear all!',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#dc2626'
+          });
+
+          if (!confirm.isConfirmed) return;
+
+          try {
+            const res = await fetch('/wishlist/clear', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+              // Remove all wishlist cards
+              document.querySelectorAll('.wishlist-card').forEach(card => card.remove());
+              
+              // Update the page to show empty state
+              const container = document.querySelector('.space-y-6');
+              if (container) {
+                container.innerHTML = `
+                  <div class="text-center text-gray-500 py-20">
+                    <div class="text-6xl mb-4">💔</div>
+                    <div class="text-xl mb-2">Your wishlist is empty</div>
+                    <div class="text-gray-400">Start adding products to your wishlist!</div>
+                    <a href="/shop" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+                      Browse Products
+                    </a>
+                  </div>
+                `;
+              }
+              
+              // Hide the clear all button
+              clearAllBtn.style.display = 'none';
+              
+              Swal.fire('Cleared!', data.message, 'success');
+            } else {
+              Swal.fire('Error', data.message || 'Failed to clear wishlist.', 'error');
+            }
+          } catch (err) {
+            console.error('Clear wishlist error:', err);
+            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+          }
+        });
+      }
+
+      // Remove from wishlist
+      document.querySelectorAll('.remove-wishlist-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const productId = button.dataset.productId;
+          const card = button.closest('.wishlist-card');
+
+          const confirm = await Swal.fire({
+            title: 'Are you sure?',
+            text: 'Do you want to remove this item from your wishlist?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, remove it!',
+            cancelButtonText: 'Cancel'
+          });
+
+          if (!confirm.isConfirmed) return;
+
+          try {
+            const res = await fetch(`/wishlist/remove/${productId}`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await res.json();
+
+                         if (data.success) {
+               card.remove();
+               // Show appropriate message based on whether item was actually removed
+               const message = data.message === 'Item was not in wishlist' 
+                 ? 'Item was not in your wishlist' 
+                 : data.message;
+               Swal.fire('Removed!', message, 'success');
+             } else {
+               Swal.fire('Error', data.message || 'Failed to remove item.', 'error');
+             }
+          } catch (err) {
+            console.error('Remove wishlist error:', err);
+            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+          }
+        });
+      });
+
+      // Add to cart and remove from wishlist
+      document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+          const productId = button.dataset.productId;
+          const card = button.closest('.wishlist-card');
+
+          try {
+            const cartRes = await fetch(`/add-to-cart/${productId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ quantity: 1 })
+            });
+
+            if (!cartRes.ok) {
+              const errorText = await cartRes.text();
+              console.error('Cart Error:', errorText);
+              throw new Error('Cart add failed');
+            }
+
+            const cartData = await cartRes.json();
+
+            if (cartData.success) {
+              
+              const wishlistRes = await fetch(`/wishlist/remove/${productId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+              });
+
+              const wishlistData = await wishlistRes.json();
+
+                           if (wishlistData.success) {
+               card.remove();
+               // Show appropriate message based on whether item was actually removed
+               const message = wishlistData.message === 'Item was not in wishlist'
+                 ? 'Product added to cart. Item was not in wishlist.'
+                 : 'Product added to cart and removed from wishlist.';
+               Swal.fire('Added to Cart', message, 'success');
+             } else {
+               Swal.fire('Warning', 'Added to cart, but failed to remove from wishlist.', 'warning');
+             }
+            } else {
+              Swal.fire('Error', cartData.message || 'Failed to add to cart.', 'error');
+            }
+          } catch (err) {
+            console.error('Add to cart error:', err);
+            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+          }
+        });
+      });
+
+    });
+  </script>
 </body>
 </html>

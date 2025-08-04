@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cart | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- Navbar -->
+  <%- include('../partial/user/navbar') %>
+
+  <div class="max-w-4xl mx-auto px-4 py-10">
+    <h1 class="text-3xl font-bold mb-8 text-center">Shopping Cart</h1>
+
+    <% if (removedItems && removedItems.length > 0) { %>
+      <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800">Some items were removed</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+              <p>The following items are no longer available and have been removed from your cart:</p>
+              <ul class="list-disc list-inside mt-1">
+                <% removedItems.forEach(item => { %>
+                  <li><%= item %></li>
+                <% }) %>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (cartItems.length === 0) { %>
+      <div class="bg-white p-10 text-center rounded shadow">
+        <p class="text-lg text-gray-500">Your cart is empty.</p>
+        <a href="/shop" class="mt-4 inline-block bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Continue Shopping</a>
+      </div>
+    <% } else { %>
+
+      <!-- Clear Cart -->
+      <div class="text-right mb-4">
+        <button id="clear-cart-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors">
+          Clear Cart (<%= cartItems.length %> items)
+        </button>
+      </div>
+
+      <% cartItems.forEach(item => { %>
+        <div class="flex items-center justify-between bg-white p-4 rounded shadow mb-4">
+          <div class="flex items-center gap-4">
+            <img src="<%= item.product.images[0] %>" alt="Product" class="w-20 h-20 object-cover rounded">
+            <div>
+              <h2 class="font-semibold text-lg"><%= item.product.name %></h2>
+                             <p class="text-sm font-medium mt-1 unit-price" data-price="<%= item.product.price %>">₹<%= item.product.price.toFixed(2) %></p>
+              <a href="/product/<%= item.product._id %>" class="text-xs text-blue-600 underline mt-1 block">Click to view product details</a>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="cart-item" data-product-id="<%= item.product._id %>">
+              <div class="flex items-center gap-2">
+                <button class="quantity-btn bg-gray-300 hover:bg-gray-400 text-gray-700 px-3 py-1 rounded font-medium" data-action="decrease">-</button>
+                <span class="quantity-value w-8 text-center font-medium" data-quantity="<%= item.quantity %>"><%= item.quantity %></span>
+                <button class="quantity-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded font-medium" data-action="increase">+</button>
+              </div>
+            </div>
+
+            <span class="item-subtotal font-medium">₹<%= (item.product.price * item.quantity).toFixed(2) %></span>
+
+
+            <form class="remove-from-cart-form" data-product-id="<%= item.product._id %>">
+              <button type="button" class="text-red-600 text-sm hover:underline">Remove</button>
+            </form>
+          </div>
+        </div>
+      <% }) %>
+
+      <!-- Total Summary -->
+<div class="bg-white p-6 rounded shadow mt-6">
+  <div class="flex justify-between text-xl font-semibold mb-4">
+    <span>Total:</span>
+    <span id="cart-total">₹<%= totalPrice.toFixed(2) %></span>
+  </div>
+  <a href="/checkout" class="block w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded text-lg font-medium">
+    Proceed to Checkout
+  </a>
+</div>
+
+      <% } %>
+    </div>
+<!-- SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+<!-- Replace your existing <script> section with this updated one -->
+  <script>
+    // Quantity Update Handler
+    document.querySelectorAll('.quantity-btn').forEach(button => {
+      button.addEventListener('click', async function () {
+        const action = this.getAttribute('data-action');
+        const cartItem = this.closest('.cart-item');
+        const productId = cartItem.getAttribute('data-product-id');
+        const quantityDisplay = cartItem.querySelector('.quantity-value');
+        let quantity = parseInt(quantityDisplay.textContent);
+  
+        if (action === 'increase') quantity++;
+        if (action === 'decrease') quantity--;
+  
+        // Remove item if quantity < 1
+                if (quantity < 1) {
+          const response = await fetch(`/cart/update-quantity/${productId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: 0 })
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            cartItem.closest('.flex.items-center.justify-between').remove();
+            
+            // Update total using server response
+            const totalElement = document.getElementById('cart-total');
+            if (totalElement && result.totalPrice !== undefined) {
+              totalElement.textContent = `₹${result.totalPrice.toFixed(2)}`;
+            }
+          }
+          return;
+        }
+  
+        const response = await fetch(`/cart/update-quantity/${productId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity })
+        });
+  
+                const result = await response.json();
+
+        if (response.ok) {
+          quantityDisplay.textContent = quantity;
+          quantityDisplay.setAttribute('data-quantity', quantity);
+
+          // Update subtotal using server response
+          const subtotalEl = cartItem.closest('.flex.items-center.gap-3').querySelector('.item-subtotal');
+          if (subtotalEl && result.itemSubtotal !== undefined) {
+            subtotalEl.textContent = `₹${result.itemSubtotal.toFixed(2)}`;
+          }
+
+          // Update total using server response
+          const totalElement = document.getElementById('cart-total');
+          if (totalElement && result.totalPrice !== undefined) {
+            totalElement.textContent = `₹${result.totalPrice.toFixed(2)}`;
+          }
+        } else {
+          alert(result.message || 'Failed to update cart.');
+        }
+      });
+    });
+  
+    // Remove item
+    document.querySelectorAll('.remove-from-cart-form').forEach(form => {
+      form.addEventListener('click', async function (e) {
+        e.preventDefault();
+        const productId = this.getAttribute('data-product-id');
+  
+        const response = await fetch(`/cart/update-quantity/${productId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity: 0 }) // delete
+        });
+  
+                const result = await response.json();
+
+        if (response.ok) {
+          this.closest('.flex.items-center.justify-between').remove();
+          
+          // Update total using server response
+          const totalElement = document.getElementById('cart-total');
+          if (totalElement && result.totalPrice !== undefined) {
+            totalElement.textContent = `₹${result.totalPrice.toFixed(2)}`;
+          }
+        } else {
+          alert(result.message || 'Could not remove item.');
+        }
+      });
+    });
+  
+    // Clear cart functionality
+    const clearCartBtn = document.getElementById('clear-cart-btn');
+    if (clearCartBtn) {
+      clearCartBtn.addEventListener('click', async () => {
+        const confirm = await Swal.fire({
+          title: 'Clear Cart?',
+          text: 'This will remove all items from your cart. This action cannot be undone.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, clear cart!',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#dc2626'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+          const response = await fetch('/cart/clear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            // Remove all cart items
+            document.querySelectorAll('.flex.items-center.justify-between').forEach(item => {
+              if (item.querySelector('.cart-item')) {
+                item.remove();
+              }
+            });
+            
+            // Update the page to show empty state
+            const container = document.querySelector('.max-w-4xl');
+            if (container) {
+              container.innerHTML = `
+                <h1 class="text-3xl font-bold mb-8 text-center">Shopping Cart</h1>
+                <div class="bg-white p-10 text-center rounded shadow">
+                  <p class="text-lg text-gray-500">Your cart is empty.</p>
+                  <a href="/shop" class="mt-4 inline-block bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Continue Shopping</a>
+                </div>
+              `;
+            }
+            
+            Swal.fire('Cleared!', 'Your cart has been cleared successfully.', 'success');
+          } else {
+            Swal.fire('Error', result.message || 'Failed to clear cart.', 'error');
+          }
+        } catch (err) {
+          console.error('Clear cart error:', err);
+          Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+        }
+      });
+    }
+
+    // Update total price
+    function updateCartTotal() {
+      let total = 0;
+      document.querySelectorAll('.cart-item').forEach(cartItem => {
+        const quantityEl = cartItem.querySelector('.quantity-value');
+        const priceEl = cartItem.closest('.flex.items-center.gap-3').querySelector('.unit-price');
+  
+        if (quantityEl && priceEl) {
+          const quantity = parseInt(quantityEl.textContent);
+          const unitPrice = parseFloat(priceEl.getAttribute('data-price'));
+          const subtotal = quantity * unitPrice;
+  
+          total += subtotal;
+        }
+      });
+  
+      const totalElement = document.getElementById('cart-total');
+      if (totalElement) {
+        totalElement.textContent = `₹${total.toFixed(2)}`;
+      }
+    }
+  </script>
+  
+</body>
+</html>
+

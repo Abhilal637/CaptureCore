@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify Email | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex items-center justify-center px-4">
+
+  <div class="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
+    <h2 class="text-xl font-bold mb-4 text-center">Verify Email</h2>
+
+    <% if (typeof error !== 'undefined') { %>
+      <div class="bg-red-100 text-red-700 p-2 rounded mb-4"><%= error %></div>
+    <% } %>
+
+    <form action="/verify-email" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-sm mb-1 text-gray-600">OTP sent to <b><%= typeof newEmail !== 'undefined' ? newEmail : 'your email' %></b></label>
+        <input type="text" name="otp" required class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Enter OTP">
+      </div>
+      <button type="submit" class="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition">Verify</button>
+    </form>
+  </div>
+
+</body>
+</html>

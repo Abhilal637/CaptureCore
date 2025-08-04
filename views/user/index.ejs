@@ -85,41 +85,26 @@
     <h2 class="text-2xl font-bold text-gray-900 mb-8">PRODUCTS</h2>
     <div class="grid md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-      <!-- Product 1 -->
-      <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        <img src="/public/images/download_20.jpg" alt="Camera 1" class="w-full h-48 object-contain p-4">
-        <div class="p-4">
-          <h3 class="font-medium text-gray-900">Vintage Style Camera</h3>
-          <p class="text-gray-600 text-sm mt-1">$1,099.00</p>
+      <% if (featuredProducts && featuredProducts.length > 0) { %>
+        <% featuredProducts.forEach(product => { %>
+          <a href="/product/<%= product._id %>" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <img src="<%= product.images[0] %>" alt="<%= product.name %>" class="w-full h-48 object-contain p-4">
+            <div class="p-4">
+              <h3 class="font-medium text-gray-900"><%= product.name %></h3>
+              <p class="text-gray-600 text-sm mt-1">₹<%= product.price.toFixed(2) %></p>
+              <% if (product.category) { %>
+                <p class="text-xs text-gray-500 mt-1"><%= product.category.name %></p>
+              <% } %>
+            </div>
+          </a>
+        <% }) %>
+      <% } else { %>
+        <!-- Fallback products when no products are available -->
+        <div class="col-span-full text-center py-8">
+          <p class="text-gray-500">No products available at the moment.</p>
+          <a href="/shop" class="mt-4 inline-block bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Browse All Products</a>
         </div>
-      </a>
-
-      <!-- Product 2 -->
-      <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        <img src="/public/images/sony_a7ii_closeup_eric.jpg" alt="Sony A7ii" class="w-full h-48 object-contain p-4">
-        <div class="p-4">
-          <h3 class="font-medium text-gray-900">Sony A7ii Close-Up</h3>
-          <p class="text-gray-600 text-sm mt-1">$1,499.00</p>
-        </div>
-      </a>
-
-      <!-- Product 3 -->
-      <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        <img src="/public/images/sony_a6700_nimrod.jpg" alt="Sony A6700" class="w-full h-48 object-contain p-4">
-        <div class="p-4">
-          <h3 class="font-medium text-gray-900">Sony A6700</h3>
-          <p class="text-gray-600 text-sm mt-1">$1,799.00</p>
-        </div>
-      </a>
-
-      <!-- Product 4 -->
-      <a href="/shop" class="block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        <img src="/public/images/sony_fx30.jpg" alt="Sony FX30" class="w-full h-48 object-contain p-4">
-        <div class="p-4">
-          <h3 class="font-medium text-gray-900">Sony FX30</h3>
-          <p class="text-gray-600 text-sm mt-1">$2,299.00</p>
-        </div>
-      </a>
+      <% } %>
 
     </div>
   </div>
@@ -142,7 +127,7 @@
             <h2 class="text-2xl font-bold text-gray-900 mb-8">GALLERY</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="relative group overflow-hidden rounded-lg">
-                    <img src="https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=300&h=300&fit=crop" 
+                    <img src="https://unsplash.com/photos/black-and-silver-vintage-camera-soLEw77Napo?utm_content=creditShareLink&utm_medium=referral&utm_source=unsplash" 
                         alt="Gallery 1" class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105">
                     <div class="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span class="text-white font-medium">View</span>

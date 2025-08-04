@@ -10,16 +10,22 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function () {
-      return !this.googleId && !this.facebookId;
+      return !this.googleId
     }
   },
   mobile: { 
     type: String, 
     required: function () {
-      return !this.googleId && !this.facebookId;
+      return !this.googleId 
     }
   },
-  address: { type: String },
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    zip: String,
+    phone: String
+  },
   profilePicture: { type: String },
   isVerified: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
@@ -39,11 +45,19 @@ const userSchema = new mongoose.Schema({
   lastLogin: { type: Date },
   loginCount: { type: Number, default: 0 },
   
-resetToken: String,
-resetTokenExpiry: Date
+  resetToken: String,
+  resetTokenExpiry: Date,
+  
+  // Wishlist field to store product IDs
+  wishlist: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  }]
 }, { 
   timestamps: true
 });
+
+
 
 userSchema.methods.addAuthProvider = function(provider) {
   if (!this.authProvider.includes(provider)) {

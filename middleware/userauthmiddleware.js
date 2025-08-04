@@ -10,6 +10,9 @@ function isUserLoggedIn(req, res, next) {
                     if (user.isBlocked) {
                         // If user is blocked by admin, destroy session
                         req.session.destroy(() => {
+                            if (req.headers['content-type'] === 'application/json') {
+                                return res.status(401).json({ message: 'User account is blocked' });
+                            }
                             return res.redirect('/login?error=user_blocked');
                         });
                     } else {
@@ -19,6 +22,9 @@ function isUserLoggedIn(req, res, next) {
                 } else {
                     // User doesn't exist or not verified, clear session
                     req.session.destroy(() => {
+                        if (req.headers['content-type'] === 'application/json') {
+                            return res.status(401).json({ message: 'Session expired' });
+                        }
                         return res.redirect('/login?error=session_expired');
                     });
                 }
@@ -26,10 +32,16 @@ function isUserLoggedIn(req, res, next) {
             .catch(err => {
                 console.error('Session validation error:', err);
                 req.session.destroy(() => {
+                    if (req.headers['content-type'] === 'application/json') {
+                        return res.status(401).json({ message: 'Session error' });
+                    }
                     return res.redirect('/login?error=session_error');
                 });
             });
     } else {
+        if (req.headers['content-type'] === 'application/json') {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
         return res.redirect('/login?error=not_authenticated');
     }
 }

@@ -27,7 +27,7 @@ router.get('/products/add', adminAuth, noCache, (req, res) => {
 });
 router.post('/products/add', adminAuth, noCache, upload.array('images', 5), validator('addproduct'),productControllers.addproduct);
 router.get('/products/edit/:id', adminAuth, noCache, productControllers.editProduct);
-router.post('/products/edit/:id',adminAuth,upload.single('image'),validator('editproduct'),productControllers.updateProduct);
+router.post('/products/edit/:id',adminAuth,upload.array('image',3),validator('editproduct'),productControllers.updateProduct);
 router.post('/products/toggle-status/:id', adminAuth, productControllers.toggleProductStatus);
 
 router.get('/dashboard', adminAuth, noCache, adminControllers.dashboard);

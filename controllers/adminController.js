@@ -130,16 +130,49 @@ exports.postAddProduct = async (req, res) => {
 
 exports.toggleUserBlockStatus = async (req, res) => {
   try {
+    console.log('toggleUserBlockStatus called with:', req.params, req.body);
+    
     const { id } = req.params;
     const { isBlocked } = req.body;
 
+    console.log('User ID:', id, 'isBlocked:', isBlocked);
+
     const user = await User.findById(id);
     if (!user) {
+      console.log('User not found with ID:', id);
       return res.status(404).json({ error: 'User not found' });
     }
 
+    console.log('Found user:', user.name, 'Current isBlocked:', user.isBlocked);
+
     user.isBlocked = isBlocked;
     await user.save();
+
+    console.log('User saved successfully, new isBlocked:', user.isBlocked);
+
+    if (isBlocked) {
+      try {
+        const io = req.app.get('io');
+        const userSockets = req.app.get('userSockets');
+        const userSocketId = userSockets.get(id);
+        
+        console.log('Socket.io available:', !!io);
+        console.log('User sockets map:', userSockets);
+        console.log('User socket ID:', userSocketId);
+        
+        if (userSocketId) {
+          io.to(userSocketId).emit('force_logout', {
+            message: 'Your account has been blocked by admin'
+          });
+          console.log(`Force logout sent to user ${id}`);
+        } else {
+          console.log(`No active socket found for user ${id}`);
+        }
+      } catch (socketError) {
+        console.error('Socket.io error:', socketError);
+        // Don't fail the request if socket.io fails
+      }
+    }
 
     res.json({ success: true, message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully` });
   } catch (err) {

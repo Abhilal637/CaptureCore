@@ -1,4 +1,5 @@
 
+const User = require('../models/user');
 
 function adminAuth(req, res, next) {
   if (req.session && req.session.isAdmin === true && req.session.admin) {
@@ -23,12 +24,15 @@ function noCache(req, res, next) {
 
 
 const checkBlocked = async (req, res, next) => {
-  if (!req.session.user) return next(); 
+  if (!req.user) return next(); 
 
   try {
-    const user = await User.findById(req.session.user._id);
-    if (!user || user. isBlocked) {
+    // req.user is already the user object from isUserLoggedIn middleware
+    if (req.user.isBlocked) {
       req.session.destroy(() => {
+        if (req.headers['content-type'] === 'application/json') {
+          return res.status(401).json({ message: 'User account is blocked' });
+        }
         res.redirect('/login?isBlocked=true'); 
       });
     } else {
@@ -36,6 +40,9 @@ const checkBlocked = async (req, res, next) => {
     }
   } catch (err) {
     console.error('Blocked check failed:', err);
+    if (req.headers['content-type'] === 'application/json') {
+      return res.status(500).json({ message: 'Server error' });
+    }
     res.redirect('/login');
   }
 };
