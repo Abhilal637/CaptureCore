@@ -4,107 +4,144 @@
   <meta charset="UTF-8" />
   <title>Edit Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet"/>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
-  <div class="flex min-h-screen">
-    <!-- Sidebar -->
-    <%- include('../partial/admin/sidebar') %>
+<body class="bg-gray-100 py-10 px-6 font-sans text-gray-800">
 
-    <!-- Main Content -->
-    <main class="flex-1 p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-semibold">Edit Product</h1>
-        <a href="/admin/products" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Back to Products</a>
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded shadow">
+    <h2 class="text-2xl font-semibold mb-6">Edit Product</h2>
+
+    <form
+      action="/admin/products/edit/<%= product._id %>"
+      method="POST"
+      enctype="multipart/form-data"
+      class="space-y-6"
+    >
+      <!-- Product Name -->
+      <div>
+        <label for="name" class="block text-sm font-medium">Product Name</label>
+        <input type="text" name="name" id="name" value="<%= product.name %>"
+               class="mt-1 w-full border rounded px-3 py-2" required />
       </div>
 
-      <div class="flex justify-center">
-        <form id="productForm" method="POST" action="/admin/products/edit/<%= product._id %>" enctype="multipart/form-data" class="bg-white rounded-lg shadow-lg p-8 w-full max-w-2xl flex flex-col gap-4">
-          
-          <label class="font-bold text-lg">Product Name</label>
-          <input type="text" name="name" value="<%= product.name %>" class="border rounded px-4 py-2 text-lg" required />
+      <!-- Price -->
+      <div>
+        <label for="price" class="block text-sm font-medium">Price</label>
+        <input type="number" name="price" id="price" value="<%= product.price %>"
+               class="mt-1 w-full border rounded px-3 py-2" required />
+      </div>
 
-          <label class="font-bold text-lg">Description</label>
-          <textarea name="description" class="border rounded px-4 py-2 text-lg" required><%= product.description %></textarea>
+      <!-- Description -->
+      <div>
+        <label for="description" class="block text-sm font-medium">Description</label>
+        <textarea name="description" id="description"
+                  class="mt-1 w-full border rounded px-3 py-2" rows="3" required><%= product.description %></textarea>
+      </div>
 
-          <label class="font-bold text-lg">Price ($)</label>
-          <input type="number" name="price" value="<%= product.price %>" class="border rounded px-4 py-2 text-lg" required />
+      <!-- Image Upload & Crop -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <% for (let i = 0; i < 3; i++) { %>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Image <%= i + 1 %></label>
 
-          <label class="font-bold text-lg">Stock</label>
-          <input type="number" name="stock" value="<%= product.stock %>" class="border rounded px-4 py-2 text-lg" required />
+            <input type="file" accept="image/*" class="imageInput hidden" id="imageInput<%= i %>"/>
+            <button type="button" onclick="document.getElementById('imageInput<%= i %>').click()"
+                    class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-sm rounded">
+              Choose Image
+            </button>
 
-       
-          <label class="font-bold text-lg">Product Image</label>
-          <input type="file" accept="image/*" id="imageInput" class="border rounded px-4 py-2 text-lg" />
-          <input type="hidden" name="croppedImage" id="croppedImageInput" />
+            <div class="border rounded overflow-hidden w-full h-40 bg-gray-100 flex items-center justify-center">
+              <img id="preview<%= i %>" src="/uploads/<%= product.images[i] || '' %>" alt="Preview" class="max-h-full" />
+            </div>
 
-          <div class="mt-4">
-            <img id="imagePreview" src="<%= product.images?.[0] || '/images/placeholder.jpg' %>" class="max-w-xs max-h-64 rounded shadow" />
+            <!-- Hidden input to hold base64 cropped image -->
+            <input type="hidden" name="croppedImages[]" id="croppedImage<%= i %>" />
+            <!-- Include existing image name if not changed -->
+            <input type="hidden" name="existingImages[]" value="<%= product.images[i] || '' %>" />
           </div>
-
-          <button type="submit" class="px-4 py-2 text-lg font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-all">
-            Update Product
-          </button>
-        </form>
+        <% } %>
       </div>
-    </main>
+
+      <!-- Submit -->
+      <div>
+        <button type="submit" class="mt-6 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          Update Product
+        </button>
+      </div>
+    </form>
   </div>
 
-  <!-- Cropper.js -->
+  <!-- Cropper Modal -->
+  <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white p-4 rounded shadow max-w-lg w-full">
+      <div class="text-right">
+        <button onclick="closeCropper()" class="text-gray-600 hover:text-black">&times;</button>
+      </div>
+      <div>
+        <img id="cropperImage" class="max-w-full max-h-[60vh] mx-auto" />
+      </div>
+      <div class="text-center mt-4">
+        <button onclick="cropImage()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Crop & Set Image</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script>
-    let cropper;
-    const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
-    const croppedImageInput = document.getElementById('croppedImageInput');
+    let currentCropper;
+    let currentIndex;
 
-    imageInput.addEventListener('change', function (e) {
-      const file = e.target.files[0];
-      if (file) {
+    const imageInputs = document.querySelectorAll('.imageInput');
+    imageInputs.forEach((input, index) => {
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        currentIndex = index;
         const reader = new FileReader();
-        reader.onload = function () {
-          imagePreview.src = reader.result;
-          if (cropper) cropper.destroy();
-          cropper = new Cropper(imagePreview, {
-            aspectRatio: 1,
-            viewMode: 1,
-            autoCropArea: 1,
-            cropend: () => {
-              const canvas = cropper.getCroppedCanvas();
-              croppedImageInput.value = canvas.toDataURL('image/jpeg');
-            }
-          });
+        reader.onload = function (e) {
+          const cropperImage = document.getElementById('cropperImage');
+          cropperImage.src = e.target.result;
+
+          document.getElementById('cropperModal').classList.remove('hidden');
+
+          if (currentCropper) {
+            currentCropper.destroy();
+          }
+
+          setTimeout(() => {
+            currentCropper = new Cropper(cropperImage, {
+              aspectRatio: 1,
+              viewMode: 1,
+              autoCropArea: 1,
+            });
+          }, 100); // Small delay ensures cropper binds properly
         };
         reader.readAsDataURL(file);
-      }
+      });
     });
 
-    document.getElementById('productForm').addEventListener('submit', (e) => {
-      if (cropper) {
-        const canvas = cropper.getCroppedCanvas();
-        croppedImageInput.value = canvas.toDataURL('image/jpeg');
+    function closeCropper() {
+      document.getElementById('cropperModal').classList.add('hidden');
+      if (currentCropper) {
+        currentCropper.destroy();
+        currentCropper = null;
       }
-    });
-
-    $('.category-toggle').change(function () {
-  const categoryId = $(this).data('category-id');
-  const newStatus = $(this).prop('checked');
-
-  $.ajax({
-    url: `/admin/category/status/${categoryId}`,
-    method: 'PATCH',
-    data: { active: newStatus },
-    success: function (res) {
-      if (!res.success) {
-        Swal.fire('Error', 'Failed to update category status.', 'error');
-      }
-    },
-    error: function () {
-      Swal.fire('Error', 'Failed to update category status.', 'error');
     }
-  });
-});
 
+    function cropImage() {
+      if (currentCropper) {
+        const canvas = currentCropper.getCroppedCanvas({ width: 400, height: 400 });
+        const base64 = canvas.toDataURL('image/jpeg');
+
+        document.getElementById(`preview${currentIndex}`).src = base64;
+        document.getElementById(`croppedImage${currentIndex}`).value = base64;
+
+        closeCropper();
+      }
+    }
   </script>
+
 </body>
 </html>

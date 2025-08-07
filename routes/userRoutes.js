@@ -149,6 +149,7 @@ router.post('/order/:orderId/cancel-product/:productId', isUserLoggedIn, orderCo
 router.get('/order/:orderId/invoice', isUserLoggedIn, orderController.downloadInvoice);
 router.post('/order/return', isUserLoggedIn, orderController.returnEntireOrder);
 router.post('/order/return-item', isUserLoggedIn, orderController.returnOrderItem);
+router.get('/wallet', isUserLoggedIn, profileController.getWallet);
 
 // Logout
 router.route('/logout')

@@ -53,15 +53,18 @@ router.post(
   '/products/edit/:id',
   adminAuth,
   noCache,
-  upload.array('image', 3),
+  upload.array('images', 3), // ✅ Accepts up to 3 files
   validator('editproductRules'),
   productControllers.updateProduct
 );
+
 router.get('/orders',adminAuth,adminordercontroller.listOrder)
 router.get('/orders/:id',adminAuth,adminordercontroller.viewOrderDetails)
-router.post('/orders/:id/update-status', adminordercontroller.updateOrderStatus);
-router.post('/orders/:id/approve-return',adminAuth,adminordercontroller.approveReturn)
-router.post('/orders/:id/refund', adminordercontroller.verifyReturnAndRefund);
+router.post('/orders/:id/update-status', adminordercontroller.updateOrderStatus); 
+router.post('/orders/:orderId/items/:productId/verify-return', adminordercontroller.verifyReturnAndRefund);
+
+
+
 
 
 router.post('/products/toggle-status/:id', adminAuth, noCache, productControllers.toggleProductStatus);

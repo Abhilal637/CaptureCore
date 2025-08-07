@@ -31,9 +31,9 @@ const userSchema = new mongoose.Schema({
   isBlocked: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
   wallet: {
-  type: Number,
-  default: 0
-},
+    type: Number,
+    default: 0
+  },
 
   
   otp: { type: String },
@@ -52,12 +52,6 @@ const userSchema = new mongoose.Schema({
   
   resetToken: String,
   resetTokenExpiry: Date,
-
-  wallet: {
-  type: Number,
-  default: 0
-},
-  
 
   wishlist: [{
     type: mongoose.Schema.Types.ObjectId,

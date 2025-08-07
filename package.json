@@ -31,7 +31,8 @@
     "sharp": "^0.34.3",
     "socket.io": "^4.8.1",
     "streamifier": "^0.1.1",
-    "twilio": "^5.8.0"
+    "twilio": "^5.8.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",

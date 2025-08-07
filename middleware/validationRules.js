@@ -1,5 +1,4 @@
-// middlewares/validationRules.js
-const { check } = require('express-validator');
+const { check, body } = require('express-validator');
 
 // Reusable regex patterns
 const onlyLettersSpaces = /^[A-Za-z\s]+$/;
@@ -138,22 +137,30 @@ module.exports = {
   // ✅ EDIT PRODUCT
   editproductRules: [
     check('productName')
-      .notEmpty().withMessage('Product name is required')
+      .optional()
       .matches(onlyAlphanumericAndPunctuation).withMessage('Product name contains invalid characters')
       .isLength({ min: 2, max: 100 }).withMessage('Product name must be between 2 and 100 characters'),
 
     check('price')
-      .notEmpty().withMessage('Price is required')
+      .optional()
       .isFloat({ min: 0 }).withMessage('Price must be a positive number'),
 
     check('stock')
-      .notEmpty().withMessage('Stock is required')
+      .optional()
       .isInt({ min: 0 }).withMessage('Stock must be a non-negative whole number'),
 
     check('description')
-      .notEmpty().withMessage('Description is required')
+      .optional()
       .matches(onlyAlphanumericAndPunctuation).withMessage('Description contains invalid characters')
-      .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters')
+      .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters'),
+
+    // ✅ Require minimum 3 images if new images are uploaded
+    body().custom((_, { req }) => {
+      if (req.files && req.files.length > 0 && req.files.length < 3) {
+        throw new Error('Please upload at least 3 cropped images');
+      }
+      return true;
+    })
   ],
 
   // ✅ RESET PASSWORD
@@ -191,3 +198,4 @@ module.exports = {
       })
   ]
 };
+  

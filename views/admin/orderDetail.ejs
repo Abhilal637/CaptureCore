@@ -49,12 +49,17 @@
             <span class="text-gray-500">No further status updates available</span>
           <% } %>
 
-          <% if (order.status === 'Delivered' && order.returnRequested && !order.returnVerified) { %>
-            <form method="POST" action="/admin/orders/<%= order._id %>/verify-return">
-              <button type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
-                Approve Return & Refund
-              </button>
-            </form>
+          <!-- ✅ Updated: Per-item Return Approval Buttons -->
+          <% if ((order.status === 'Return Requested' || order.status === 'Returned') && !order.returnVerified) { %>
+            <% order.items.forEach(item => { %>
+              <% if ((item.status === 'Return Requested' || item.status === 'Returned') && !item.returnApproved) { %>
+                <form class="return-form" data-product-id="<%= item.product._id || item.product %>" data-order-id="<%= order._id %>">
+                  <button type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
+                    Approve Return & Refund for <%= item.productName %>
+                  </button>
+                </form>
+              <% } %>
+            <% }) %>
           <% } %>
 
           <a href="/admin/orders" class="text-blue-600 hover:underline">← Back to Order List</a>
@@ -69,16 +74,30 @@
                 <th class="px-4 py-2">Qty</th>
                 <th class="px-4 py-2">Price</th>
                 <th class="px-4 py-2">Total</th>
+                <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               <% order.items.forEach(item => { %>
-                <tr>
+                <tr class="border-t">
                   <td class="px-4 py-2"><%= item.productName %></td>
                   <td class="px-4 py-2"><%= item.quantity %></td>
                   <td class="px-4 py-2">₹<%= item.price.toFixed(2) %></td>
                   <td class="px-4 py-2">
                     ₹<%= item.totalAmount ? item.totalAmount.toFixed(2) : (item.price * item.quantity).toFixed(2) %>
+                  </td>
+                  <td class="px-4 py-2"><%= item.status %></td>
+                  <td class="px-4 py-2">
+                    <% if (item.status === 'Return Requested' && !item.returnApproved) { %>
+                      <form class="return-form" data-product-id="<%= item.product._id || item.product %>" data-order-id="<%= order._id %>">
+                        <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                          Approve Return & Refund
+                        </button>
+                      </form>
+                    <% } else { %>
+                      <span class="text-gray-500">-</span>
+                    <% } %>
                   </td>
                 </tr>
               <% }); %>
@@ -87,8 +106,40 @@
         </div>
       </div>
     </div>
-
   </div>
+  
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.querySelectorAll(".return-form").forEach(form => {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const orderId = form.dataset.orderId;
+      const productId = form.dataset.productId;
+
+      try {
+        const res = await fetch(`/admin/orders/${orderId}/items/${productId}/verify-return`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          Swal.fire({
+            title: 'Return Approved!',
+            text: data.message,
+            icon: 'success',
+            confirmButtonText: 'OK'
+          }).then(() => window.location.reload());
+        } else {
+          Swal.fire('Error', data.message || 'Something went wrong', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'Network or server error', 'error');
+      }
+    });
+  });
+</script>
 
 </body>
 </html>

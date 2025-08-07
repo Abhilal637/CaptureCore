@@ -500,49 +500,28 @@ exports.searchOrders = async (req, res) => {
 
     const order = await Order.findOne({ orderId, user: userId });
     if (!order) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Order not found' 
-      });
+      return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
     const item = order.items.find(i => i.product.toString() === productId);
     if (!item) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Product not found in order' 
-      });
+      return res.status(404).json({ success: false, message: 'Product not found in order' });
     }
 
-    if (item.isReturned) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Item already returned' 
-      });
+    if (item.status === 'Returned' || item.status === 'Return Requested') {
+      return res.status(400).json({ success: false, message: 'Item already returned or return requested' });
     }
 
-    item.isReturned = true;
+    item.isReturned = false;
     item.returnReason = reason || '';
-    order.status = 'Returned';
-
-    const product = await Product.findById(productId);
-    if (product) {
-      product.stock += item.quantity;
-      await product.save();
-    }
-
+    item.status = 'Return Requested';
+    order.status = 'Return Requested';
     await order.save();
 
-    res.json({ 
-      success: true, 
-      message: 'Item returned successfully' 
-    });
+    res.json({ success: true, message: 'Return requested successfully' });
   } catch (error) {
     console.error('Error in returnOrderItem:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

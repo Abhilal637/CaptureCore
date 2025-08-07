@@ -101,6 +101,9 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     order.status = status;
+    if (status === 'Delivered') {
+      order.paymentStatus = 'Paid';
+    }
     await order.save();
 
     res.redirect(`/admin/orders/${order._id}`);
@@ -109,56 +112,36 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+exports.verifyReturnAndRefund = async (req, res) => {
+  const orderId = req.params.orderId;
+  const productId = req.params.productId;
 
+  try {
+    const order = await Order.findById(orderId).populate('user');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
 
+    const item = order.items.find(p => p.product.toString() === productId);
+    if (!item) return res.status(404).json({ message: 'Product not found in order' });
 
-
-exports.approveReturn = async(req,res)=>{
-  try{
-    const order= await Order.findById(req.params.id).populate('user')
-    const product = order.products.find(p=>p.returnRequested && !p.returnApproved)
-    if(!product) return res.redirect(`/admin/orders/${order._id}`)
-      product.returnApproved= true
-    await order.save()
-
-
-
-    const refundAmount = product.product.price*product.quantity
-    order.user.wallet+= refundAmount
-    await order.user.save()
-
-    res.redirect(`/admin/orders/${order._id}`)
-  }catch(err){
-    console.error('Error approved return:',err)
-    res,status(500).send('Server Error')
-  }
-}
-
-
-exports.verifyReturnAndRefund=async(req,res)=>{
-  const{id}=req.params
-  try{
-    const order = await Order.findById(id).populate('user')
-
-    if(!order){
-      return res.status(404).send('Order not found')
+    if (item.status === 'Returned' || item.returnApproved) {
+      return res.status(400).json({ message: 'Already returned' });
     }
 
-    if(order.status!=='Delivered'){
-      return res.status(400).send('Only deliverd Order can be returned')
+    item.status = 'Returned';
+    item.returnRequested = false;
+    item.returnApproved = true;
+
+    if (order.items.every(i => i.status === 'Returned')) {
+      order.status = 'Returned';
     }
-    order.status='Returned';
-    await order.save()
 
+    order.user.wallet += item.price * item.quantity;
+    await order.user.save();
+    await order.save();
 
-    const user= order.user;
-    user.wallet+=order.totalAmount
-    await user.save()
-
-
-    res.redirec('/admin/orders');
-  }catch(error){
-    console.log('Error during return verification and refund',error)
-    res.status(500).send('Internal server error')
+    res.json({ message: 'Return approved and amount refunded to wallet' });
+  } catch (error) {
+    console.error('Return approval error:', error);
+    res.status(500).json({ message: 'Server Error' });
   }
-}
+};

@@ -351,3 +351,9 @@ exports.setDefaultAddress = async (req, res) => {
     res.redirect('/addresses?error=Could not update default address');
   }
 };
+exports.getWallet = (req, res) => {
+  res.render('user/wallet', {
+    user: req.session.userId, 
+    walletTransactions: [] 
+  });
+};

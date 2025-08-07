@@ -357,7 +357,7 @@ exports.postResetPassword = async (req, res) => {
 exports.getProducts = async (req, res) => {
   try {
     const { search = '', sort = '', category = '', priceRange = '', page = 1 } = req.query;
-    const limit = 8;
+    const limit = 9;
     const skip = (page - 1) * limit;
 
     let query = {
@@ -383,7 +383,6 @@ exports.getProducts = async (req, res) => {
       if (cat) {
         query.category = category;
       } else {
-        // If category is inactive or invalid, show no products
         const categories = await Category.find({ isDeleted: false, active: true });
         return res.render('user/shop', {
           products: [],
@@ -395,7 +394,6 @@ exports.getProducts = async (req, res) => {
         });
       }
     }
-   
 
     const sortOptionsMap = {
       'price-asc': { price: 1 },
@@ -409,23 +407,29 @@ exports.getProducts = async (req, res) => {
     };
     const sortOption = sortOptionsMap[sort] || {};
 
-    const total = await Product.countDocuments(query);
+    // Full product list (filtered but not paginated) to get real total count
+    const allMatchingProducts = await Product.find(query).populate({
+      path: 'category',
+      match: { active: true, isDeleted: false }
+    });
+    const filteredCount = allMatchingProducts.filter(p => p.category).length;
 
+    // Paginated product list
     const products = await Product.find(query)
       .populate({
         path: 'category',
-        match: { active: true, isDeleted: false } // ✅ only populate active categories
+        match: { active: true, isDeleted: false }
       })
       .sort(sortOption)
       .skip(skip)
       .limit(limit);
-    const filteredProducts = products.filter(p => p.category); // Keep only products with active categories
+    const filteredProducts = products.filter(p => p.category);
 
     const categories = await Category.find({ isDeleted: false, active: true });
 
     return res.render('user/shop', {
       products: filteredProducts,
-      total: filteredProducts.length,
+      total: filteredCount,
       currentPage: parseInt(page),
       limit,
       query: req.query,

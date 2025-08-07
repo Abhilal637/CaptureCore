@@ -127,24 +127,24 @@
             <% }); %>
           </div>
 
-          <!-- Pagination -->
-          <% if (total > limit) { %>
-            <div class="flex justify-center mt-10 space-x-2 text-gray-500 flex-wrap">
-              <% if (currentPage > 1) { %>
-                <a href="/shop?page=<%= currentPage - 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&laquo;</a>
-              <% } %>
+            <!-- Pagination -->
+            <% if (total > limit) { %>
+              <div class="flex justify-center mt-10 space-x-2 text-gray-500 flex-wrap">
+                <% if (currentPage > 1) { %>
+                  <a href="/shop?page=<%= currentPage - 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&laquo;</a>
+                <% } %>
 
-              <% for (let i = 1; i <= Math.ceil(total / limit); i++) { %>
-                <a href="/shop?page=<%= i %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
-                   class="<%= currentPage === i ? 'font-semibold text-black' : 'hover:text-black' %>"><%= i %></a>
-              <% } %>
+                <% for (let i = 1; i <= Math.ceil(total / limit); i++) { %>
+                  <a href="/shop?page=<%= i %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
+                    class="<%= currentPage === i ? 'font-semibold text-black' : 'hover:text-black' %>"><%= i %></a>
+                <% } %>
 
-              <% if (currentPage < Math.ceil(total / limit)) { %>
-                <a href="/shop?page=<%= currentPage + 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&raquo;</a>
-              <% } %>
-            </div>
+                <% if (currentPage < Math.ceil(total / limit)) { %>
+                  <a href="/shop?page=<%= currentPage + 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&raquo;</a>
+                <% } %>
+              </div>
+            <% } %>
           <% } %>
-        <% } %>
       </div>
     </div>
 

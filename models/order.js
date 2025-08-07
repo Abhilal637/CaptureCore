@@ -19,7 +19,7 @@ const orderSchema = new mongoose.Schema({
 
     status: {
       type: String,
-      enum: ['Placed', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'],
+      enum: ['Placed', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled','Return Requested' ,'Returned', ],
       default: 'Placed'
     },
 
@@ -39,9 +39,15 @@ const orderSchema = new mongoose.Schema({
     default: 'COD'
   },
 
+  paymentStatus: {
+    type: String,
+    enum: ['Pending', 'Paid'],
+    default: 'Pending'
+  },
+
   status: {
     type: String,
-    enum: ['Placed', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'],
+    enum: ['Placed', 'Confirmed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled','Return Requested','Returned'],
     default: 'Placed'
   },
 

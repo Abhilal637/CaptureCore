@@ -3,6 +3,7 @@ const Category = require('../models/category');
 const sharp = require('sharp');
 const fs= require('fs')
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 exports.listProducts = async (req, res) => {
     try {
@@ -80,29 +81,65 @@ exports.editProduct = async (req, res) => {
         res.status(500).send("error loading product");
     }
 };
+
+
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, description, stock } = req.body;
+    const { name, description, stock, croppedImages = [], existingImages = [] } = req.body;
     const productId = req.params.id;
 
+    const currentProduct = await product.findById(productId);
+
     const updatedFields = {
-      name,
-      description,
-      stock: parseInt(stock),
+      ...(name && { name }),
+      ...(description && { description }),
+      ...(stock && { stock: parseInt(stock) }),
+      isListed: currentProduct.isListed,
+      isActive: currentProduct.isActive,
+      isBlocked: currentProduct.isBlocked,
+      isDeleted: currentProduct.isDeleted,
+      images: currentProduct.images // default to existing images
     };
 
-  
-    if (req.file) {
-      updatedFields.image = req.file.filename;
+    let finalImagePaths = [];
+
+    // Step 1: Handle cropped images (base64)
+    if (croppedImages && croppedImages.length >= 3) {
+      for (let i = 0; i < croppedImages.length; i++) {
+        const base64Data = croppedImages[i];
+        if (base64Data && base64Data.startsWith('data:image')) {
+          const matches = base64Data.match(/^data:image\/(jpeg|png);base64,(.+)$/);
+          if (!matches) continue;
+
+          const ext = matches[1] === 'png' ? 'png' : 'jpg';
+          const buffer = Buffer.from(matches[2], 'base64');
+
+          const filename = `${uuidv4()}.${ext}`;
+          const filePath = path.join(__dirname, '../public/uploads/products', filename);
+
+          // Save file to disk
+          fs.writeFileSync(filePath, buffer);
+          finalImagePaths.push(`/uploads/products/${filename}`);
+        } else {
+          // Use existing image path if not replaced
+          if (existingImages[i]) {
+            finalImagePaths.push(existingImages[i]);
+          }
+        }
+      }
+
+      updatedFields.images = finalImagePaths;
     }
+
     await product.findByIdAndUpdate(productId, updatedFields, { new: true });
 
-    res.redirect('/admin/products'); 
+    res.redirect('/admin/products');
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(500).send('Server Error');
   }
-};  
+};
+
 exports.toggleProductStatus = async (req, res) => {
   try {
     const productId = req.params.id;
