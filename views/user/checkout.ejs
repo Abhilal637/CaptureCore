@@ -2,136 +2,232 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Checkout - CaptureCore</title>
+  <title>Checkout | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-900">
-  <%- include('partial/navbar') %>
-  
+<body class="bg-gray-100 text-gray-800">
+  <%- include('../partial/user/navbar') %>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">
+      Checkout
+      <% if (isBuyNow) { %>
+        <span class="text-sm text-green-600 font-normal">(Buy Now)</span>
+      <% } %>
+    </h1>
 
+    <!-- START FORM -->
+    <form action="/place-order" method="POST">
+      <% if (isBuyNow && buyNowProduct) { %>
+        <input type="hidden" name="productId" value="<%= buyNowProduct._id %>">
+        <input type="hidden" name="quantity" value="<%= buyNowProduct.quantity %>">
+      <% } %>
 
-  <!-- Page Header -->
-  <div class="text-center py-10 bg-gray-100">
-    <h1 class="text-3xl font-semibold tracking-wide">Checkout</h1>
-    <p class="text-gray-500 text-sm">Home / Checkout</p>
-  </div>
+      <!-- Address Section -->
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">Shipping Address</h2>
 
-  <main class="max-w-6xl mx-auto px-4 py-12 grid md:grid-cols-2 gap-12">
-    
-    <!-- Billing Details -->
-    <section>
-      <h2 class="text-xl font-semibold mb-6">Billing Details</h2>
-      <form action="/order" method="POST" class="space-y-4">
-        <input type="text" name="firstName" placeholder="First Name" class="w-full border p-2 rounded">
-        <input type="text" name="lastName" placeholder="Last Name" class="w-full border p-2 rounded">
-        <input type="text" name="company" placeholder="Company Name (optional)" class="w-full border p-2 rounded">
-        <input type="text" name="country" placeholder="Country" class="w-full border p-2 rounded">
-        <input type="text" name="street" placeholder="Street Address" class="w-full border p-2 rounded">
-        <input type="text" name="city" placeholder="Town / City" class="w-full border p-2 rounded">
-        <input type="text" name="state" placeholder="State" class="w-full border p-2 rounded">
-        <input type="text" name="zip" placeholder="ZIP Code" class="w-full border p-2 rounded">
-        <input type="tel" name="phone" placeholder="Phone" class="w-full border p-2 rounded">
-        <input type="email" name="email" placeholder="Email Address" class="w-full border p-2 rounded">
-      </form>
-    </section>
-
-    <!-- Order Summary -->
-    <section>
-      <h2 class="text-xl font-semibold mb-6">Your Order</h2>
-      <div class="bg-white shadow rounded p-6 space-y-4">
-
-        <!-- Product 1 -->
-<div class="flex justify-between border-b pb-2">
-  <div>
-    <p class="font-medium">Sony Alpha A7 III</p>
-    <p class="text-sm text-gray-500">x 1</p>
-  </div>
-  <p class="text-right">₹150000</p>
-</div>
-
-
-<!-- Product 2 -->
-<div class="flex justify-between border-b pb-2">
-  <div>
-    <p class="font-medium">Canon 50mm Lens</p>
-    <p class="text-sm text-gray-500">x 2</p>
-  </div>
-  <p class="text-right">₹16000</p>
-</div>
-
-<!-- Cart Totals -->
-<div class="border-t pt-4 space-y-2">
-  <div class="flex justify-between">
-    <span>Subtotal</span>
-    <span>₹166000</span>
-  </div>
-  <div class="flex justify-between font-semibold">
-    <span>Total</span>
-    <span>₹166050</span>
-  </div>
-</div>
-
-     
-
-        <!-- Cart Totals -->
-        <div class="border-t pt-4 space-y-2">
-          <div class="flex justify-between">
-            
-          <div class="flex justify-between font-semibold">
-            
+        <% if (addresses && addresses.length > 0) { %>
+          <div class="grid gap-6 md:grid-cols-2">
+            <% addresses.forEach(address => { %>
+              <label class="border rounded-lg p-5 shadow-sm bg-white cursor-pointer flex gap-4 peer-checked:ring-2 peer-checked:ring-blue-500">
+                <input 
+                  type="radio" 
+                  name="addressId" 
+                  value="<%= address._id %>" 
+                  class="accent-blue-600 mt-1"
+                  required
+                >
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold"><%= address.name %></h3>
+                  <p><%= address.street %>, <%= address.city %>, <%= address.state %>, <%= address.zipCode %></p>
+                  <p>Phone: <%= address.phone %></p>
+                  <% if (defaultAddress === address._id.toString()) { %>
+                    <span class="text-sm text-green-600 font-medium">Default Address</span>
+                  <% } %>
+                </div>
+                <a href="#" class="text-blue-600 text-sm hover:underline edit-address-btn" data-address-id="<%= address._id %>">Edit</a>
+              </label>
+            <% }) %>
           </div>
-        </div>
+        <% } else { %>
+          <p class="text-gray-500">No address found.</p>
+        <% } %>
 
-        <!-- Shipping -->
         <div class="mt-4">
-          <h4 class="text-sm font-semibold mb-2">Shipping Method</h4>
-          <div class="space-y-2 text-sm">
-            <label><input type="radio" name="shipping" value="standard" checked> Standard Delivery - ₹50</label><br>
-            <label><input type="radio" name="shipping" value="express"> Express Delivery - ₹150</label>
+          <a href="/addresses/add" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add New Address</a>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <div class="mb-8">
+        <h2 class="text-xl font-semibold mb-4">Order Summary</h2>
+        <div class="space-y-4">
+          <% items.forEach(item => { %>
+            <div class="flex gap-4 items-center bg-white p-4 rounded shadow">
+              <img 
+                src="<%= item.image %>" 
+                onerror="this.onerror=null; this.src='/images/placeholder.png';" 
+                class="w-20 h-20 object-cover rounded" 
+                alt="Product Image">
+              <div class="flex-1">
+                <h3 class="font-medium"><%= item.name %></h3>
+                <p>Quantity: <%= item.quantity %></p>
+              </div>
+              <div class="text-right">
+                <p class="text-lg font-semibold">
+                  ₹<%= item.itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+                </p>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <!-- Price Summary -->
+      <div class="bg-white p-6 rounded shadow mb-8">
+        <h2 class="text-xl font-semibold mb-4">Price Summary</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span>Subtotal</span>
+            <span>₹<%= subtotal.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between">
+            <span>Tax (5%)</span>
+            <span>₹<%= tax.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between">
+            <span>Discount</span>
+            <span>- ₹<%= discount.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between">
+            <span>Shipping</span>
+            <span>₹<%= shipping.toFixed(2) %></span>
+          </div>
+          <div class="border-t pt-2 flex justify-between font-semibold text-lg">
+            <span>Total</span>
+            <span>₹<%= finalTotal.toFixed(2) %></span>
           </div>
         </div>
+      </div>
 
-        <!-- Place Order Button -->
-        <form action="/checkout" method="POST" class="pt-6">
-          <button type="submit" class="w-full bg-black text-white py-3 rounded hover:bg-gray-800">
-           Go to checkout
-          </button>
-        </form>
+      <!-- Payment Method -->
+      <div class="bg-white p-6 rounded shadow mb-8">
+        <h2 class="text-xl font-semibold mb-4">Select Payment Method</h2>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" name="paymentMethod" value="COD" checked class="peer hidden">
+            <div class="peer-checked:ring-2 peer-checked:ring-green-500 bg-gray-100 p-3 rounded-full transition">
+              💵 Cash on Delivery
+            </div>
+          </label>
+        </div>
       </div>
-    </section>
-  </main>
 
-  <!-- Footer -->
-  <footer class="bg-white mt-12 py-8 border-t">
-    <div class="max-w-6xl mx-auto px-4 grid md:grid-cols-4 gap-8 text-sm text-gray-600">
-      <div>
-        <h4 class="font-semibold">CaptureCore</h4>
-        <p>Minimalist camera gear hub for professionals & creators.</p>
+      <!-- Submit Button -->
+      <button type="submit" class="w-full bg-green-600 text-white py-3 rounded text-lg hover:bg-green-700">
+        Place Order
+      </button>
+
+    </form>
+    <!-- END FORM -->
+  </div>
+
+<!-- Address Edit Modal -->
+<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-8 w-full max-w-md relative">
+    <button id="closeEditModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
+    <h2 class="text-xl font-semibold mb-4">Edit Address</h2>
+    <form id="editAddressForm">
+      <input type="hidden" name="addressId" id="editAddressId">
+      <div class="mb-4">
+        <label class="block mb-1">Name</label>
+        <input type="text" name="name" id="editName" class="w-full border rounded px-3 py-2" required>
       </div>
-      <div>
-        <h4 class="font-semibold">Quick Links</h4>
-        <ul>
-          <li><a href="/shop">Shop</a></li>
-          <li><a href="/about">About</a></li>
-          <li><a href="/blog">Blog</a></li>
-          <li><a href="/contact">Contact</a></li>
-        </ul>
+      <div class="mb-4">
+        <label class="block mb-1">Street</label>
+        <input type="text" name="street" id="editStreet" class="w-full border rounded px-3 py-2" required>
       </div>
-      <div>
-        <h4 class="font-semibold">Help & Info</h4>
-        <ul>
-          <li><a href="#">Return Policy</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms & Conditions</a></li>
-        </ul>
+      <div class="mb-4">
+        <label class="block mb-1">City</label>
+        <input type="text" name="city" id="editCity" class="w-full border rounded px-3 py-2" required>
       </div>
-      <div>
-        <h4 class="font-semibold">Contact Us</h4>
-        <p>support@capturecore.in</p>
-        <p>+91 12345 67890</p>
+      <div class="mb-4">
+        <label class="block mb-1">State</label>
+        <input type="text" name="state" id="editState" class="w-full border rounded px-3 py-2" required>
       </div>
-    </div>
-  </footer>
+      <div class="mb-4">
+        <label class="block mb-1">Zip Code</label>
+        <input type="text" name="zipCode" id="editZipCode" class="w-full border rounded px-3 py-2" required>
+      </div>
+      <div class="mb-4">
+        <label class="block mb-1">Phone</label>
+        <input type="text" name="phone" id="editPhone" class="w-full border rounded px-3 py-2" required>
+      </div>
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Address</button>
+    </form>
+  </div>
+</div>
+<script type="application/json" id="addresses-data">
+  <%= JSON.stringify(addresses || []) %>
+</script>
+<script>
+  let addresses = [];
+  try {
+    const addressesData = document.getElementById('addresses-data');
+    if (addressesData) {
+      addresses = JSON.parse(addressesData.textContent);
+    }
+  } catch (e) {
+    addresses = [];
+  }
+  document.querySelectorAll('.edit-address-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const addressId = this.dataset.addressId;
+      const address = addresses.find(a => a._id === addressId);
+      if (address) {
+        document.getElementById('editAddressId').value = address._id;
+        document.getElementById('editName').value = address.name;
+        document.getElementById('editStreet').value = address.street;
+        document.getElementById('editCity').value = address.city;
+        document.getElementById('editState').value = address.state;
+        document.getElementById('editZipCode').value = address.zipCode;
+        document.getElementById('editPhone').value = address.phone;
+        document.getElementById('editAddressModal').classList.remove('hidden');
+      }
+    });
+  });
+  document.getElementById('closeEditModal').addEventListener('click', function() {
+    document.getElementById('editAddressModal').classList.add('hidden');
+  });
+  document.getElementById('editAddressForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const addressId = document.getElementById('editAddressId').value;
+    const data = {
+      name: document.getElementById('editName').value,
+      street: document.getElementById('editStreet').value,
+      city: document.getElementById('editCity').value,
+      state: document.getElementById('editState').value,
+      zipCode: document.getElementById('editZipCode').value,
+      phone: document.getElementById('editPhone').value
+    };
+    try {
+      const res = await fetch(`/addresses/edit/${addressId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.ok) {
+        location.reload();
+      } else {
+        alert('Failed to update address.');
+      }
+    } catch (err) {
+      alert('Error updating address.');
+    }
+  });
+</script>
 
 </body>
 </html>

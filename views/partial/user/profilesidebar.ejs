@@ -29,10 +29,10 @@
                 </a>
             </li>
             <li>
-                <a href="/account/orders" class="block text-sm text-gray-600 hover:text-gray-800 py-2"> 📦  Order</a>
+                <a href="/orders" class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= (currentPage || '') === 'orders' ? 'text-gray-800 font-medium' : '' %>"> 📦  Orders</a>
             </li>
             <li>
-                <a href="/account/address" class="block text-sm text-gray-600 hover:text-gray-800 py-2"> ***✏️ Manage Address</a>
+                <a href="/addresses" class="block text-sm text-gray-600 hover:text-gray-800 py-2 <%= (currentPage || '') === 'addresses' ? 'text-gray-800 font-medium' : '' %>"> ✏️ Manage Address</a>
             </li>
             <li>
                 <a href="/account/wallet" class="block text-sm text-gray-600 hover:text-gray-800 py-2"> 💰 Wallet</a>

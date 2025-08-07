@@ -1,69 +1,93 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/userController');
 const passport = require('passport');
-const validator = require('../middleware/validator');
+
+const userController = require('../controllers/userController');
+const cartController = require('../controllers/cartcontroller');
+const wishlistController = require('../controllers/wishlistcontroller');
+const profileController = require('../controllers/profilecontroller');
+const orderController = require('../controllers/orderController');
+
+const validator = require('../middleware/validate');
 const upload = require('../middleware/upload');
 
-const { 
-    isUserLoggedIn, 
-    preventLoginIfLoggedIn, 
-    noCache, 
-    checkSessionTimeout, 
-    optionalAuth, 
-    sessionSecurity 
+const {
+  isUserLoggedIn,
+  preventLoginIfLoggedIn,
+  noCache,
+  checkSessionTimeout,
+  optionalAuth,
+  sessionSecurity
 } = require('../middleware/userauthmiddleware');
+
 const { checkBlocked } = require('../middleware/adminauthmiddleware');
 
-// Global middlewares
+// 🌐 Global Middlewares
 router.use(checkSessionTimeout);
 router.use(noCache);
 
-// Home
-router.route('/')
-  .get(optionalAuth, userController.getHome);
+router.get('/', optionalAuth, userController.getHome);
+router.get('/shop', userController.getProducts);
+router.get('/product/:id', userController.getProductDetails);
 
-// Auth: Signup
+// Signup
 router.route('/signup')
   .get(preventLoginIfLoggedIn, userController.getSignup)
-  .post(validator('signup'), preventLoginIfLoggedIn, userController.postSignup);
+  .post(validator('userSignupRules'), preventLoginIfLoggedIn, userController.postSignup);
 
-// Auth: Login
+// Login
 router.route('/login')
   .get(preventLoginIfLoggedIn, userController.getLogin)
-  .post(preventLoginIfLoggedIn, userController.postlogin);
+  .post(validator('userLoginRules'), preventLoginIfLoggedIn, userController.postlogin);
 
 // OTP
 router.route('/otp')
   .get(preventLoginIfLoggedIn, userController.getotpVerify)
-  .post(validator('otp'), preventLoginIfLoggedIn, userController.postOtpVerify);
+  .post(preventLoginIfLoggedIn, userController.postOtpVerify);
 
-router.route('/otp/resend')
-  .post(preventLoginIfLoggedIn, userController.resendOtp);
+router.post('/otp/resend', preventLoginIfLoggedIn, userController.resendOtp);
 
 // Forgot Password
 router.route('/forgot-password')
   .get(preventLoginIfLoggedIn, userController.getforgetPassword)
-  .post(validator('forgot-password'), preventLoginIfLoggedIn, userController.postForgetPassword);
+  .post(preventLoginIfLoggedIn, userController.postForgetPassword);
 
+// Reset Password
 router.route('/reset-password/:token')
   .get(preventLoginIfLoggedIn, userController.getResetPassword)
-  .post(validator('reset-password'), preventLoginIfLoggedIn, userController.postResetPassword);
+  .post(validator('resetPasswordRules'), preventLoginIfLoggedIn, userController.postResetPassword);
+
+// Google Auth
+router.get('/auth/google', preventLoginIfLoggedIn, passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/auth/google/callback',
+  preventLoginIfLoggedIn,
+  passport.authenticate('google', { failureRedirect: '/login', failureFlash: true }),
+  sessionSecurity,
+  (req, res) => {
+    try {
+      req.session.userId = req.user._id;
+      req.session.lastActivity = Date.now();
+      req.session.save(err => {
+        if (err) return res.redirect('/login?error=session_error');
+        res.redirect('/');
+      });
+    } catch (error) {
+      console.error('Google callback error:', error);
+      res.redirect('/login?error=auth_error');
+    }
+  }
+);
 
 // Profile
-router.route('/profile')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getProfile);
+router.get('/profile', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getProfile);
 
 router.route('/edit-profile')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getEditProfile)
-  .post(isUserLoggedIn, sessionSecurity, checkBlocked, upload.single('profileImage'), userController.postEditProfile);
+  .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getEditProfile)
+  .post(isUserLoggedIn, sessionSecurity,validator('editproductRules') ,checkBlocked, upload.single('profileImage'), profileController.postEditProfile);
 
-router.route('/edit-email')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getEditEmail);
-
-// Email OTP
-router.route('/email/send-otp')
-  .post(isUserLoggedIn, checkBlocked, userController.sendOtpForEmail);
+router.get('/edit-email', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getEditEmail);
+router.post('/email/send-otp', isUserLoggedIn, checkBlocked, profileController.sendOtpForEmail);
 
 router.route('/verify-email')
   .get(isUserLoggedIn, checkBlocked, (req, res) => {
@@ -72,91 +96,59 @@ router.route('/verify-email')
       newEmail: req.session.pendingEmail || 'your email'
     });
   })
-  .post(isUserLoggedIn, checkBlocked, userController.postverifyEmail);
+  .post(isUserLoggedIn, checkBlocked, profileController.postverifyEmail);
 
 // Change Password
 router.route('/change-password')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getChangePassword)
-  .post(isUserLoggedIn, sessionSecurity, checkBlocked, userController.postChangePassword);
+  .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getChangePassword)
+  .post(validator('changePasswordRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postChangePassword);
 
+// Address
+router.get('/account/address', isUserLoggedIn, sessionSecurity, checkBlocked, (req, res) => res.redirect('/addresses'));
 
-
-// Address routes
 router.route('/addresses')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getAddresses)
-  .post(isUserLoggedIn, sessionSecurity, checkBlocked, validator('address'), userController.postAddaddress);
+  .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getAddresses)
+  .post(validator('addressRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postAddaddress);
 
-router.route('/addresses/add')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getAddress);
+router.get('/addresses/add', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getAddress);
 
 router.route('/addresses/edit/:id')
-  .get(isUserLoggedIn, sessionSecurity, checkBlocked, userController.getEditAddresses)
-  .post(isUserLoggedIn, sessionSecurity, checkBlocked, validator('address'), userController.postEditAddress);
+  .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getEditAddresses)
+  .post(validator('addressRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postEditAddress);
 
-router.route('/addresses/delete/:id')
-  .post(isUserLoggedIn, sessionSecurity, checkBlocked, userController.postDeleteAddress);
+router.post('/addresses/delete/:id', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postDeleteAddress);
+router.post('/addresses/default/:id', isUserLoggedIn, profileController.setDefaultAddress);
 
-// Redirect /account/address to /addresses for compatibility
-router.get('/account/address', isUserLoggedIn, sessionSecurity, checkBlocked, (req, res) => {
-  res.redirect('/addresses');
-});
-router.post('/addresses/default/:id', isUserLoggedIn, userController.setDefaultAddress);
-router.get('/cart', isUserLoggedIn, sessionSecurity, checkBlocked, userController.getCartPage);
-router.post('/add-to-cart/:productId', isUserLoggedIn, userController.addToCart); 
+// Cart
+router.get('/cart', isUserLoggedIn, sessionSecurity, checkBlocked, cartController.getCartPage);
+router.post('/add-to-cart/:productId', isUserLoggedIn, cartController.addToCart);
+router.get('/cart/count', cartController.getCartCount);
+router.post('/cart/remove/:productId', cartController.removeFromCart);
+router.post('/cart/update/:productId', cartController.updateCartItemQuantity);
+router.patch('/cart/update-quantity/:productId', cartController.updateCartItemQuantity);
+router.post('/cart/clear', isUserLoggedIn, cartController.clearCart);
 
-router.get('/cart/count', userController.getCartCount);
-router.post('/cart/remove/:productId', userController.removeFromCart);
-router.post('/cart/update/:productId', userController.updateCartItemQuantity);
-router.patch('/cart/update-quantity/:productId', userController.updateCartItemQuantity);
-router.post('/cart/clear', isUserLoggedIn, userController.clearCart);
+// Wishlist
+router.get('/wishlist', isUserLoggedIn, wishlistController.getWishlist);
+router.post('/wishlist/add/:productId', isUserLoggedIn, wishlistController.addToWishlist);
+router.delete('/wishlist/remove/:id', isUserLoggedIn, wishlistController.removeFromWishlist);
+router.post('/wishlist/toggle/:productId', isUserLoggedIn, wishlistController.toggleWishlist);
+router.delete('/wishlist/clear', isUserLoggedIn, wishlistController.clearWishlist);
 
+// Orders
+router.get('/checkout', isUserLoggedIn, userController.getCheckoutPage);
+router.post('/place-order', isUserLoggedIn, orderController.placeOrder);
+router.get('/orders', isUserLoggedIn, orderController.getOrders);
+router.get('/orderSuccess', isUserLoggedIn, orderController.getOrderSuccess);
+router.get('/order/:id', isUserLoggedIn, orderController.getOrderDetails);
+router.get('/search-orders', isUserLoggedIn, orderController.searchOrders);
 
-
-
-router.get('/wishlist', isUserLoggedIn, userController.getWishlist);
-router.post('/wishlist/add/:productId', isUserLoggedIn, userController.addToWishlist);
-router.delete('/wishlist/remove/:id', isUserLoggedIn, userController.removeFromWishlist);
-router.post('/wishlist/toggle/:productId', isUserLoggedIn, userController.toggleWishlist);
-router.delete('/wishlist/clear', isUserLoggedIn, userController.clearWishlist);
-
-
-
-
-
-// Google OAuth
-router.route('/auth/google')
-  .get(preventLoginIfLoggedIn, passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.route('/auth/google/callback')
-  .get(
-    preventLoginIfLoggedIn,
-    passport.authenticate('google', { failureRedirect: '/login', failureFlash: true }),
-    sessionSecurity,
-    (req, res) => {
-      try {
-        req.session.userId = req.user._id;
-        req.session.lastActivity = Date.now();
-        req.session.save((err) => {
-          if (err) {
-            console.error('Session save error:', err);
-            return res.redirect('/login?error=session_error');
-          }
-          console.log('Session saved successfully, redirecting to home');
-          res.redirect('/');
-        });
-      } catch (error) {
-        console.error('Google callback error:', error);
-        res.redirect('/login?error=auth_error');
-      }
-    }
-  );
-
-// Shop
-router.route('/shop')
-  .get(userController.getProducts);
-
-router.route('/product/:id')
-  .get(userController.getProductDetails);
+router.post('/order/:orderId/cancel', isUserLoggedIn, orderController.cancelOrder);
+router.post('/order/cancel-item', isUserLoggedIn, orderController.cancelOrderItem);
+router.post('/order/:orderId/cancel-product/:productId', isUserLoggedIn, orderController.cancelOrderItem);
+router.get('/order/:orderId/invoice', isUserLoggedIn, orderController.downloadInvoice);
+router.post('/order/return', isUserLoggedIn, orderController.returnEntireOrder);
+router.post('/order/return-item', isUserLoggedIn, orderController.returnOrderItem);
 
 // Logout
 router.route('/logout')

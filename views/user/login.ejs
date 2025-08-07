@@ -28,14 +28,29 @@
 
         <div>
           <label class="text-xs block mb-2 tracking-wide" for="email">EMAIL</label>
+          <% if (locals.errors && errors.email) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.email.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="text" name="email" id="email" placeholder="EMAIL"
-            class="w-full border border-gray-400 px-4 py-2 text-sm">
+            value="<%= locals.body && body.email ? body.email : '' %>"
+            class="w-full border border-gray-400 px-4 py-2 text-sm <%= locals.errors && errors.email ? 'border-red-500' : '' %>">
         </div>
 
         <div>
           <label class="text-xs block mb-2 tracking-wide" for="password">PASSWORD</label>
+          <% if (locals.errors && errors.password) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.password.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="password" name="password" id="password" placeholder="PASSWORD" 
-            class="w-full border border-gray-400 px-4 py-2 text-sm">
+            class="w-full border border-gray-400 px-4 py-2 text-sm <%= locals.errors && errors.password ? 'border-red-500' : '' %>">
         </div>
 
         <div class="text-left">

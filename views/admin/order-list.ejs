@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Orders | Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <%- include('../partial/admin/sidebar') %>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-8">
+      <h1 class="text-3xl font-bold mb-6">Orders</h1>
+
+      <% if (orders && orders.length > 0) { %>
+        <div class="overflow-x-auto bg-white rounded-lg shadow">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Order ID</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">User</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Status</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Date</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Update</th>
+                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% orders.forEach(order => { %>
+                <tr>
+                  <td class="px-6 py-4 text-sm text-blue-600 font-mono">#<%= order.orderId %></td>
+                  <td class="px-6 py-4 text-sm"><%= order.user?.name || 'N/A' %></td>
+                  <td class="px-6 py-4 text-sm">₹<%= order.totalAmount?.toFixed(2) || '0.00' %></td>
+                  <td class="px-6 py-4 text-sm font-semibold"><%= order.status || 'N/A' %></td>
+                  <td class="px-6 py-4 text-sm"><%= order.createdAt?.toLocaleDateString() || 'N/A' %></td>
+
+                  <!-- Status Update Form -->
+                  <td class="px-6 py-4">
+                    <% const allowed = nextStatusMap[order.status] || []; %>
+                    <% if (allowed.length > 0) { %>
+                      <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center">
+                        <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm" required>
+                          <option disabled selected value> -- Select Status -- </option>
+                          <% allowed.forEach(status => { %>
+                            <option value="<%= status %>"><%= status %></option>
+                          <% }) %>
+                        </select>
+                        <button type="submit" class="ml-2 px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Update</button>
+                      </form>
+                    <% } else { %>
+                      <span class="text-gray-500 text-sm">No further updates</span>
+                    <% } %>
+                  </td>
+
+                  <!-- View Button -->
+                  <td class="px-6 py-4">
+                    <a href="/admin/orders/<%= order._id %>" class="text-blue-500 hover:underline text-sm">View</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <p>No orders found.</p>
+      <% } %>
+    </div>
+  </div>
+
+</body>
+</html>

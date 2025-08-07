@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Order Details | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <%- include('../partial/user/navbar') %>
+
+  <div class="max-w-4xl mx-auto py-10 px-4">
+    <h1 class="text-2xl font-bold mb-6">Order #<%= order.orderId %></h1>
+
+    <!-- Order Items -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-4">Order Items</h2>
+      <% order.items.forEach(item => { %>
+        <div class="flex items-center gap-4 border-b py-4">
+          <img src="<%= item.product.images?.[0] || '/images/placeholder.png' %>" class="w-16 h-16 object-cover rounded" alt="">
+          <div class="flex-1">
+            <div class="font-medium"><%= item.product.name %></div>
+            <div class="text-sm text-gray-600">Qty: <%= item.quantity %></div>
+            <div class="text-sm text-gray-600">Price: ₹<%= item.product.price.toFixed(2) %></div>
+
+            <!-- Status Badge -->
+            <% if (item.isCancelled) { %>
+              <span class="text-red-600 text-sm font-semibold">Cancelled</span>
+            <% } else if (item.isReturned) { %>
+              <span class="text-yellow-600 text-sm font-semibold">Returned</span>
+            <% } else { %>
+              <!-- Cancel Product -->
+              <div class="mt-2 space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-3">
+                <input type="hidden" name="orderId" value="<%= order.orderId %>">
+                <input type="hidden" name="productId" value="<%= item.product._id %>">
+                <textarea name="reason" placeholder="Cancel reason (optional)" class="w-full sm:w-64 px-3 py-1 border rounded cancel-reason"></textarea>
+                <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded cancel-item-btn" 
+                        data-order-id="<%= order.orderId %>" 
+                        data-product-id="<%= item.product._id %>">Cancel Product</button>
+              </div>
+
+              <% if (order.status === 'Delivered') { %>
+                <!-- Return Product -->
+                <div class="mt-2 space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-3">
+                  <input type="hidden" name="orderId" value="<%= order.orderId %>">
+                  <input type="hidden" name="productId" value="<%= item.product._id %>">
+                  <textarea name="reason" placeholder="Return reason" required class="w-full sm:w-64 px-3 py-1 border rounded return-reason"></textarea>
+                  <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded return-item-btn" 
+                          data-order-id="<%= order.orderId %>" 
+                          data-product-id="<%= item.product._id %>">Return Product</button>
+                </div>
+
+              <% } %>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- Shipping Address -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-2">Shipping Address</h2>
+      <div class="text-gray-700">
+        <%= order.address.fullName %><br>
+        <%= order.address.addressLine %>, <%= order.address.city %>, <%= order.address.state %> - <%= order.address.pincode %><br>
+        <%= order.address.country %><br>
+        Phone: <%= order.address.phone %>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-2">Order Summary</h2>
+      <div class="flex justify-between"><span>Subtotal:</span><span>₹<%= order.subtotal.toFixed(2) %></span></div>
+      <div class="flex justify-between"><span>Tax:</span><span>₹<%= order.tax.toFixed(2) %></span></div>
+      <div class="flex justify-between"><span>Shipping:</span><span>₹<%= order.shipping.toFixed(2) %></span></div>
+      <div class="flex justify-between"><span>Discount:</span><span>-₹<%= order.discount.toFixed(2) %></span></div>
+      <div class="flex justify-between font-bold border-t pt-2 mt-2"><span>Total:</span><span>₹<%= order.total.toFixed(2) %></span></div>
+      <div class="mt-4 text-sm text-gray-600">
+        Status: <span class="font-medium text-blue-600 order-status-text"><%= order.status %></span>
+      </div>
+    </div>
+
+    <!-- Full Order Actions -->
+    <div class="space-y-4">
+             <% if (order.status === 'Placed') { %>
+         <!-- Cancel Full Order -->
+         <div class="flex flex-col sm:flex-row gap-3">
+           <input type="hidden" name="orderId" value="<%= order.orderId %>">
+           <textarea name="reason" placeholder="Cancel full order reason (optional)" class="w-full sm:w-auto px-3 py-2 border rounded cancel-full-reason"></textarea>
+           <button type="button" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded cancel-full-order-btn" 
+                   data-order-id="<%= order.orderId %>">Cancel Entire Order</button>
+         </div>
+       <% } %>
+
+             <% if (order.status === 'Delivered') { %>
+        <!-- Return Full Order -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input type="hidden" name="orderId" value="<%= order.orderId %>">
+          <textarea name="reason" placeholder="Reason for returning full order" class="w-full sm:w-auto px-3 py-2 border rounded return-full-reason" required></textarea>
+          <button type="button" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded return-full-order-btn" 
+                  data-order-id="<%= order.orderId %>">Return Entire Order</button>
+        </div>
+
+        <!-- Invoice -->
+        <!-- Invoice -->
+        <a href="/order/<%= order.orderId %>/invoice" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2 text-center">Download Invoice</a>
+      <% } %>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+         document.addEventListener('DOMContentLoaded', () => {
+       // Handle cancel full order button
+       document.querySelectorAll('.cancel-full-order-btn').forEach(button => {
+         button.addEventListener('click', async (e) => {
+           e.preventDefault();
+           const orderId = button.dataset.orderId;
+           const reasonTextarea = document.querySelector('.cancel-full-reason');
+           const reason = reasonTextarea ? reasonTextarea.value : '';
+
+           const confirm = await Swal.fire({
+             title: 'Cancel Entire Order?',
+             text: 'Are you sure you want to cancel this entire order?',
+             icon: 'warning',
+             showCancelButton: true,
+             confirmButtonText: 'Yes, cancel it!',
+             cancelButtonText: 'Keep it',
+             confirmButtonColor: '#dc2626'
+           });
+
+           if (!confirm.isConfirmed) return;
+
+           try {
+             const res = await fetch(`/order/${orderId}/cancel`, {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 reason: reason
+               })
+             });
+
+             const data = await res.json();
+
+             if (data.success) {
+               Swal.fire('Cancelled!', 'Your entire order has been cancelled.', 'success')
+                 .then(() => {
+                   window.location.href = '/orders'; // Redirect to orders page
+                 });
+             } else {
+               Swal.fire('Error', data.message || 'Failed to cancel order.', 'error');
+             }
+           } catch (err) {
+             Swal.fire('Error', 'Something went wrong. Try again later.', 'error');
+           }
+         });
+       });
+
+       // Handle cancel item buttons
+       document.querySelectorAll('.cancel-item-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const orderId = button.dataset.orderId;
+          const productId = button.dataset.productId;
+          const reasonTextarea = button.parentElement.querySelector('.cancel-reason');
+          const reason = reasonTextarea.value;
+
+          const confirm = await Swal.fire({
+            title: 'Cancel Product?',
+            text: 'Are you sure you want to cancel this product from your order?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, cancel it!',
+            cancelButtonText: 'Keep it',
+            confirmButtonColor: '#dc2626'
+          });
+
+          if (!confirm.isConfirmed) return;
+
+          try {
+            const res = await fetch('/order/cancel-item', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: orderId,
+                productId: productId,
+                reason: reason
+              })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+              Swal.fire('Cancelled!', 'Product has been cancelled from your order.', 'success')
+                .then(() => {
+                  location.reload(); // Reload page to show updated status
+                });
+            } else {
+              Swal.fire('Error', data.message || 'Failed to cancel product.', 'error');
+            }
+          } catch (err) {
+            Swal.fire('Error', 'Something went wrong. Try again later.', 'error');
+          }
+                 });
+       });
+
+       // Handle return item buttons
+       document.querySelectorAll('.return-item-btn').forEach(button => {
+         button.addEventListener('click', async (e) => {
+           e.preventDefault();
+           const orderId = button.dataset.orderId;
+           const productId = button.dataset.productId;
+           const reasonTextarea = button.parentElement.querySelector('.return-reason');
+           const reason = reasonTextarea.value;
+
+           if (!reason.trim()) {
+             Swal.fire('Error', 'Please provide a return reason.', 'error');
+             return;
+           }
+
+           const confirm = await Swal.fire({
+             title: 'Return Product?',
+             text: 'Are you sure you want to return this product?',
+             icon: 'warning',
+             showCancelButton: true,
+             confirmButtonText: 'Yes, return it!',
+             cancelButtonText: 'Keep it',
+             confirmButtonColor: '#f59e0b'
+           });
+
+           if (!confirm.isConfirmed) return;
+
+           try {
+             const res = await fetch('/order/return-item', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 orderId: orderId,
+                 productId: productId,
+                 reason: reason
+               })
+             });
+
+             const data = await res.json();
+
+             if (data.success) {
+               Swal.fire('Returned!', 'Product has been returned successfully.', 'success')
+                 .then(() => {
+                   location.reload(); // Reload page to show updated status
+                 });
+             } else {
+               Swal.fire('Error', data.message || 'Failed to return product.', 'error');
+             }
+           } catch (err) {
+             Swal.fire('Error', 'Something went wrong. Try again later.', 'error');
+           }
+         });
+       });
+
+       // Handle return full order button
+       document.querySelectorAll('.return-full-order-btn').forEach(button => {
+         button.addEventListener('click', async (e) => {
+           e.preventDefault();
+           const orderId = button.dataset.orderId;
+           const reasonTextarea = document.querySelector('.return-full-reason');
+           const reason = reasonTextarea ? reasonTextarea.value : '';
+
+           if (!reason.trim()) {
+             Swal.fire('Error', 'Please provide a return reason.', 'error');
+             return;
+           }
+
+           const confirm = await Swal.fire({
+             title: 'Return Entire Order?',
+             text: 'Are you sure you want to return this entire order?',
+             icon: 'warning',
+             showCancelButton: true,
+             confirmButtonText: 'Yes, return it!',
+             cancelButtonText: 'Keep it',
+             confirmButtonColor: '#f59e0b'
+           });
+
+           if (!confirm.isConfirmed) return;
+
+           try {
+             const res = await fetch('/order/return', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({
+                 orderId: orderId,
+                 reason: reason
+               })
+             });
+
+             const data = await res.json();
+
+             if (data.success) {
+               Swal.fire('Returned!', 'Your entire order has been returned successfully.', 'success')
+                 .then(() => {
+                   window.location.href = '/orders'; // Redirect to orders page
+                 });
+             } else {
+               Swal.fire('Error', data.message || 'Failed to return order.', 'error');
+             }
+           } catch (err) {
+             Swal.fire('Error', 'Something went wrong. Try again later.', 'error');
+           }
+         });
+       });
+     });
+  </script>
+</body>
+</html>

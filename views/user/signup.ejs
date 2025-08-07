@@ -10,6 +10,7 @@
   <style>
     body { font-family: 'Helvetica Neue', sans-serif; }
   </style>
+
 </head>
 <body class="bg-[#f8f8f8] text-[#333] text-sm">
   <%- include('../partial/user/navbar') %>
@@ -29,24 +30,63 @@
       <% } %>
       <form action="/signup" method="POST" class="space-y-5">
         <div>
+          <% if (locals.errors && errors.name) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.name.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="text" name="name" placeholder="name" 
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+            value="<%= locals.body && body.name ? body.name : '' %>"
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.name ? 'border-red-500' : '' %>" />
         </div>
         <div>
+          <% if (locals.errors && errors.email) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.email.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="email" name="email" placeholder="EMAIL ADDRESS" 
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+            value="<%= locals.body && body.email ? body.email : '' %>"
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.email ? 'border-red-500' : '' %>" />
         </div>
         <div>
+          <% if (locals.errors && errors.phone) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.phone.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="text" name="phone" placeholder="PHONE NUMBER" 
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+            value="<%= locals.body && body.phone ? body.phone : '' %>"
+            maxlength="10"
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.phone ? 'border-red-500' : '' %>" />
         </div>
         <div>
+          <% if (locals.errors && errors.password) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.password.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="password" name="password" placeholder="PASSWORD"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.password ? 'border-red-500' : '' %>" />
         </div>
         <div>
+          <% if (locals.errors && errors.confirm_password) { %>
+            <div class="text-red-500 text-xs mb-1">
+              <% errors.confirm_password.forEach(error => { %>
+                <p><%= error %></p>
+              <% }) %>
+            </div>
+          <% } %>
           <input type="password" name="confirm_password" placeholder="CONFIRM PASSWORD"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.confirm_password ? 'border-red-500' : '' %>" />
         </div>
         <div>
           <button type="submit"
@@ -125,6 +165,27 @@
       &copy; 2024 CaptureCore. Design by <a href="#" class="underline">TemplateCreator</a>
     </div>
   </footer>
+
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const phoneInput = document.querySelector('input[name="phone"]');
+      
+      if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+          // Remove any non-digit characters
+          let value = e.target.value.replace(/\D/g, '');
+          
+          // Limit to 10 digits
+          if (value.length > 10) {
+            value = value.slice(0, 10);
+          }
+          
+          e.target.value = value;
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>

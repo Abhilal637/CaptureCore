@@ -7,18 +7,12 @@ require('dotenv').config();
 const crypto= require('crypto');
 const mongoose = require('mongoose');
 const Category = require('../models/category');
-const validator = require('../middleware/validator');
+const validator = require('../middleware/validate');
 const { isAscii } = require('buffer');
 const { error } = require('console');
 const Cart = require('../models/cart');
-const Wishlist= require('../models/wishlist')
-
-
 const Address = require('../models/address');
 const wishlist = require('../models/wishlist');
-
-
-
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -38,13 +32,23 @@ exports.getSignup=(req,res)=>{
 exports.postSignup = async (req, res) => {
   const { name = req.body.username, email, password, phone, confirm_password } = req.body;
 
+  // Check for validation errors
+  if (req.validationErrors) {
+    return res.render('user/signup', {
+      errors: req.validationErrors,
+      body: req.body,
+      error: null
+    });
+  }
+
   try {
    
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.render('user/signup', {
         error: 'Email already exists.',
-        name, email, phone
+        errors: null,
+        body: req.body
       });
     }
 
@@ -189,6 +193,15 @@ exports.getLogin = (req, res) => {
 
     exports.postlogin = async (req, res) => {
         const { email, password } = req.body;
+
+        // Check for validation errors
+        if (req.validationErrors) {
+          return res.render('user/login', {
+            errors: req.validationErrors,
+            body: req.body,
+            error: null
+          });
+        }
 
         console.log('Login attempt:', { email, password });
 
@@ -365,7 +378,6 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Apply category filter only if it's active
     if (category && mongoose.Types.ObjectId.isValid(category)) {
       const cat = await Category.findOne({ _id: category, isDeleted: false, active: true });
       if (cat) {
@@ -512,698 +524,6 @@ exports.toggleUserBlockStatus = async (req, res) => {
 };
 
 
-exports.getProfile = async (req, res) => {
-  try {
-      const userId = req.session.userId;
-      if (!userId) {
-          return res.redirect('/login');
-      }
-      const user = await User.findById(userId);
-      if (!user) {
-          return res.redirect('/login');
-      }
-      res.render('user/profile', { 
-        user, 
-        currentPage: 'profile',
-        success: req.query.success,
-        error: req.query.error
-      });
-  } catch (err) {
-      console.error('Profile error:', err);
-      res.render('user/profile', { 
-        error: 'Failed to load profile', 
-        user: null, 
-        currentPage: 'profile',
-        success: req.query.success,
-        error: req.query.error
-      });
-  }
-};
-
-
-exports.getEditProfile = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    if (!userId) {
-      return res.redirect('/login');
-    }
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.redirect('/login');
-    }
-    res.render('user/edit-profile', { 
-      user, 
-      currentPage: 'edit-profile',
-      error: req.query.error
-    });
-  } catch (err) {
-    console.error('Edit profile error:', err);
-    res.redirect('/profile');
-  }
-}
-
-exports.postEditProfile = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    if (!userId) {
-      return res.redirect('/login');
-    }
-
-    const { name, phone } = req.body;
-    const profilePicture = req.file ? req.file.filename : null;
-
-    // Validate file type if uploaded
-    if (req.file) {
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(req.file.mimetype)) {
-        return res.redirect('/edit-profile?error=invalid_file_type');
-      }
-    }
-
-    const updateData = { name, phone };
-    if (profilePicture) {
-      updateData.profilePicture = profilePicture;
-    }
-
-    await User.findByIdAndUpdate(userId, updateData, { new: true });
-    res.redirect('/profile?success=profile_updated');
-  } catch (err) {
-    console.error('Update profile error:', err);
-    res.redirect('/edit-profile');
-  }
-}
-
-
-exports.getEditEmail = async (req, res) => {
-  res.render('user/edit-email', { currentPage: 'edit-email' });
-}
-
-exports.sendOtpForEmail = async (req, res) => {
-  const {newEmail}= req.body
-  console.log('sendOtpForEmail called with:', newEmail);
-
-  try{
-    const existingUser = await User.findOne({email:newEmail})
-    if(existingUser){
-      return res.render('user/edit-email',{error:"Email already in use", currentPage: 'edit-email'})
-    }
-
-    const otp = Math.floor(100000+Math.random()*900000).toString();
-
-    req.session.pendingEmail= newEmail
-    req.session.emailOtp= otp
-
-    const transporter = nodemailer.createTransport({
-      service:'Gmail',
-      auth:{
-        user:process.env.EMAIL_USER,
-        pass:process.env.EMAIL_PASS
-
-      }
-    })
-
-    await transporter.sendMail({
-      to:newEmail,
-      subject:'verify Your Email',
-      html:`<p>Your OTP for updating email is <b>${otp}</b><p>`
-    })
-
-
-    res.redirect('/verify-email')
-  }catch(error){
-    console.log('Error sending OTP:',error);
-    res.status(500).send('something went wrong')
-  }
-}
-
-exports.postverifyEmail= async(req,res)=>{
-  const {otp}= req.body
-
-  if(otp===req.session.emailOtp){
-    const userId= req.session.userId
-
-    await User.findByIdAndUpdate(userId,{
-      email:req.session.pendingEmail
-    })
-
-
-    req.session.emailOtp= null
-    req.session.pendingEmail= null
-
-    res.redirect('/profile')
-  }else{
-    res.render('user/verify-email',{
-      newEmail:req.session.pendingEmail,
-      error:'Invalid OTP'
-    })
-  }
-}
-
-
-
-
-exports.getChangePassword=(req,res)=>{
-  res.render('user/change-password', { currentPage: 'change-password' })
-}
-exports.postChangePassword= async(req,res)=>{
-  const {currentPassword, newPassword,confirmPassword}= req.body
-
-  try{
-    const user= await User.findById(req.session.userId)
-
-
-    if(!user){
-      return res.redirect('/login')
-    }
-    const isMatch= await bcrypt.compare(currentPassword, user.password)
-    if(!isMatch){
-      return res.render('user/change-password', { 
-        currentPage: 'change-password',
-        error: 'Incorrect current password' 
-      });
-    }
-
-    if(newPassword!== confirmPassword){
-      return res.render('user/change-password', { 
-        currentPage: 'change-password',
-        error: 'New passwords do not match' 
-      });
-    }
-
-
-
-    const hashedPassword= await bcrypt.hash(newPassword,10);
-    user.password=hashedPassword
-    await user.save()
-
-    res.redirect('/profile?success=password_changed');
-  }catch(error){
-    console.log('Error changing password',error);
-    res.render('user/change-password', { 
-      currentPage: 'change-password',
-      error: 'An error occurred while changing password. Please try again.' 
-    });
-  }
-}
-
-exports.getAddresses = async (req, res) => {
-  try {
-    const addresses = await Address.find({ user: req.session.userId });
-    res.render('user/addresses', { 
-      addresses,
-      currentPage: 'addresses',
-      error: null
-    });
-  } catch (error) {
-    console.error('Error fetching addresses:', error);
-    res.render('user/addresses', { 
-      addresses: [],
-      currentPage: 'addresses',
-      error: 'Failed to load addresses'
-    });
-  }
-};
-
-exports.getAddress = (req, res) => {
-  res.render('user/add-address', { 
-    currentPage: 'add-address',
-    error: null,
-    formData: {}
-  });
-};
-
-exports.postAddaddress = async (req, res) => {
-  try {
-    await Address.create({ ...req.body, user: req.session.userId });
-    res.redirect('/addresses');
-  } catch (error) {
-    console.error('Error adding address:', error);
-    res.render('user/add-address', { 
-      currentPage: 'add-address',
-      error: 'Failed to add address. Please try again.',
-      formData: req.body
-    });
-  }
-};
-
-exports.getEditAddresses = async (req, res) => {
-  try {
-    const address = await Address.findOne({ _id: req.params.id, user: req.session.userId });
-    if (!address) return res.redirect('/addresses');
-    
-    res.render('user/edit-address', { 
-      address,
-      currentPage: 'edit-address',
-      error: null
-    });
-  } catch (error) {
-    console.error('Error fetching address for edit:', error);
-    res.redirect('/addresses');
-  }
-};
-
-exports.postEditAddress = async (req, res) => {
-  try {
-    await Address.updateOne({ _id: req.params.id, user: req.session.userId }, req.body);
-    res.redirect('/addresses');
-  } catch (error) {
-    console.error('Error updating address:', error);
-    res.redirect('/addresses');
-  }
-};
-
-exports.postDeleteAddress = async (req, res) => {
-  try {
-    await Address.deleteOne({ _id: req.params.id, user: req.session.userId });
-    res.redirect('/addresses');
-  } catch (error) {
-    console.error('Error deleting address:', error);
-    res.redirect('/addresses');
-  }
-};
-
-
-exports.setDefaultAddress = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const addressId = req.params.id;
-    await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
-    await Address.findByIdAndUpdate(addressId, { isDefault: true });
-    res.redirect('/addresses');
-  } catch (error) {
-    console.error('Error setting default address:', error);
-    res.redirect('/addresses?error=Could not update default address');
-  }
-};
-
-
-exports.getCartPage = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const cartData = await Cart.findOne({ user: userId }).populate({
-      path: 'items.product',
-      populate: { path: 'category' }
-    });
-    
-    let cartItems = cartData?.items || [];
-    let removedItems = [];
-
-    cartItems = cartItems.filter(item => {
-      const product = item.product;
-      if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-        removedItems.push(product?.name || 'Unknown Product');
-        return false;
-      }
-      
-      if (product.category && product.category.isBlocked) {
-        removedItems.push(product.name);
-        return false;
-      }
-      
-      return true;
-    });
-
-    // Update cart if items were removed
-    if (removedItems.length > 0) {
-      cartData.items = cartItems;
-      await cartData.save();
-    }
-
-    const totalPrice = cartItems.reduce((total, item) => {
-      return total + item.quantity * item.product.price;
-    }, 0);
-
-    res.render('user/cart', {
-      user: res.locals.user,
-      cartItems,
-      totalPrice,
-      removedItems
-    });
-  } catch (err) {
-    console.error('Error loading cart:', err);
-    res.status(500).send('Server Error');
-  }
-};
-exports.addToCart = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const productId = req.params.product || req.params.productId; // support both routes
-    const quantity = req.body && req.body.quantity ? parseInt(req.body.quantity) : 1;
-
-
-    if (!userId) {
-      const errorMsg = 'Authentication required';
-      return req.headers['content-type'] === 'application/json'
-        ? res.status(401).json({ success: false, message: errorMsg })
-        : res.redirect('/login');
-    }
-
-    const product = await Product.findById(productId).populate('category');
-
-    if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      const errorMsg = 'Product not found or unavailable';
-      return req.headers['content-type'] === 'application/json'
-        ? res.status(404).json({ success: false, message: errorMsg })
-        : res.redirect('/wishlist');
-    }
-
-    if (product.category?.isBlocked) {
-      const errorMsg = 'Product category is currently unavailable';
-      return req.headers['content-type'] === 'application/json'
-        ? res.status(404).json({ success: false, message: errorMsg })
-        : res.redirect('/wishlist');
-    }
-
-    if (product.stock < quantity) {
-      const errorMsg = `Only ${product.stock} items available in stock`;
-      return req.headers['content-type'] === 'application/json'
-        ? res.status(400).json({ success: false, message: errorMsg })
-        : res.redirect('/wishlist');
-    }
-
-    const user = await User.findById(userId);
-    const wishlistIndex = user.wishlist.indexOf(productId);
-    if (wishlistIndex !== -1) {
-      user.wishlist.splice(wishlistIndex, 1);
-      await user.save();
-    }
-
-   
-    let cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      cart = new Cart({ user: userId, items: [] });
-    }
-
-    const existingItem = cart.items.find(item => item.product.toString() === productId);
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.items.push({ product: productId, quantity });
-    }
-
-    await cart.save();
-
-    if (req.headers['content-type'] === 'application/json') {
-      return res.status(200).json({ success: true, message: 'Product added to cart successfully', cartItemCount: cart.items.length });
-    } else {
-      return res.redirect('/cart');
-    }
-  } catch (err) {
-    console.error('Error adding to cart:', err);
-    const errorMsg = 'Server Error. Please try again.';
-    if (req.headers['content-type'] === 'application/json') {
-      return res.status(500).json({ success: false, message: errorMsg });
-    } else {
-      return res.redirect('/wishlist');
-    }
-  }
-};
-
-
-
-exports.getCartCount = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    if (!userId) {
-      return res.status(200).json({ count: 0 });
-    }
-
-    const userCart =await Cart.findOne({ user: userId });
-    const count = userCart ? userCart.items.length : 0;
-    
-    res.status(200).json({ count });
-  } catch (err) {
-    console.error('Error getting cart count:', err);
-    res.status(500).json({ count: 0 });
-  }
-};
-
-exports.removeFromCart = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const productId = req.params.productId;
-
-    const userCart = await Cart.findOne({ user: userId });
-
-    if (!userCart) return res.redirect('/cart');
-
-    userCart.items = userCart.items.filter(item => item.product.toString() !== productId);
-    await userCart.save();
-
-    res.redirect('/cart');
-  } catch (err) {
-    console.error('Error removing from cart:', err);
-    res.redirect('/cart');
-  }
-};
-
-exports.updateCartItemQuantity = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const productId = req.params.productId;
-    const { quantity } = req.body;
-
-    if (!userId) return res.status(401).json({ message: 'Not logged in' });
-
-    const product = await Product.findById(productId).populate('category');
-    if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      return res.status(404).json({ message: 'Product is no longer available' });
-    }
-
-    if (product.category && product.category.isBlocked) {
-      return res.status(404).json({ message: 'Product category is currently unavailable' });
-    }
-
-    if (quantity > product.stock) {
-      return res.status(400).json({ message: `Only ${product.stock} items available in stock` });
-    }
-
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
-    if (!cart) return res.status(404).json({ message: 'Cart not found' });
-
-    const item = cart.items.find(item => item.product._id.toString() === productId);
-    if (!item) return res.status(404).json({ message: 'Item not found in cart' });
-
-    if (quantity < 1) {
-      cart.items = cart.items.filter(item => item.product._id.toString() !== productId);
-    } else {
-      item.quantity = quantity;
-    }
-
-    await cart.save();
-
-    const totalPrice = cart.items.reduce((sum, item) => {
-      return sum + item.quantity * item.product.price;
-    }, 0);
-
-    const itemSubtotal = quantity * product.price;
-
-    res.status(200).json({
-      message: 'Quantity updated successfully',
-      totalPrice,
-      itemSubtotal,
-      productId,
-      quantity
-    });
-  } catch (err) {
-    console.error('Error updating cart item quantity:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-
-exports.clearCart = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'User not authenticated' });
-    }
-
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) {
-      return res.status(404).json({ success: false, message: 'Cart not found' });
-    }
-
-    cart.items = [];
-    await cart.save();
-
-    if (req.headers['content-type'] === 'application/json') {
-      return res.status(200).json({ success: true, message: 'Cart cleared successfully' });
-    } else {
-      return res.redirect('/cart');
-    }
-  } catch (err) {
-    console.error('Error clearing Cart:', err);
-    return res.status(500).json({ success: false, message: 'Server Error while clearing cart' });
-  }
-};
-
-exports.getWishlist = async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId).populate({
-      path: 'wishlist',
-      populate: {
-        path: 'category'
-      }
-    });
-
-    if (!user) {
-      return res.render('user/wishlist', { wishlistItems: [] });
-    }
-
-    res.render('user/wishlist', {
-      wishlistItems: user.wishlist || []
-    });
-  } catch (err) {
-    console.error('Get wishlist error:', err);
-    res.render('user/wishlist', { wishlistItems: [] });
-  }
-};
-
-exports.addToWishlist = async (req, res) => {
-  const userId = req.session.userId;
-  const productId = req.params.productId;
-
-  try {
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    const product = await Product.findById(productId);
-    if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      return res.status(404).json({ success: false, message: 'Product is no longer available' });
-    }
-
-    if (!user.wishlist.includes(productId)) {
-      user.wishlist.push(productId);
-      await user.save();
-    }
-
-    res.status(200).json({ success: true, message: 'Added to wishlist' });
-
-  } catch (err) {
-    console.error('Wishlist add error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-exports.removeFromWishlist = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const productId = req.params.id;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const initialLength = user.wishlist.length;
-    // Remove product from user's wishlist array
-    user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
-    await user.save();
-
-    // Always return success, even if item was not in wishlist (idempotent)
-    res.json({ 
-      success: true, 
-      message: initialLength === user.wishlist.length 
-        ? 'Item was not in wishlist' 
-        : 'Removed from wishlist' 
-    });
-  } catch (err) {
-    console.error('Wishlist remove error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-// Toggle wishlist item (add if not present, remove if present)
-exports.toggleWishlist = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-    const productId = req.params.productId;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    // Check if product exists and is valid
-    const product = await Product.findById(productId);
-    if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      return res.status(404).json({ success: false, message: 'Product is no longer available' });
-    }
-
-    const isInWishlist = user.wishlist.includes(productId);
-    
-    if (isInWishlist) {
-      // Remove from wishlist
-      user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
-      await user.save();
-      res.json({ 
-        success: true, 
-        message: 'Removed from wishlist',
-        action: 'removed',
-        inWishlist: false
-      });
-    } else {
-      // Add to wishlist
-      user.wishlist.push(productId);
-      await user.save();
-      res.json({ 
-        success: true, 
-        message: 'Added to wishlist',
-        action: 'added',
-        inWishlist: true
-      });
-    }
-  } catch (err) {
-    console.error('Wishlist toggle error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-// Clear all wishlist items
-exports.clearWishlist = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-
-    if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const itemCount = user.wishlist.length;
-    user.wishlist = [];
-    await user.save();
-
-    res.json({ 
-      success: true, 
-      message: `Cleared ${itemCount} items from wishlist`,
-      clearedCount: itemCount
-    });
-  } catch (err) {
-    console.error('Clear wishlist error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-
 exports.logout = (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -1214,3 +534,96 @@ exports.logout = (req, res) => {
         res.redirect('/login?message=logged_out');
     });
 }
+
+
+
+
+  exports.getCheckoutPage = async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const { productId, quantity = 1 } = req.query;
+
+      const addresses = await Address.find({ user: userId });
+      const defaultAddress = addresses.find(addr => addr.isDefault) || null;
+
+      let validItems = [];
+      let subtotal = 0;
+
+      // Handle "Buy Now" - direct product purchase
+      if (productId) {
+        const product = await Product.findById(productId).populate('category');
+        
+        if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < quantity) {
+          return res.redirect('/shop?error=product_unavailable');
+        }
+
+        const itemTotal = quantity * product.price;
+        subtotal = itemTotal;
+
+        validItems.push({
+          _id: product._id,
+          name: product.name,
+          image: product.images?.[0],
+          price: product.price,
+          quantity: parseInt(quantity),
+          itemTotal
+        });
+      } else {
+        // Handle regular cart checkout
+        const cart = await Cart.findOne({ user: userId }).populate({
+          path: 'items.product',
+          populate: { path: 'category' }
+        });
+
+        if (!cart || cart.items.length === 0) {
+          return res.redirect('/cart');
+        }
+
+        for (const item of cart.items) {
+          const p = item.product;
+          if (
+            !p || p.isBlocked || !p.isListed || p.isDeleted || !p.isActive || p.stock < 1 ||
+            (p.category && p.category.isBlocked)
+          ) continue;
+
+          const itemTotal = item.quantity * p.price;
+          subtotal += itemTotal;
+
+          validItems.push({
+            _id: p._id,
+            name: p.name,
+            image: p.images?.[0],
+            price: p.price,
+            quantity: item.quantity,
+            itemTotal
+          });
+        }
+      }
+
+      if (validItems.length === 0) {
+        return res.redirect('/cart?error=no_valid_items');
+      }
+
+      const tax = subtotal * 0.05;
+      const discount = subtotal > 1000 ? subtotal * 0.1 : 0;
+      const shipping = subtotal > 500 ? 0 : 50;
+      const finalTotal = subtotal + tax - discount + shipping;
+
+      res.render('user/checkout', {
+        user: res.locals.user,
+        addresses,
+        defaultAddress: defaultAddress?._id.toString(),
+        items: validItems,
+        subtotal,
+        tax,
+        discount,
+        shipping,
+        finalTotal,
+        isBuyNow: !!productId,
+        buyNowProduct: productId ? validItems[0] : null
+      });
+    } catch (error) {
+      console.error('Error loading checkout page:', error);
+      res.status(500).send('Server Error');
+    }
+  };

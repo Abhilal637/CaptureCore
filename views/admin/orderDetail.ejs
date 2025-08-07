@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Order Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+
+  <div class="flex min-h-screen">
+    
+    <!-- Sidebar -->
+    <div class="w-64">
+      <%- include('../partial/admin/sidebar') %>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 p-6">
+      <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">Order Details - <%= order.orderId %></h1>
+
+        <p><strong>Status:</strong> <%= order.status %></p>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4">
+          <% const nextStatusMap = {
+            'Placed': ['Confirmed'],
+            'Confirmed': ['Shipped'],
+            'Shipped': ['Out for Delivery'],
+            'Out for Delivery': ['Delivered'],
+            'Delivered': [],
+            'Cancelled': []
+          }; %>
+          <% const allowed = nextStatusMap[order.status] || []; %>
+
+          <% if (allowed.length > 0) { %>
+            <form action="/admin/orders/<%= order._id %>/update-status" method="POST" class="flex gap-3">
+              <select name="status" class="border border-gray-300 rounded px-2 py-1">
+                <option disabled selected value> -- Select Status -- </option>
+                <% allowed.forEach(status => { %>
+                  <option value="<%= status %>"><%= status %></option>
+                <% }) %>
+              </select>
+              <button type="submit" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
+                Update Status
+              </button>
+            </form>
+          <% } else { %>
+            <span class="text-gray-500">No further status updates available</span>
+          <% } %>
+
+          <% if (order.status === 'Delivered' && order.returnRequested && !order.returnVerified) { %>
+            <form method="POST" action="/admin/orders/<%= order._id %>/verify-return">
+              <button type="submit" class="bg-green-600 text-white px-4 py-1 rounded hover:bg-green-700">
+                Approve Return & Refund
+              </button>
+            </form>
+          <% } %>
+
+          <a href="/admin/orders" class="text-blue-600 hover:underline">← Back to Order List</a>
+        </div>
+
+        <div class="mt-6">
+          <h2 class="text-xl font-semibold">Items</h2>
+          <table class="min-w-full mt-2 table-auto border">
+            <thead>
+              <tr class="bg-gray-200 text-left">
+                <th class="px-4 py-2">Product</th>
+                <th class="px-4 py-2">Qty</th>
+                <th class="px-4 py-2">Price</th>
+                <th class="px-4 py-2">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% order.items.forEach(item => { %>
+                <tr>
+                  <td class="px-4 py-2"><%= item.productName %></td>
+                  <td class="px-4 py-2"><%= item.quantity %></td>
+                  <td class="px-4 py-2">₹<%= item.price.toFixed(2) %></td>
+                  <td class="px-4 py-2">
+                    ₹<%= item.totalAmount ? item.totalAmount.toFixed(2) : (item.price * item.quantity).toFixed(2) %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

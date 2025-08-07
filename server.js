@@ -7,12 +7,14 @@ const flash = require('connect-flash');
 const http = require('http');
 const socketIo = require('socket.io');
 
+
 const userRoute = require('./routes/userRoutes');
 const session = require("express-session");
 const adminRoutes = require('./routes/adminRoute');
 const User = require('./models/user');
 const passport = require('./config/passport');
-const validator = require('./middleware/validator');
+const validate = require('./middleware/validate');
+ 
 
 dotenv.config();
 

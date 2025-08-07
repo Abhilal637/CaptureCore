@@ -4,15 +4,15 @@ const categorySchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true // 
+    unique: true
   },
   description: {
     type: String,
-    default: "" // 
+    default: ""
   },
   active: {
     type: Boolean,
-    default: true // 
+    default: true
   },
   isDeleted: {
     type: Boolean,
@@ -22,9 +22,10 @@ const categorySchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  active: {
-    type: Boolean,
-    default: true
+  parentCategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    default: null // null means it's a main category
   }
 });
 

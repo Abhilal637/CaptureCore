@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   isBlocked: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
+  wallet: {
+  type: Number,
+  default: 0
+},
+
   
   otp: { type: String },
   otpExpiry: { type: Date },
@@ -47,8 +52,13 @@ const userSchema = new mongoose.Schema({
   
   resetToken: String,
   resetTokenExpiry: Date,
+
+  wallet: {
+  type: Number,
+  default: 0
+},
   
-  // Wishlist field to store product IDs
+
   wishlist: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product'

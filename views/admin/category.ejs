@@ -38,6 +38,15 @@
           <form method="post" action="/admin/category/add" class="flex flex-col gap-4">
             <input type="text" name="name" placeholder="Category Name" class="border rounded px-4 py-2 text-lg" required />
             <textarea name="description" placeholder="Category Description" class="border rounded px-4 py-2 text-lg" required></textarea>
+
+            <!-- Subcategory Dropdown -->
+            <select name="parentCategory" class="border rounded px-4 py-2 text-lg">
+              <option value="">-- Main Category --</option>
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat._id %>"><%= cat.name %></option>
+              <% }) %>
+            </select>
+
             <button type="submit" class="px-4 py-2 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all">Add Category</button>
           </form>
         </div>
@@ -51,6 +60,7 @@
               <th class="p-3">ID</th>
               <th class="p-3">Name</th>
               <th class="p-3">Description</th>
+              <th class="p-3">Parent</th>
               <th class="p-3">Status</th>
               <th class="p-3">Actions</th>
             </tr>
@@ -62,6 +72,7 @@
                   <td class="p-3 text-blue-700 font-mono font-bold">#<%= category._id %></td>
                   <td class="p-3"><%= category.name %></td>
                   <td class="p-3"><%= category.description %></td>
+                  <td class="p-3"><%= category.parentCategory ? category.parentCategory.name : '-' %></td>
                   <td class="p-3">
                     <label class="inline-flex items-center cursor-pointer">
                       <input type="checkbox" class="sr-only toggle-category-status" data-id="<%= category._id %>" <%= category.active ? 'checked' : '' %>>
@@ -78,7 +89,7 @@
                 </tr>
               <% }) %>
             <% } else { %>
-              <tr><td colspan="5" class="text-center p-4">No categories found.</td></tr>
+              <tr><td colspan="6" class="text-center p-4">No categories found.</td></tr>
             <% } %>
           </tbody>
         </table>
@@ -87,79 +98,79 @@
     </main>
   </div>
 
- <script>
-  // Modal functionality
-  document.getElementById('openAddCategoryModal').onclick = () => {
-    document.getElementById('addCategoryModal').classList.remove('hidden');
-  };
-
-  document.getElementById('closeAddCategoryModal').onclick = () => {
-    document.getElementById('addCategoryModal').classList.add('hidden');
-  };
-
-  document.getElementById('addCategoryModal').addEventListener('click', (e) => {
-    if (e.target.id === 'addCategoryModal') {
-      e.target.classList.add('hidden');
-    }
-  });
-
-  // ✅ Toggle switch for category status (PATCH)
-  document.querySelectorAll('.toggle-category-status').forEach((toggle) => {
-    toggle.addEventListener('change', async () => {
-      const categoryId = toggle.dataset.id;
-      const isActive = toggle.checked;
-
-      try {
-        const response = await fetch(`/admin/category/toggle/${categoryId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          body: JSON.stringify({ active: isActive }),
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          Swal.fire('Success', result.message, 'success').then(() => location.reload());
-        } else {
-          Swal.fire('Error', result.message || 'Failed to update category status.', 'error');
-          toggle.checked = !isActive;
-        }
-      } catch (err) {
-        Swal.fire('Error', 'Something went wrong.', 'error');
-        toggle.checked = !isActive;
+  <script>
+    // Modal open/close
+    document.getElementById('openAddCategoryModal').onclick = () => {
+      document.getElementById('addCategoryModal').classList.remove('hidden');
+    };
+    document.getElementById('closeAddCategoryModal').onclick = () => {
+      document.getElementById('addCategoryModal').classList.add('hidden');
+    };
+    document.getElementById('addCategoryModal').addEventListener('click', (e) => {
+      if (e.target.id === 'addCategoryModal') {
+        e.target.classList.add('hidden');
       }
     });
-  });
 
-  // ✅ Delete confirmation with SweetAlert
-  document.querySelectorAll('.delete-category-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id');
-      Swal.fire({
-        title: 'Delete Category?',
-        text: 'This will remove the category permanently.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Yes, delete it!'
-      }).then(result => {
-        if (result.isConfirmed) {
-          fetch(`/admin/category/delete/${id}`, {
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-          }).then(res => {
-            if (res.ok) {
-              Swal.fire('Deleted!', 'Category deleted.', 'success').then(() => location.reload());
-            } else {
-              Swal.fire('Error!', 'Could not delete category.', 'error');
-            }
+    // Toggle active status
+    document.querySelectorAll('.toggle-category-status').forEach(toggle => {
+      toggle.addEventListener('change', async () => {
+        const categoryId = toggle.dataset.id;
+        const isActive = toggle.checked;
+
+        try {
+          const response = await fetch(`/admin/category/toggle/${categoryId}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ active: isActive })
           });
+
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            Swal.fire('Success', result.message, 'success').then(() => location.reload());
+          } else {
+            Swal.fire('Error', result.message || 'Failed to update status.', 'error');
+            toggle.checked = !isActive;
+          }
+        } catch (err) {
+          Swal.fire('Error', 'Something went wrong.', 'error');
+          toggle.checked = !isActive;
         }
       });
     });
-  });
-</script>
+
+    // Delete category
+    document.querySelectorAll('.delete-category-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        Swal.fire({
+          title: 'Delete Category?',
+          text: 'This will remove the category permanently.',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          confirmButtonText: 'Yes, delete it!'
+        }).then(result => {
+          if (result.isConfirmed) {
+            fetch(`/admin/category/delete/${id}`, {
+              method: 'GET',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(res => {
+              if (res.ok) {
+                Swal.fire('Deleted!', 'Category deleted.', 'success').then(() => location.reload());
+              } else {
+                Swal.fire('Error!', 'Could not delete category.', 'error');
+              }
+            });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

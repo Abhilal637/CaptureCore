@@ -3,6 +3,9 @@ const Product = require("../models/product");
 const bcrypt = require('bcrypt');
 const cloudinary = require("../config/cloudinary");
 const streamifier = require('streamifier');
+const Order=require('../models/order');
+const PDFDocument = require('pdfkit'); 
+
 
 function setNoCache(res) {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -170,7 +173,7 @@ exports.toggleUserBlockStatus = async (req, res) => {
         }
       } catch (socketError) {
         console.error('Socket.io error:', socketError);
-        // Don't fail the request if socket.io fails
+        
       }
     }
 
@@ -180,6 +183,8 @@ exports.toggleUserBlockStatus = async (req, res) => {
     res.status(500).json({ error: 'Could not update user status' });
   }
 };
+
+
 
 exports.logout = (req, res) => {
   req.session.destroy(() => {

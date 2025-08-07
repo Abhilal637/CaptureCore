@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Orders | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <%- include('../partial/user/navbar') %>
+
+  <div class="max-w-5xl mx-auto py-10">
+    <div class="flex justify-between items-center mb-8">
+            <form action="/search-orders" method="get" class="mb-6 flex items-center gap-2">
+  <input 
+    type="text" 
+    name="query" 
+    value="<%= typeof query !== 'undefined' ? query : '' %>" 
+    placeholder="Search by Order ID or Product Name" 
+    class="px-4 py-2 rounded border border-gray-300 w-64 focus:outline-none focus:ring focus:border-blue-400"
+  />
+  <button 
+    type="submit"
+    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+  >
+    Search
+  </button>
+  <a 
+    href="/orders"
+    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
+  >
+    Clear
+  </a>
+</form>
+
+      <h1 class="text-3xl font-bold">My Orders</h1>
+      <% if (orders && orders.length > 0) { %>
+       <span class="text-gray-600">(<%= pagination?.totalOrders || orders.length %> orders)</span>
+
+      <% } %>
+    </div>
+
+    <% if (orders && orders.length > 0) { %>
+      <div class="space-y-4">
+        <% orders.forEach(order => { %>
+          <div class="bg-white p-4 rounded-lg shadow flex items-center justify-between hover:shadow-md transition">
+            <!-- Left: Product Image -->
+            <div class="flex items-center space-x-4">
+              <% if (order.items && order.items[0] && order.items[0].product) { %>
+                <img src="<%= order.items[0].product.images?.[0] || '/images/placeholder.png' %>"
+                     alt="<%= order.items[0].product.name %>"
+                     class="w-24 h-24 object-cover rounded border">
+              <% } else { %>
+                <img src="/images/placeholder.png" alt="No product" class="w-24 h-24 object-cover rounded border">
+              <% } %>
+            </div>
+
+            <!-- Center: Details -->
+            <div class="flex-1 px-4">
+              <h2 class="text-lg font-semibold mb-1">Order #<%= order._id.toString().slice(-8) %></h2>
+              <p class="text-sm text-gray-700">₹<%= order.total.toFixed(2) %></p>
+              <p class="text-sm text-gray-600">Placed on <%= new Date(order.createdAt).toLocaleDateString() %></p>
+              <p class="text-sm text-gray-600">Items: <%= order.items.length %></p>
+              <p class="text-sm text-blue-600 font-medium">Status: <%= order.status %></p>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="text-right space-y-2">
+              <a href="/order/<%= order._id %>">View Details</a>
+
+                             <% if (order.status === 'Placed') { %>
+                 <button class="text-red-600 hover:underline cancel-order-btn" data-order-id="<%= order.orderId %>">
+                   Cancel Order
+                 </button>
+               <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <!--  Dynamic Pagination -->
+      <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="mt-10 flex justify-center items-center gap-2 text-sm">
+          
+          <!-- Previous Button -->
+          <% if (pagination.currentPage > 1) { %>
+            <a href="/orders?page=<%= pagination.currentPage - 1 %>"
+               class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+              ‹ Previous
+            </a>
+          <% } else { %>
+            <span class="px-4 py-2 bg-gray-100 rounded-lg text-gray-400 cursor-not-allowed">
+              ‹ Previous
+            </span>
+          <% } %>
+
+          <!-- Page Numbers -->
+          <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+            <a href="/orders?page=<%= i %>"
+               class="px-3 py-2 rounded-lg 
+                     <%= i === pagination.currentPage 
+                          ? 'bg-blue-600 text-white font-semibold' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800' %>">
+              <%= i %>
+            </a>
+          <% } %>
+
+          <!-- Next Button -->
+          <% if (pagination.currentPage < pagination.totalPages) { %>
+            <a href="/orders?page=<%= pagination.currentPage + 1 %>"
+               class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
+              Next ›
+            </a>
+          <% } else { %>
+            <span class="px-4 py-2 bg-gray-100 rounded-lg text-gray-400 cursor-not-allowed">
+              Next ›
+            </span>
+          <% } %>
+
+        </div>
+      <% } %>
+
+    <% } else { %>
+      <div class="text-center text-gray-500 py-20">
+        <div class="text-6xl mb-4">📦</div>
+        <div class="text-xl mb-2">No orders yet</div>
+        <div class="text-gray-400">Start shopping to see your orders here!</div>
+        <a href="/shop" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+          Browse Products
+        </a>
+      </div>
+    <% } %> 
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.cancel-order-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const orderId = button.dataset.orderId;
+          const card = button.closest('.bg-white');
+
+          const confirm = await Swal.fire({
+            title: 'Cancel Order?',
+            text: 'Are you sure you want to cancel this order?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, cancel it!',
+            cancelButtonText: 'Keep it',
+            confirmButtonColor: '#dc2626'
+          });
+
+          if (!confirm.isConfirmed) return;
+
+          try {
+            const res = await fetch(`/order/${orderId}/cancel`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+              Swal.fire('Cancelled!', 'Your order has been cancelled.', 'success')
+                .then(() => {
+                  location.reload(); // Reload page to show updated status
+                });
+            } else {
+              Swal.fire('Error', data.message || 'Failed to cancel order.', 'error');
+            }
+          } catch (err) {
+            Swal.fire('Error', 'Something went wrong. Try again later.', 'error');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

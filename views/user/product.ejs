@@ -200,9 +200,10 @@
                       data-product-id="<%= product._id %>">
                 Add to Cart
               </button>
-              <a href="/checkout?productId=<%= product._id %>" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors text-center">
+              <button type="button" class="buy-now-btn flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors text-center" 
+                      data-product-id="<%= product._id %>">
                 Buy Now
-              </a>
+              </button>
             <% } else if (product.stock <= 0) { %>
               <button disabled class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg cursor-not-allowed">
                 Out of Stock
@@ -447,8 +448,43 @@
       closeNotifyModal();
     }
 
-         // Add to Cart functionality
-     document.addEventListener('DOMContentLoaded', function() {
+         // Buy Now functionality
+         document.addEventListener('DOMContentLoaded', function() {
+           // Buy Now button handler
+           const buyNowBtn = document.querySelector('.buy-now-btn');
+           if (buyNowBtn) {
+             buyNowBtn.addEventListener('click', async function(e) {
+               e.preventDefault();
+               
+               const productId = this.getAttribute('data-product-id');
+               const quantity = parseInt(document.getElementById('quantity').value) || 1;
+               
+               const productStock = parseInt('<%= product.stock || 0 %>');
+               
+               if (productStock <= 0) {
+                 Swal.fire({
+                   icon: 'error',
+                   title: 'Out of Stock',
+                   text: 'This product is currently out of stock.'
+                 });
+                 return;
+               }
+               
+               if (quantity > productStock) {
+                 Swal.fire({
+                   icon: 'error',
+                   title: 'Insufficient Stock',
+                   text: `Only ${productStock} items available in stock.`
+                 });
+                 return;
+               }
+               
+               // Redirect to checkout with product details
+               window.location.href = `/checkout?productId=${productId}&quantity=${quantity}`;
+             });
+           }
+           
+           // Add to Cart functionality
        console.log('DOM loaded, looking for add to cart button...');
        const addToCartBtn = document.querySelector('.add-to-cart-btn');
        console.log('Found button:', addToCartBtn);
