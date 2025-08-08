@@ -28,7 +28,6 @@ exports.getCartPage = async (req, res) => {
       return true;
     });
 
-    // Update cart if items were removed
     if (removedItems.length > 0) {
       cartData.items = cartItems;
       await cartData.save();

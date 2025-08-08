@@ -26,7 +26,7 @@ exports.addproduct = async(req,res)=>{
         
         let category = await Category.findOne({ name: categoryName, isDeleted: false });
         if (!category) {
-           // herer we are creating a new category 
+           
             category = new Category({
                 name: categoryName,
                 description: categoryName,
@@ -58,7 +58,7 @@ exports.addproduct = async(req,res)=>{
             isBlocked: false,
             isListed: true,
             isDeleted: false,
-            stock: stock || 0, //making stock  0 to defailt
+            stock: stock || 0, 
         });
 
         await newProduct.save();
@@ -98,12 +98,12 @@ exports.updateProduct = async (req, res) => {
       isActive: currentProduct.isActive,
       isBlocked: currentProduct.isBlocked,
       isDeleted: currentProduct.isDeleted,
-      images: currentProduct.images // default to existing images
+      images: currentProduct.images 
     };
 
     let finalImagePaths = [];
 
-    // Step 1: Handle cropped images (base64)
+
     if (croppedImages && croppedImages.length >= 3) {
       for (let i = 0; i < croppedImages.length; i++) {
         const base64Data = croppedImages[i];
@@ -117,11 +117,11 @@ exports.updateProduct = async (req, res) => {
           const filename = `${uuidv4()}.${ext}`;
           const filePath = path.join(__dirname, '../public/uploads/products', filename);
 
-          // Save file to disk
+          
           fs.writeFileSync(filePath, buffer);
           finalImagePaths.push(`/uploads/products/${filename}`);
         } else {
-          // Use existing image path if not replaced
+         
           if (existingImages[i]) {
             finalImagePaths.push(existingImages[i]);
           }

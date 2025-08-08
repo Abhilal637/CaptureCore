@@ -1,14 +1,10 @@
 const User = require('../models/user');
-
-// Check if user is authenticated
 function isUserLoggedIn(req, res, next) {
     if (req.session && req.session.userId) {
-        // Verify user still exists in database
         User.findById(req.session.userId)
             .then(user => {
                 if (user && user.isVerified) {
                     if (user.isBlocked) {
-                        // If user is blocked by admin, destroy session
                         req.session.destroy(() => {
                             if (req.headers['content-type'] === 'application/json') {
                                 return res.status(401).json({ message: 'User account is blocked' });
@@ -16,11 +12,11 @@ function isUserLoggedIn(req, res, next) {
                             return res.redirect('/login?error=user_blocked');
                         });
                     } else {
-                        req.user = user; // Attach user to request
+                        req.user = user; 
                         return next();
                     }
                 } else {
-                    // User doesn't exist or not verified, clear session
+                   
                     req.session.destroy(() => {
                         if (req.headers['content-type'] === 'application/json') {
                             return res.status(401).json({ message: 'Session expired' });
@@ -46,7 +42,6 @@ function isUserLoggedIn(req, res, next) {
     }
 }
 
-// Prevent logged-in users from accessing login/signup pages
 function preventLoginIfLoggedIn(req, res, next) {
     if (req.session && req.session.userId) {
         return res.redirect('/');
@@ -54,7 +49,6 @@ function preventLoginIfLoggedIn(req, res, next) {
     next();
 }
 
-// Session timeout middleware
 function checkSessionTimeout(req, res, next) {
     const sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
     
@@ -67,7 +61,7 @@ function checkSessionTimeout(req, res, next) {
         }
     }
     
-    // Update last activity
+   
     if (req.session) {
         req.session.lastActivity = Date.now();
     }
@@ -75,7 +69,6 @@ function checkSessionTimeout(req, res, next) {
     next();
 }
 
-// Prevent caching for authenticated pages
 function noCache(req, res, next) {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
@@ -83,7 +76,7 @@ function noCache(req, res, next) {
     next();
 }
 
-// Optional authentication - doesn't redirect but provides user info
+
 function optionalAuth(req, res, next) {
     if (req.session && req.session.userId) {
         User.findById(req.session.userId)
@@ -103,9 +96,9 @@ function optionalAuth(req, res, next) {
 }
 
 
-// Session security middleware
+
 function sessionSecurity(req, res, next) {
-    // Regenerate session ID on successful login
+   
     if (req.session && req.session.userId && !req.session.regenerated) {
         req.session.regenerate((err) => {
             if (err) {

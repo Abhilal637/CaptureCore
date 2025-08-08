@@ -57,10 +57,8 @@
         <table class="min-w-full text-sm">
           <thead>
             <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
-              <th class="p-3">ID</th>
               <th class="p-3">Name</th>
               <th class="p-3">Description</th>
-              <th class="p-3">Parent</th>
               <th class="p-3">Status</th>
               <th class="p-3">Actions</th>
             </tr>
@@ -69,10 +67,8 @@
             <% if (categories && categories.length) { %>
               <% categories.forEach(category => { %>
                 <tr class="border-b hover:bg-gray-50">
-                  <td class="p-3 text-blue-700 font-mono font-bold">#<%= category._id %></td>
                   <td class="p-3"><%= category.name %></td>
                   <td class="p-3"><%= category.description %></td>
-                  <td class="p-3"><%= category.parentCategory ? category.parentCategory.name : '-' %></td>
                   <td class="p-3">
                     <label class="inline-flex items-center cursor-pointer">
                       <input type="checkbox" class="sr-only toggle-category-status" data-id="<%= category._id %>" <%= category.active ? 'checked' : '' %>>
@@ -89,7 +85,7 @@
                 </tr>
               <% }) %>
             <% } else { %>
-              <tr><td colspan="6" class="text-center p-4">No categories found.</td></tr>
+              <tr><td colspan="4" class="text-center p-4">No categories found.</td></tr>
             <% } %>
           </tbody>
         </table>

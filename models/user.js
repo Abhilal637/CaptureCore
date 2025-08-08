@@ -34,7 +34,23 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-
+walletTransactions: [
+  {
+    type: {
+      type: String,
+      enum: ['Refund', 'Purchase', 'Top-up'],
+      required: true
+    },
+    amount: {
+      type: Number,
+      required: true
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }
+],  
   
   otp: { type: String },
   otpExpiry: { type: Date },

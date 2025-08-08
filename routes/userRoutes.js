@@ -22,7 +22,6 @@ const {
 
 const { checkBlocked } = require('../middleware/adminauthmiddleware');
 
-// 🌐 Global Middlewares
 router.use(checkSessionTimeout);
 router.use(noCache);
 
@@ -30,34 +29,32 @@ router.get('/', optionalAuth, userController.getHome);
 router.get('/shop', userController.getProducts);
 router.get('/product/:id', userController.getProductDetails);
 
-// Signup
+
 router.route('/signup')
   .get(preventLoginIfLoggedIn, userController.getSignup)
   .post(validator('userSignupRules'), preventLoginIfLoggedIn, userController.postSignup);
 
-// Login
+
 router.route('/login')
   .get(preventLoginIfLoggedIn, userController.getLogin)
   .post(validator('userLoginRules'), preventLoginIfLoggedIn, userController.postlogin);
 
-// OTP
 router.route('/otp')
   .get(preventLoginIfLoggedIn, userController.getotpVerify)
   .post(preventLoginIfLoggedIn, userController.postOtpVerify);
 
 router.post('/otp/resend', preventLoginIfLoggedIn, userController.resendOtp);
 
-// Forgot Password
+
 router.route('/forgot-password')
   .get(preventLoginIfLoggedIn, userController.getforgetPassword)
   .post(preventLoginIfLoggedIn, userController.postForgetPassword);
 
-// Reset Password
 router.route('/reset-password/:token')
   .get(preventLoginIfLoggedIn, userController.getResetPassword)
   .post(validator('resetPasswordRules'), preventLoginIfLoggedIn, userController.postResetPassword);
 
-// Google Auth
+
 router.get('/auth/google', preventLoginIfLoggedIn, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/auth/google/callback',
@@ -79,7 +76,7 @@ router.get('/auth/google/callback',
   }
 );
 
-// Profile
+
 router.get('/profile', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getProfile);
 
 router.route('/edit-profile')
@@ -98,12 +95,11 @@ router.route('/verify-email')
   })
   .post(isUserLoggedIn, checkBlocked, profileController.postverifyEmail);
 
-// Change Password
 router.route('/change-password')
   .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getChangePassword)
   .post(validator('changePasswordRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postChangePassword);
 
-// Address
+
 router.get('/account/address', isUserLoggedIn, sessionSecurity, checkBlocked, (req, res) => res.redirect('/addresses'));
 
 router.route('/addresses')
@@ -119,7 +115,7 @@ router.route('/addresses/edit/:id')
 router.post('/addresses/delete/:id', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postDeleteAddress);
 router.post('/addresses/default/:id', isUserLoggedIn, profileController.setDefaultAddress);
 
-// Cart
+
 router.get('/cart', isUserLoggedIn, sessionSecurity, checkBlocked, cartController.getCartPage);
 router.post('/add-to-cart/:productId', isUserLoggedIn, cartController.addToCart);
 router.get('/cart/count', cartController.getCartCount);
@@ -128,14 +124,14 @@ router.post('/cart/update/:productId', cartController.updateCartItemQuantity);
 router.patch('/cart/update-quantity/:productId', cartController.updateCartItemQuantity);
 router.post('/cart/clear', isUserLoggedIn, cartController.clearCart);
 
-// Wishlist
+
 router.get('/wishlist', isUserLoggedIn, wishlistController.getWishlist);
 router.post('/wishlist/add/:productId', isUserLoggedIn, wishlistController.addToWishlist);
 router.delete('/wishlist/remove/:id', isUserLoggedIn, wishlistController.removeFromWishlist);
 router.post('/wishlist/toggle/:productId', isUserLoggedIn, wishlistController.toggleWishlist);
 router.delete('/wishlist/clear', isUserLoggedIn, wishlistController.clearWishlist);
 
-// Orders
+
 router.get('/checkout', isUserLoggedIn, userController.getCheckoutPage);
 router.post('/place-order', isUserLoggedIn, orderController.placeOrder);
 router.get('/orders', isUserLoggedIn, orderController.getOrders);
@@ -151,7 +147,7 @@ router.post('/order/return', isUserLoggedIn, orderController.returnEntireOrder);
 router.post('/order/return-item', isUserLoggedIn, orderController.returnOrderItem);
 router.get('/wallet', isUserLoggedIn, profileController.getWallet);
 
-// Logout
+
 router.route('/logout')
   .get(isUserLoggedIn, userController.logout)
   .post(isUserLoggedIn, userController.logout);

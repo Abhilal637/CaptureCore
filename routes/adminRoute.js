@@ -10,7 +10,7 @@ const { adminAuth, preventAdminLoginIfLoggedIn, noCache } = require('../middlewa
 const upload = require('../middleware/upload');
 const validator = require('../middleware/validate');
 
-// === Dashboard & Admin Authentication ===
+
 router.get('/', adminAuth, noCache, adminControllers.dashboard);
 router.get('/dashboard', adminAuth, noCache, adminControllers.dashboard);
 
@@ -19,11 +19,9 @@ router.post('/login', validator('adminLoginRules'), adminControllers.postLogin);
 
 router.get('/logout', adminControllers.logout);
 
-// === User Management ===
 router.get('/users', adminAuth, noCache, adminControllers.getUsers);
 router.patch('/users/toggle-block/:id', adminAuth, noCache, adminControllers.toggleUserBlockStatus);
 
-// === Category Management ===
 router.get('/category', adminAuth, noCache, categoryControllers.listCategories);
 router.post('/category/add', adminAuth, noCache, validator('addcategoryRules'), categoryControllers.addCategory);
 router.get('/category/delete/:id', adminAuth, noCache, categoryControllers.deleteCategory);
@@ -31,7 +29,7 @@ router.get('/category/edit/:id', adminAuth, noCache, categoryControllers.editcat
 router.patch('/category/edit/:id', adminAuth, noCache, validator('editcategoryRules'), categoryControllers.updateCategory);
 router.patch('/category/toggle/:id', adminAuth, noCache, categoryControllers.toggleCategoryStatus);
 
-// === Product Management ===
+
 router.get('/products', adminAuth, noCache, productControllers.listProducts);
 router.get('/products/add', adminAuth, noCache, (req, res) => {
   res.render('admin/addproduct');
@@ -53,7 +51,7 @@ router.post(
   '/products/edit/:id',
   adminAuth,
   noCache,
-  upload.array('images', 3), // ✅ Accepts up to 3 files
+  upload.array('images', 3), 
   validator('editproductRules'),
   productControllers.updateProduct
 );

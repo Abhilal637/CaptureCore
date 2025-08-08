@@ -1,12 +1,12 @@
 const { check, body } = require('express-validator');
 
-// Reusable regex patterns
+
 const onlyLettersSpaces = /^[A-Za-z\s]+$/;
 const onlyAlphanumericAndPunctuation = /^[A-Za-z0-9\s.,'"/\-()#&]+$/;
 const phoneRegex = /^\d{10}$/;
 const pincodeRegex = /^\d{6}$/;
 
-// Custom validators
+
 const disallowConsecutiveDigits = value => {
   if (/^(\d)\1{9}$/.test(value)) {
     throw new Error('Phone number cannot have all digits the same');
@@ -15,7 +15,7 @@ const disallowConsecutiveDigits = value => {
 };
 
 module.exports = {
-  // ✅ USER SIGNUP
+  //  USER SIGNUP
   userSignupRules: [
     check('name')
       .notEmpty().withMessage('Name is required')
@@ -45,7 +45,7 @@ module.exports = {
       })
   ],
 
-  // ✅ USER LOGIN
+  //  USER LOGIN
   userLoginRules: [
     check('email')
       .notEmpty().withMessage('Email is required')
@@ -55,7 +55,7 @@ module.exports = {
       .notEmpty().withMessage('Password is required')
   ],
 
-  // ✅ ADMIN LOGIN
+  //  ADMIN LOGIN
   adminLoginRules: [
     check('email')
       .notEmpty().withMessage('Email is required')
@@ -65,7 +65,7 @@ module.exports = {
       .notEmpty().withMessage('Password is required')
   ],
 
-  // ✅ ADDRESS FORM
+  //  ADDRESS FORM
   addressRules: [
     check('fullName')
       .notEmpty().withMessage('Full name is required')
@@ -97,7 +97,7 @@ module.exports = {
       .isLength({ min: 2, max: 50 }).withMessage('City must be between 2 and 50 characters')
   ],
 
-  // ✅ ADD CATEGORY
+  //  ADD CATEGORY
   addcategoryRules: [
     check('categoryName')
       .notEmpty().withMessage('Category name is required')
@@ -105,7 +105,7 @@ module.exports = {
       .isLength({ min: 2, max: 50 }).withMessage('Category name must be between 2 and 50 characters')
   ],
 
-  // ✅ EDIT CATEGORY
+  //  EDIT CATEGORY
   editcategoryRules: [
     check('categoryName')
       .notEmpty().withMessage('Category name is required')
@@ -113,7 +113,7 @@ module.exports = {
       .isLength({ min: 2, max: 50 }).withMessage('Category name must be between 2 and 50 characters')
   ],
 
-  // ✅ ADD PRODUCT
+  // ADD PRODUCT
   addproductRules: [
     check('productName')
       .notEmpty().withMessage('Product name is required')
@@ -134,7 +134,7 @@ module.exports = {
       .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters')
   ],
 
-  // ✅ EDIT PRODUCT
+  // EDIT PRODUCT
   editproductRules: [
     check('productName')
       .optional()
@@ -154,7 +154,7 @@ module.exports = {
       .matches(onlyAlphanumericAndPunctuation).withMessage('Description contains invalid characters')
       .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters'),
 
-    // ✅ Require minimum 3 images if new images are uploaded
+   
     body().custom((_, { req }) => {
       if (req.files && req.files.length > 0 && req.files.length < 3) {
         throw new Error('Please upload at least 3 cropped images');
@@ -163,7 +163,7 @@ module.exports = {
     })
   ],
 
-  // ✅ RESET PASSWORD
+  // RESET PASSWORD
   resetPasswordRules: [
     check('password')
       .notEmpty().withMessage('Password is required')
@@ -179,7 +179,7 @@ module.exports = {
       })
   ],
 
-  // ✅ CHANGE PASSWORD
+  //  CHANGE PASSWORD
   changePasswordRules: [
     check('currentPassword')
       .notEmpty().withMessage('Current password is required'),

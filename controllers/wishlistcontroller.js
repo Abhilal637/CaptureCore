@@ -71,11 +71,10 @@ exports.removeFromWishlist = async (req, res) => {
     }
 
     const initialLength = user.wishlist.length;
-    // Remove product from user's wishlist array
+    
     user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
     await user.save();
 
-    // Always return success, even if item was not in wishlist (idempotent)
     res.json({ 
       success: true, 
       message: initialLength === user.wishlist.length 
@@ -88,7 +87,7 @@ exports.removeFromWishlist = async (req, res) => {
   }
 };
 
-// Toggle wishlist item (add if not present, remove if present)
+
 exports.toggleWishlist = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -103,7 +102,7 @@ exports.toggleWishlist = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Check if product exists and is valid
+ 
     const product = await Product.findById(productId);
     if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
       return res.status(404).json({ success: false, message: 'Product is no longer available' });
@@ -112,7 +111,6 @@ exports.toggleWishlist = async (req, res) => {
     const isInWishlist = user.wishlist.includes(productId);
     
     if (isInWishlist) {
-      // Remove from wishlist
       user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
       await user.save();
       res.json({ 
@@ -122,7 +120,6 @@ exports.toggleWishlist = async (req, res) => {
         inWishlist: false
       });
     } else {
-      // Add to wishlist
       user.wishlist.push(productId);
       await user.save();
       res.json({ 
@@ -138,7 +135,7 @@ exports.toggleWishlist = async (req, res) => {
   }
 };
 
-// Clear all wishlist items
+
 exports.clearWishlist = async (req, res) => {
   try {
     const userId = req.session.userId;

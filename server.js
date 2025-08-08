@@ -7,25 +7,23 @@ const flash = require('connect-flash');
 const http = require('http');
 const socketIo = require('socket.io');
 
-
 const userRoute = require('./routes/userRoutes');
 const session = require("express-session");
 const adminRoutes = require('./routes/adminRoute');
 const User = require('./models/user');
 const passport = require('./config/passport');
 const validate = require('./middleware/validate');
- 
 
 dotenv.config();
 
-// Set up view engine
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Connect to MongoDB
+
 connectDB();
 
-// Middleware setup
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -59,45 +57,46 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Static files
+
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-// Routes
-app.use('/', userRoute); 
+app.use('/', userRoute);
 app.use('/admin', adminRoutes);
 
-// --- SOCKET.IO Setup ---
+
 const server = http.createServer(app);
 const io = socketIo(server);
 
-app.get('/orders',(req,res)=>{
-  res.render('user/order')
-})
+app.get('/orders', (req, res) => {
+  res.render('user/order');
+});
 
 
-// Store user socket connections
-const userSockets = new Map();
+global.userSockets = new Map();
+global.io = io;
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // When user logs in, store their socket connection
-  socket.on('user_login', (userId) => {
-    userSockets.set(userId.toString(), socket.id);
-    console.log(`User ${userId} logged in with socket ${socket.id}`);
+
+  socket.on('registerUser', (userId) => {
+    if (userId) {
+      global.userSockets.set(userId.toString(), socket.id);
+      console.log(`User ${userId} registered with socket ${socket.id}`);
+    }
   });
 
-  // When user logs out manually
+
   socket.on('user_logout', (userId) => {
-    userSockets.delete(userId.toString());
+    global.userSockets.delete(userId.toString());
     console.log(`User ${userId} logged out manually`);
   });
 
-  // On socket disconnect
+ 
   socket.on('disconnect', () => {
-    for (const [userId, socketId] of userSockets.entries()) {
+    for (const [userId, socketId] of global.userSockets.entries()) {
       if (socketId === socket.id) {
-        userSockets.delete(userId);
+        global.userSockets.delete(userId);
         console.log(`User ${userId} disconnected`);
         break;
       }
@@ -105,11 +104,11 @@ io.on('connection', (socket) => {
   });
 });
 
-// Make io and sockets globally available
-app.set('io', io);
-app.set('userSockets', userSockets);
 
-// Start the server
+app.set('io', io);
+app.set('userSockets', global.userSockets);
+
+
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

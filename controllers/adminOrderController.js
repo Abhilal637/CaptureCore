@@ -7,6 +7,9 @@ const streamifier = require('streamifier');
 const Order=require('../models/order');
 const PDFDocument = require('pdfkit'); 
 
+const { refundToWallet } = require('../utils/wallet');
+
+
 
 exports.listOrder = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -68,7 +71,6 @@ exports.viewOrderDetails = async (req, res) => {
 
     if (!order) return res.status(404).send('Order not found');
 
-    // fallback in case totalAmount is undefined
     const totalAmount = typeof order.totalAmount === 'number' 
       ? order.totalAmount 
       : order.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -112,6 +114,7 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+
 exports.verifyReturnAndRefund = async (req, res) => {
   const orderId = req.params.orderId;
   const productId = req.params.productId;
@@ -131,15 +134,20 @@ exports.verifyReturnAndRefund = async (req, res) => {
     item.returnRequested = false;
     item.returnApproved = true;
 
-    if (order.items.every(i => i.status === 'Returned')) {
+       if (order.items.every(i => i.status === 'Returned')) {
       order.status = 'Returned';
     }
 
-    order.user.wallet += item.price * item.quantity;
-    await order.user.save();
+    
     await order.save();
 
+   
+    const amount = item.price * item.quantity;
+    const description = `Refund for returned product: ${item.name || 'Item'}`;
+    await refundToWallet(order.user._id, amount, description, order.orderId);
+
     res.json({ message: 'Return approved and amount refunded to wallet' });
+
   } catch (error) {
     console.error('Return approval error:', error);
     res.status(500).json({ message: 'Server Error' });

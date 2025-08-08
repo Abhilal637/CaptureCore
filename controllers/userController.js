@@ -191,71 +191,140 @@ exports.getLogin = (req, res) => {
   res.render('user/login', { error });
 };
 
-    exports.postlogin = async (req, res) => {
-        const { email, password } = req.body;
+exports.postlogin = async (req, res) => {
+    const { email, password } = req.body;
 
-        // Check for validation errors
-        if (req.validationErrors) {
-          return res.render('user/login', {
+    // Check for validation errors
+    if (req.validationErrors) {
+        return res.render('user/login', {
             errors: req.validationErrors,
             body: req.body,
             error: null
-          });
+        });
+    }
+
+    console.log('Login attempt:', { email, password });
+
+    // ✅ Regex Validation
+    if (!email || !emailRegex.test(email)) {
+        return res.render('user/login', { error: 'Please enter a valid email address.' });
+    }
+
+    if (!password || !passwordRegex.test(password)) {
+        return res.render('user/login', {
+            error: 'Password must be at least 8 characters, include a letter and a number.',
+        });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+            return res.render('user/login', { error: 'Invalid email or password' });
         }
 
-        console.log('Login attempt:', { email, password });
-
-        // ✅ Regex Validation
-        if (!email || !emailRegex.test(email)) {
-            return res.render('user/login', { error: 'Please enter a valid email address.' });
-        }
-
-        if (!password || !passwordRegex.test(password)) {
+        // ✅ Blocked user check (new)
+        if (user.isBlocked) {
             return res.render('user/login', {
-                error: 'Password must be at least 8 characters, include a letter and a number.',
+                error: 'Your account has been blocked by the admin. Please contact support.',
+                body: req.body
             });
         }
 
-        try {
-            const user = await User.findOne({ email });
-
-            if (!user) {
-                req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-                return res.render('user/login', { error: 'Invalid email or password' });
-            }
-            if (user.isBlocked) {
-                return res.render('user/login', { error: 'Your account has been blocked by the admin.' });
-            }
-
-            if (!user.isVerified) {
-                req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-                return res.render('user/login', { error: 'Please verify your email first' });
-            }
-
-            const match = await bcrypt.compare(password, user.password);
-            if (!match) {
-                req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-                return res.render('user/login', { error: 'Invalid email or password' });
-            }
-
-            req.session.loginAttempts = 0;
-            req.session.userId = user.id;
-            req.session.lastActivity = Date.now();
-            req.session.regenerated = false;
-
-            console.log('Login successful, redirecting to home...');
-            res.redirect('/');
-        } catch (err) {
-            console.error('Login error:', err);
+        if (!user.isVerified) {
             req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
-            return res.render('user/login', { error: 'Login failed. Please try again.' });
+            return res.render('user/login', { error: 'Please verify your email first' });
         }
-    };
 
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+            return res.render('user/login', { error: 'Invalid email or password' });
+        }
+
+        req.session.loginAttempts = 0;
+        req.session.userId = user.id;
+        req.session.lastActivity = Date.now();
+        req.session.regenerated = false;
+
+        console.log('Login successful, redirecting to home...');
+        res.redirect('/');
+    } catch (err) {
+        console.error('Login error:', err);
+        req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+        return res.render('user/login', { error: 'Login failed. Please try again.' });
+    }
+};
+exports.postlogin = async (req, res) => {
+    const { email, password } = req.body;
+
+    // Check for validation errors
+    if (req.validationErrors) {
+        return res.render('user/login', {
+            errors: req.validationErrors,
+            body: req.body,
+            error: null
+        });
+    }
+
+    console.log('Login attempt:', { email, password });
+
+    // ✅ Regex Validation
+    if (!email || !emailRegex.test(email)) {
+        return res.render('user/login', { error: 'Please enter a valid email address.' });
+    }
+
+    if (!password || !passwordRegex.test(password)) {
+        return res.render('user/login', {
+            error: 'Password must be at least 8 characters, include a letter and a number.',
+        });
+    }
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+            return res.render('user/login', { error: 'Invalid email or password' });
+        }
+
+        // ✅ Blocked user check (new)
+        if (user.isBlocked) {
+            return res.render('user/login', {
+                error: 'Your account has been blocked by the admin. Please contact support.',
+                body: req.body
+            });
+        }
+
+        if (!user.isVerified) {
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+            return res.render('user/login', { error: 'Please verify your email first' });
+        }
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+            return res.render('user/login', { error: 'Invalid email or password' });
+        }
+
+        req.session.loginAttempts = 0;
+        req.session.userId = user.id;
+        req.session.lastActivity = Date.now();
+        req.session.regenerated = false;
+
+        console.log('Login successful, redirecting to home...');
+        res.redirect('/');
+    } catch (err) {
+        console.error('Login error:', err);
+        req.session.loginAttempts = (req.session.loginAttempts || 0) + 1;
+        return res.render('user/login', { error: 'Login failed. Please try again.' });
+    }
+};
 
 exports.getHome = async (req, res) => {
   try {
-    // Fetch 4 featured products
+
     const featuredProducts = await Product.find({
       isBlocked: false,
       isListed: true,
@@ -264,7 +333,7 @@ exports.getHome = async (req, res) => {
     })
     .limit(4)
     .populate('category')
-    .sort({ createdAt: -1 }); // Show newest products first
+    .sort({ createdAt: -1 });
 
     res.render('user/index', { featuredProducts });
   } catch (error) {
@@ -407,14 +476,13 @@ exports.getProducts = async (req, res) => {
     };
     const sortOption = sortOptionsMap[sort] || {};
 
-    // Full product list (filtered but not paginated) to get real total count
+    
     const allMatchingProducts = await Product.find(query).populate({
       path: 'category',
       match: { active: true, isDeleted: false }
     });
     const filteredCount = allMatchingProducts.filter(p => p.category).length;
 
-    // Paginated product list
     const products = await Product.find(query)
       .populate({
         path: 'category',
@@ -470,7 +538,7 @@ exports.getProductDetails = async (req, res) => {
       return res.redirect('/shop');
     }
 
-    // Related products
+    
     const related = await Product.find({
       _id: { $ne: product._id },
       category: product.category._id,
@@ -481,7 +549,6 @@ exports.getProductDetails = async (req, res) => {
       .populate('category')
       .limit(4);
 
-    // Wishlist check
     const userId = req.session.userId;
     let isInWishlist = false;
 
@@ -553,7 +620,7 @@ exports.logout = (req, res) => {
       let validItems = [];
       let subtotal = 0;
 
-      // Handle "Buy Now" - direct product purchase
+     
       if (productId) {
         const product = await Product.findById(productId).populate('category');
         
@@ -573,7 +640,7 @@ exports.logout = (req, res) => {
           itemTotal
         });
       } else {
-        // Handle regular cart checkout
+        
         const cart = await Cart.findOne({ user: userId }).populate({
           path: 'items.product',
           populate: { path: 'category' }
