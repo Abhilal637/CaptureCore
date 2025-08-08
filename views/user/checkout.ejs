@@ -28,9 +28,9 @@
         <h2 class="text-xl font-semibold mb-4">Shipping Address</h2>
 
         <% if (addresses && addresses.length > 0) { %>
-          <div class="grid gap-6 md:grid-cols-2">
+          <div class="grid gap-6 md:grid-cols-2" id="addresses-container">
             <% addresses.forEach(address => { %>
-              <label class="border rounded-lg p-5 shadow-sm bg-white cursor-pointer flex gap-4 peer-checked:ring-2 peer-checked:ring-blue-500">
+              <label class="border rounded-lg p-5 shadow-sm bg-white cursor-pointer flex gap-4 hover:border-blue-300 transition-colors address-card" data-address-id="<%= address._id %>">
                 <input 
                   type="radio" 
                   name="addressId" 
@@ -39,14 +39,14 @@
                   required
                 >
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold"><%= address.name %></h3>
-                  <p><%= address.street %>, <%= address.city %>, <%= address.state %>, <%= address.zipCode %></p>
-                  <p>Phone: <%= address.phone %></p>
+                  <h3 class="text-lg font-semibold address-name"><%= address.name %></h3>
+                  <p class="address-details"><%= address.street %>, <%= address.city %>, <%= address.state %>, <%= address.zipCode %></p>
+                  <p class="address-phone">Phone: <%= address.phone %></p>
                   <% if (defaultAddress === address._id.toString()) { %>
                     <span class="text-sm text-green-600 font-medium">Default Address</span>
                   <% } %>
                 </div>
-                <a href="#" class="text-blue-600 text-sm hover:underline edit-address-btn" data-address-id="<%= address._id %>">Edit</a>
+                <button type="button" class="text-blue-600 text-sm hover:underline edit-address-btn self-start" data-address-id="<%= address._id %>">Edit</button>
               </label>
             <% }) %>
           </div>
@@ -134,97 +134,308 @@
   </div>
 
 <!-- Address Edit Modal -->
-<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg p-8 w-full max-w-md relative">
-    <button id="closeEditModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">&times;</button>
-    <h2 class="text-xl font-semibold mb-4">Edit Address</h2>
+<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-8 w-full max-w-md relative shadow-xl">
+    <button id="closeEditModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+    <h2 class="text-2xl font-semibold mb-6">Edit Address</h2>
+    
     <form id="editAddressForm">
       <input type="hidden" name="addressId" id="editAddressId">
+      
       <div class="mb-4">
-        <label class="block mb-1">Name</label>
-        <input type="text" name="name" id="editName" class="w-full border rounded px-3 py-2" required>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+        <input type="text" name="name" id="editName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
+      
       <div class="mb-4">
-        <label class="block mb-1">Street</label>
-        <input type="text" name="street" id="editStreet" class="w-full border rounded px-3 py-2" required>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Street</label>
+        <input type="text" name="street" id="editStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
+      
       <div class="mb-4">
-        <label class="block mb-1">City</label>
-        <input type="text" name="city" id="editCity" class="w-full border rounded px-3 py-2" required>
+        <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+        <input type="text" name="city" id="editCity" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
+      
       <div class="mb-4">
-        <label class="block mb-1">State</label>
-        <input type="text" name="state" id="editState" class="w-full border rounded px-3 py-2" required>
+        <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+        <input type="text" name="state" id="editState" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
+      
       <div class="mb-4">
-        <label class="block mb-1">Zip Code</label>
-        <input type="text" name="zipCode" id="editZipCode" class="w-full border rounded px-3 py-2" required>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Zip Code</label>
+        <input type="text" name="zipCode" id="editZipCode" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
-      <div class="mb-4">
-        <label class="block mb-1">Phone</label>
-        <input type="text" name="phone" id="editPhone" class="w-full border rounded px-3 py-2" required>
+      
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+        <input type="text" name="phone" id="editPhone" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Address</button>
+      
+      <div class="mb-6">
+        <label class="flex items-center gap-2">
+          <input type="checkbox" name="isDefault" id="editIsDefault" class="rounded">
+          <span class="text-sm text-gray-700">Set as default address</span>
+        </label>
+      </div>
+      
+      <div class="flex gap-3">
+        <button type="button" id="cancelEdit" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors">Cancel</button>
+        <button type="submit" id="saveAddressBtn" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">Save Address</button>
+      </div>
     </form>
   </div>
 </div>
-<script type="application/json" id="addresses-data">
-  <%= JSON.stringify(addresses || []) %>
-</script>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-60 hidden">
+  <div class="bg-white rounded-lg p-6 flex items-center gap-3">
+    <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+    <span>Updating address...</span>
+  </div>
+</div>
+
+<!-- Pass addresses data to JavaScript -->
+<script type="application/json" id="addresses-data"><%- JSON.stringify(addresses || []) %></script>
+
 <script>
   let addresses = [];
+  
+  // Load addresses data safely
   try {
-    const addressesData = document.getElementById('addresses-data');
-    if (addressesData) {
-      addresses = JSON.parse(addressesData.textContent);
+    const addressesElement = document.getElementById('addresses-data');
+    if (addressesElement && addressesElement.textContent.trim()) {
+      addresses = JSON.parse(addressesElement.textContent);
+      console.log('Successfully loaded addresses:', addresses);
+    } else {
+      console.log('No addresses data found');
     }
   } catch (e) {
-    addresses = [];
+    console.error('Error loading addresses data:', e);
+    // Fallback: try to extract from the DOM
+    try {
+      const addressCards = document.querySelectorAll('.address-card');
+      addresses = Array.from(addressCards).map(card => {
+        return {
+          _id: card.dataset.addressId,
+          name: card.querySelector('.address-name')?.textContent || '',
+          street: '', // We'll extract this from the details
+          city: '',
+          state: '',
+          zipCode: '',
+          phone: card.querySelector('.address-phone')?.textContent.replace('Phone: ', '') || ''
+        };
+      });
+      console.log('Fallback addresses extracted:', addresses);
+    } catch (fallbackError) {
+      console.error('Fallback extraction failed:', fallbackError);
+      addresses = [];
+    }
   }
-  document.querySelectorAll('.edit-address-btn').forEach(btn => {
+
+  // Modal elements
+  const modal = document.getElementById('editAddressModal');
+  const form = document.getElementById('editAddressForm');
+  const loadingOverlay = document.getElementById('loadingOverlay');
+
+  // Debug: Check if addresses data loaded
+  console.log('Loaded addresses:', addresses);
+  console.log('Found edit buttons:', document.querySelectorAll('.edit-address-btn').length);
+
+  // Edit button click handlers
+  document.querySelectorAll('.edit-address-btn').forEach((btn, index) => {
+    console.log(`Setting up button ${index}:`, btn);
+    
     btn.addEventListener('click', function(e) {
+      console.log('Edit button clicked!');
       e.preventDefault();
+      e.stopPropagation(); // Prevent radio button selection
+      
       const addressId = this.dataset.addressId;
-      const address = addresses.find(a => a._id === addressId);
+      console.log('Address ID:', addressId);
+      
+      // Try to find address in our data
+      let address = addresses.find(a => a._id === addressId);
+      
+      // If not found in data, extract from DOM as fallback
+      if (!address) {
+        console.log('Address not found in data, extracting from DOM');
+        const card = document.querySelector(`.address-card[data-address-id="${addressId}"]`);
+        if (card) {
+          const name = card.querySelector('.address-name')?.textContent || '';
+          const details = card.querySelector('.address-details')?.textContent || '';
+          const phone = card.querySelector('.address-phone')?.textContent.replace('Phone: ', '') || '';
+          
+          // Parse address details (format: "street, city, state, zipCode")
+          const detailsParts = details.split(', ');
+          
+          address = {
+            _id: addressId,
+            name: name,
+            street: detailsParts[0] || '',
+            city: detailsParts[1] || '',
+            state: detailsParts[2] || '',
+            zipCode: detailsParts[3] || '',
+            phone: phone,
+            isDefault: card.querySelector('.text-green-600') !== null
+          };
+          console.log('Extracted address from DOM:', address);
+        }
+      }
+      
+      console.log('Using address:', address);
+      
       if (address) {
+        // Populate modal form
         document.getElementById('editAddressId').value = address._id;
-        document.getElementById('editName').value = address.name;
-        document.getElementById('editStreet').value = address.street;
-        document.getElementById('editCity').value = address.city;
-        document.getElementById('editState').value = address.state;
-        document.getElementById('editZipCode').value = address.zipCode;
-        document.getElementById('editPhone').value = address.phone;
-        document.getElementById('editAddressModal').classList.remove('hidden');
+        document.getElementById('editName').value = address.name || '';
+        document.getElementById('editStreet').value = address.street || '';
+        document.getElementById('editCity').value = address.city || '';
+        document.getElementById('editState').value = address.state || '';
+        document.getElementById('editZipCode').value = address.zipCode || '';
+        document.getElementById('editPhone').value = address.phone || '';
+        document.getElementById('editIsDefault').checked = address.isDefault || false;
+        
+        console.log('About to show modal');
+        // Show modal
+        modal.classList.remove('hidden');
+        document.getElementById('editName').focus();
+      } else {
+        console.error('Address not found with ID:', addressId);
+        alert('Address not found. Please refresh the page.');
       }
     });
   });
-  document.getElementById('closeEditModal').addEventListener('click', function() {
-    document.getElementById('editAddressModal').classList.add('hidden');
+
+  // Close modal handlers
+  document.getElementById('closeEditModal').addEventListener('click', closeModal);
+  document.getElementById('cancelEdit').addEventListener('click', closeModal);
+  
+  // Close modal when clicking outside
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
   });
-  document.getElementById('editAddressForm').addEventListener('submit', async function(e) {
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    form.reset();
+  }
+
+  // Form submission
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
+    
     const addressId = document.getElementById('editAddressId').value;
-    const data = {
-      name: document.getElementById('editName').value,
-      street: document.getElementById('editStreet').value,
-      city: document.getElementById('editCity').value,
-      state: document.getElementById('editState').value,
-      zipCode: document.getElementById('editZipCode').value,
-      phone: document.getElementById('editPhone').value
-    };
+    const saveBtn = document.getElementById('saveAddressBtn');
+    
+    // Disable button and show loading
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+    loadingOverlay.classList.remove('hidden');
+    
+    // Prepare form data (matching your backend expectations)
+    const formData = new FormData();
+    formData.append('name', document.getElementById('editName').value);
+    formData.append('street', document.getElementById('editStreet').value);
+    formData.append('city', document.getElementById('editCity').value);
+    formData.append('state', document.getElementById('editState').value);
+    formData.append('zipCode', document.getElementById('editZipCode').value);
+    formData.append('phone', document.getElementById('editPhone').value);
+    formData.append('isDefault', document.getElementById('editIsDefault').checked);
+    
     try {
-      const res = await fetch(`/addresses/edit/${addressId}`, {
+      const response = await fetch(`/addresses/edit/${addressId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: formData
       });
-      if (res.ok) {
-        location.reload();
+      
+      if (response.ok) {
+        // Update the address in our local array
+        const addressIndex = addresses.findIndex(a => a._id === addressId);
+        if (addressIndex !== -1) {
+          addresses[addressIndex] = {
+            ...addresses[addressIndex],
+            name: document.getElementById('editName').value,
+            street: document.getElementById('editStreet').value,
+            city: document.getElementById('editCity').value,
+            state: document.getElementById('editState').value,
+            zipCode: document.getElementById('editZipCode').value,
+            phone: document.getElementById('editPhone').value,
+            isDefault: document.getElementById('editIsDefault').checked
+          };
+        }
+        
+        // Update the UI immediately
+        updateAddressCard(addressId);
+        
+        // Show success message
+        showNotification('Address updated successfully!', 'success');
+        closeModal();
+        
       } else {
-        alert('Failed to update address.');
+        // If server returns an error, show message
+        const errorText = await response.text();
+        showNotification('Failed to update address. Please try again.', 'error');
+        console.error('Server error:', errorText);
       }
-    } catch (err) {
-      alert('Error updating address.');
+      
+    } catch (error) {
+      console.error('Network error:', error);
+      showNotification('Network error. Please check your connection.', 'error');
+    } finally {
+      // Reset button state
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save Address';
+      loadingOverlay.classList.add('hidden');
+    }
+  });
+
+  // Update address card in the UI
+  function updateAddressCard(addressId) {
+    const addressCard = document.querySelector(`.address-card[data-address-id="${addressId}"]`);
+    if (addressCard) {
+      const address = addresses.find(a => a._id === addressId);
+      if (address) {
+        addressCard.querySelector('.address-name').textContent = address.name;
+        addressCard.querySelector('.address-details').textContent = 
+          `${address.street}, ${address.city}, ${address.state}, ${address.zipCode}`;
+        addressCard.querySelector('.address-phone').textContent = `Phone: ${address.phone}`;
+      }
+    }
+  }
+
+  // Show notification
+  function showNotification(message, type = 'info') {
+    // Remove any existing notification
+    const existingNotification = document.getElementById('notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.id = 'notification';
+    notification.className = `fixed top-4 right-4 px-6 py-3 rounded-md text-white z-70 ${
+      type === 'success' ? 'bg-green-500' : 
+      type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+
+  // Handle keyboard shortcuts
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      closeModal();
     }
   });
 </script>

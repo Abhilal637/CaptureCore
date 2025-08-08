@@ -315,7 +315,6 @@ exports.postEditAddress = async (req, res) => {
       await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
     }
 
-    // Update the address
     await Address.updateOne(
       { _id: addressId, user: userId },
       {
