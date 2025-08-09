@@ -12,56 +12,80 @@ const { refundToWallet } = require('../utils/wallet');
 
 
 exports.listOrder = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = 5;
-  const skip = (page - 1) * limit;
+  try {
+    const perPage = 8; 
+    const page = parseInt(req.query.page) || 1;
 
-  const search = req.query.search || '';
-  const sort = req.query.sort === 'old' ? 1 : -1;
+    const search = req.query.search || '';
+    const sort = req.query.sort === 'old' ? 1 : -1;
 
-  const query = {
-    orderId: { $regex: search, $options: 'i' }
-  };
+    const matchStage = search ? {
+      $or: [
+        { orderId: { $regex: search, $options: 'i' } },
+        { 'user.name': { $regex: search, $options: 'i' } }
+      ]
+    } : {};
 
-  const orders = await Order.find(query)
-    .sort({ createdAt: sort })
-    .skip(skip)
-    .limit(limit)
-    .populate('user')
-    .populate('items.product');
+    // Count total matching orders
+    const totalOrdersAgg = await Order.aggregate([
+      { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
+      { $match: matchStage },
+      { $count: 'count' }
+    ]);
+    const totalOrders = totalOrdersAgg[0]?.count || 0;
+    const totalPages = Math.ceil(totalOrders / perPage);
 
-  orders.forEach(order => {
-    order.totalAmount = Array.isArray(order.items)
-      ? order.items.reduce((sum, item) => {
-          const price = item.product?.price || 0;
-          const qty = item.quantity || 1;
-          return sum + price * qty;
-        }, 0)
-      : 0;
-  });
+    // Fetch paginated orders with populate and filtering
+    const ordersAgg = await Order.aggregate([
+      { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
+      { $unwind: '$user' },
+      { $match: matchStage },
+      { $sort: { createdAt: sort } },
+      { $skip: (page - 1) * perPage },
+      { $limit: perPage }
+    ]);
+    
+    const orderIds = ordersAgg.map(o => o._id);
+    let orders = await Order.find({ _id: { $in: orderIds } })
+      .populate('user')
+      .populate('items.product')
+      .sort({ createdAt: sort });
 
-  const count = await Order.countDocuments(query);
+    orders.forEach(order => {
+      order.totalAmount = Array.isArray(order.items)
+        ? order.items.reduce((sum, item) => {
+            const price = item.product?.price || 0;
+            const qty = item.quantity || 1;
+            return sum + price * qty;
+          }, 0)
+        : 0;
+    });
 
-  const nextStatusMap = {
-    'Pending': ['Confirmed'],
-    'Confirmed': ['Shipped'],
-    'Shipped': ['Out for Delivery'],
-    'Out for Delivery': ['Delivered'],
-    'Delivered': [],
-    'Cancelled': [], 
-    'Placed': ['Confirmed']
-  };
+    // Status transition map
+    const nextStatusMap = {
+      'Pending': ['Confirmed'],
+      'Confirmed': ['Shipped'],
+      'Shipped': ['Out for Delivery'],
+      'Out for Delivery': ['Delivered'],
+      'Delivered': [],
+      'Cancelled': [],
+      'Placed': ['Confirmed']
+    };
 
-  res.render('admin/order-list', {
-    orders,
-    page,
-    search,
-    sort,
-    hasMore: skip + orders.length < count,
-    nextStatusMap
-  });
+    res.render('admin/order-list', {
+      orders,
+      totalPages,
+      currentPage: page,
+      search,
+      sort,
+      nextStatusMap
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server error');
+  }
 };
-
 
 exports.viewOrderDetails = async (req, res) => {
   try {

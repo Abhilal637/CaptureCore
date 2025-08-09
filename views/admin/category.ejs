@@ -36,16 +36,8 @@
           <button id="closeAddCategoryModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
           <h2 class="text-xl font-bold mb-4 text-center">Add New Category</h2>
           <form method="post" action="/admin/category/add" class="flex flex-col gap-4">
-            <input type="text" name="name" placeholder="Category Name" class="border rounded px-4 py-2 text-lg" required />
-            <textarea name="description" placeholder="Category Description" class="border rounded px-4 py-2 text-lg" required></textarea>
-
-            <!-- Subcategory Dropdown -->
-            <select name="parentCategory" class="border rounded px-4 py-2 text-lg">
-              <option value="">-- Main Category --</option>
-              <% categories.forEach(cat => { %>
-                <option value="<%= cat._id %>"><%= cat.name %></option>
-              <% }) %>
-            </select>
+            <input type="text" name="name" placeholder="Category Name" class="border rounded px-4 py-2 text-lg" required/>
+            <textarea name="description" placeholder="Category Description" class="border rounded px-4 py-2 text-lg" ></textarea>
 
             <button type="submit" class="px-4 py-2 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all">Add Category</button>
           </form>

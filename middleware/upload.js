@@ -1,4 +1,4 @@
-// middlewares/upload.js
+
 const multer = require('multer');
 const path = require('path');
 
@@ -17,7 +17,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage, // now using memoryStorage
+  storage, 
   limits: { fileSize: 1024 * 1024 * 15 }, // 15MB
   fileFilter
 });

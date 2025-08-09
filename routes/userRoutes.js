@@ -29,22 +29,31 @@ router.get('/', optionalAuth, userController.getHome);
 router.get('/shop', userController.getProducts);
 router.get('/product/:id', userController.getProductDetails);
 
-
 router.route('/signup')
   .get(preventLoginIfLoggedIn, userController.getSignup)
-  .post(validator('userSignupRules'), preventLoginIfLoggedIn, userController.postSignup);
-
+  .post(
+    validator('userSignupRules'),  // added validator here
+    preventLoginIfLoggedIn,
+    userController.postSignup
+  );
 
 router.route('/login')
   .get(preventLoginIfLoggedIn, userController.getLogin)
-  .post(validator('userLoginRules'), preventLoginIfLoggedIn, userController.postlogin);
+  .post(
+    validator('userLoginRules'),  
+    preventLoginIfLoggedIn,
+    userController.postlogin
+  );
 
 router.route('/otp')
   .get(preventLoginIfLoggedIn, userController.getotpVerify)
-  .post(preventLoginIfLoggedIn, userController.postOtpVerify);
+  .post(
+    preventLoginIfLoggedIn,
+    validator('otpRules'),          
+    userController.postOtpVerify
+  );
 
 router.post('/otp/resend', preventLoginIfLoggedIn, userController.resendOtp);
-
 
 router.route('/forgot-password')
   .get(preventLoginIfLoggedIn, userController.getforgetPassword)
@@ -52,8 +61,11 @@ router.route('/forgot-password')
 
 router.route('/reset-password/:token')
   .get(preventLoginIfLoggedIn, userController.getResetPassword)
-  .post(validator('resetPasswordRules'), preventLoginIfLoggedIn, userController.postResetPassword);
-
+  .post(
+    validator('resetPasswordRules'), 
+    preventLoginIfLoggedIn,
+    userController.postResetPassword
+  );
 
 router.get('/auth/google', preventLoginIfLoggedIn, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
@@ -76,12 +88,18 @@ router.get('/auth/google/callback',
   }
 );
 
-
 router.get('/profile', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getProfile);
 
 router.route('/edit-profile')
   .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getEditProfile)
-  .post(isUserLoggedIn, sessionSecurity,validator('editproductRules') ,checkBlocked, upload.single('profileImage'), profileController.postEditProfile);
+  .post(
+    isUserLoggedIn,
+    sessionSecurity,
+    validator('editProfileRules'),
+    checkBlocked,
+    upload.single('profileImage'),
+    profileController.postEditProfile
+  );
 
 router.get('/edit-email', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getEditEmail);
 router.post('/email/send-otp', isUserLoggedIn, checkBlocked, profileController.sendOtpForEmail);
@@ -97,24 +115,40 @@ router.route('/verify-email')
 
 router.route('/change-password')
   .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getChangePassword)
-  .post(validator('changePasswordRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postChangePassword);
-
+  .post(
+    validator('changePasswordRules'), 
+    isUserLoggedIn,
+    sessionSecurity,
+    checkBlocked,
+    profileController.postChangePassword
+  );
 
 router.get('/account/address', isUserLoggedIn, sessionSecurity, checkBlocked, (req, res) => res.redirect('/addresses'));
 
 router.route('/addresses')
   .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getAddresses)
-  .post(validator('addressRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postAddaddress);
+  .post(
+    validator('addressRules'), 
+    isUserLoggedIn,
+    sessionSecurity,
+    checkBlocked,
+    profileController.postAddaddress
+  );
 
 router.get('/addresses/add', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getAddress);
 
 router.route('/addresses/edit/:id')
   .get(isUserLoggedIn, sessionSecurity, checkBlocked, profileController.getEditAddresses)
-  .post(validator('addressRules'), isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postEditAddress);
+  .post(
+    validator('addressRules'),  
+    isUserLoggedIn,
+    sessionSecurity,
+    checkBlocked,
+    profileController.postEditAddress
+  );
 
 router.post('/addresses/delete/:id', isUserLoggedIn, sessionSecurity, checkBlocked, profileController.postDeleteAddress);
 router.post('/addresses/default/:id', isUserLoggedIn, profileController.setDefaultAddress);
-
 
 router.get('/cart', isUserLoggedIn, sessionSecurity, checkBlocked, cartController.getCartPage);
 router.post('/add-to-cart/:productId', isUserLoggedIn, cartController.addToCart);
@@ -124,13 +158,11 @@ router.post('/cart/update/:productId', cartController.updateCartItemQuantity);
 router.patch('/cart/update-quantity/:productId', cartController.updateCartItemQuantity);
 router.post('/cart/clear', isUserLoggedIn, cartController.clearCart);
 
-
 router.get('/wishlist', isUserLoggedIn, wishlistController.getWishlist);
 router.post('/wishlist/add/:productId', isUserLoggedIn, wishlistController.addToWishlist);
 router.delete('/wishlist/remove/:id', isUserLoggedIn, wishlistController.removeFromWishlist);
 router.post('/wishlist/toggle/:productId', isUserLoggedIn, wishlistController.toggleWishlist);
 router.delete('/wishlist/clear', isUserLoggedIn, wishlistController.clearWishlist);
-
 
 router.get('/checkout', isUserLoggedIn, userController.getCheckoutPage);
 router.post('/place-order', isUserLoggedIn, orderController.placeOrder);
@@ -146,7 +178,6 @@ router.get('/order/:orderId/invoice', isUserLoggedIn, orderController.downloadIn
 router.post('/order/return', isUserLoggedIn, orderController.returnEntireOrder);
 router.post('/order/return-item', isUserLoggedIn, orderController.returnOrderItem);
 router.get('/wallet', isUserLoggedIn, profileController.getWallet);
-
 
 router.route('/logout')
   .get(isUserLoggedIn, userController.logout)

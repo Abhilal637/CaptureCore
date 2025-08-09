@@ -14,6 +14,25 @@
     <div class="flex-1 p-8">
       <h1 class="text-3xl font-bold mb-6">Orders</h1>
 
+      <!-- Search Form -->
+      <form method="GET" action="/admin/orders" class="mb-6 flex gap-2">
+        <input 
+          type="text" 
+          name="search" 
+          value="<%= typeof search !== 'undefined' ? search : '' %>" 
+          placeholder="Search by Order ID or User" 
+          class="border border-gray-300 rounded px-3 py-2 w-64 text-sm"
+        />
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+          Search
+        </button>
+        <% if (search && search.length > 0) { %>
+          <button type="button" id="clearSearchBtn" class="px-4 py-2 bg-gray-400 text-white text-sm rounded hover:bg-gray-500">
+            Clear
+          </button>
+        <% } %>
+      </form>
+
       <% if (orders && orders.length > 0) { %>
         <div class="overflow-x-auto bg-white rounded-lg shadow">
           <table class="min-w-full divide-y divide-gray-200">
@@ -36,7 +55,7 @@
                   <td class="px-6 py-4 text-sm"><%= order.user?.name || 'N/A' %></td>
                   <td class="px-6 py-4 text-sm">₹<%= order.totalAmount?.toFixed(2) || '0.00' %></td>
                   
-                  <!-- Individual Product Statuses -->
+                  <!-- Product Statuses -->
                   <td class="px-6 py-4 text-sm">
                     <div class="space-y-1">
                       <% if (order.items && order.items.length > 0) { %>
@@ -61,7 +80,6 @@
                           </div>
                         <% }) %>
                       <% } else { %>
-                        <!-- Fallback to order status if no items -->
                         <% if (order.status === 'Return Requested') { %>
                           <span class="px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs">Return Requested</span>
                         <% } else if (order.status === 'Returned') { %>
@@ -86,7 +104,7 @@
                   </td>
                   <td class="px-6 py-4 text-sm"><%= order.createdAt?.toLocaleDateString() || 'N/A' %></td>
 
-                  <!-- Status Update Form -->
+                  <!-- Status Update -->
                   <td class="px-6 py-4">
                     <% const allowed = nextStatusMap[order.status] || []; %>
                     <% if (allowed.length > 0) { %>
@@ -104,11 +122,10 @@
                     <% } %>
                   </td>
 
-                  <!-- View Button & Approve Return for Individual Products -->
+                  <!-- Actions -->
                   <td class="px-6 py-4 text-sm">
                     <a href="/admin/orders/<%= order._id %>" class="text-blue-500 hover:underline">View</a>
 
-                    <!-- Individual Product Return Approvals -->
                     <div class="mt-2 space-y-2">
                       <% if (order.items && order.items.length > 0) { %>
                         <% order.items.forEach((item, itemIndex) => { %>
@@ -132,7 +149,6 @@
                           <% } %>
                         <% }) %>
                       <% } else { %>
-                        <!-- Fallback for orders without items array -->
                         <% if ((order.status === 'Return Requested' || order.status === 'Returned') && !order.returnVerified) { %>
                           <button 
                             class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 approve-btn"
@@ -152,6 +168,20 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Pagination -->
+        <div class="mt-6 flex justify-center space-x-1">
+          <% for (let i = 1; i <= totalPages; i++) { %>
+            <% if (i === currentPage) { %>
+              <span class="px-3 py-1 bg-blue-600 text-white rounded text-sm"><%= i %></span>
+            <% } else { %>
+              <a href="?page=<%= i %><%= search ? '&search=' + encodeURIComponent(search) : '' %>" 
+                class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100">
+                <%= i %>
+              </a>
+            <% } %>
+          <% } %>
+        </div>
       <% } else { %>
         <p>No orders found.</p>
       <% } %>
@@ -168,24 +198,15 @@
         try {
           const res = await fetch(`/admin/orders/${orderId}/items/${productId}/verify-return`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              itemIndex: itemIndex
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemIndex: itemIndex })
           });
 
           const data = await res.json();
 
           if (res.ok) {
-            // Replace the button with a success message
             const parent = button.parentElement;
             button.remove();
-            
-            // Update the product name span to remain
-            const productNameSpan = parent.querySelector('span');
-            
             const msg = document.createElement('div');
             msg.className = 'text-xs text-green-600 font-medium';
             msg.innerText = 'Return Approved';
@@ -197,7 +218,6 @@
               text: data.message || 'Return approved and amount refunded.',
               confirmButtonColor: '#3085d6'
             });
-
           } else {
             Swal.fire({
               icon: 'error',
@@ -208,7 +228,7 @@
           }
         } catch (err) {
           console.error('Error:', err);
-          Swal.fire({
+          Swal.fire({ 
             icon: 'error',
             title: 'Error',
             text: 'An unexpected error occurred.',
@@ -216,6 +236,14 @@
           });
         }
       });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      const clearBtn = document.getElementById('clearSearchBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          window.location.href = '/admin/orders';
+        });
+      }
     });
   </script>
 </body>

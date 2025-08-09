@@ -154,7 +154,7 @@ module.exports = {
       .matches(onlyAlphanumericAndPunctuation).withMessage('Description contains invalid characters')
       .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters'),
 
-   
+
     body().custom((_, { req }) => {
       if (req.files && req.files.length > 0 && req.files.length < 3) {
         throw new Error('Please upload at least 3 cropped images');
@@ -196,6 +196,31 @@ module.exports = {
         }
         return true;
       })
-  ]
+  ],
+
+  otpRules: [
+    check('otp')
+      .notEmpty().withMessage('OTP is required')
+      .isNumeric().withMessage('OTP must be numeric')
+      .isLength({ min: 6, max: 6 }).withMessage('OTP must be exactly 6 digits')
+  ],
+
+  editProfileRules: [
+  check('name')
+    .optional()
+    .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters')
+    .matches(/^[A-Za-z\s]+$/).withMessage('Name can only contain letters and spaces'),
+
+  check('phone')
+    .optional()
+    .matches(/^\d{10}$/).withMessage('Phone number must be exactly 10 digits')
+    .custom(value => {
+      if (/^(\d)\1{9}$/.test(value)) {
+        throw new Error('Phone number cannot have all digits the same');
+      }
+      return true;
+    })
+]
 };
-  
+
+

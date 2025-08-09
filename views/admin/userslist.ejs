@@ -1,136 +1,132 @@
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Admin – User Management</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  </head>
-  <body class="bg-gray-100 font-sans text-gray-800">
-    <div class="flex min-h-screen">
-      <!-- Sidebar -->
-      <%- include('../partial/admin/sidebar') %>
-      <!-- Main Content -->
-      <main class="flex-1 p-6">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-2xl font-semibold">USER</h1>
-          <form method="get" action="/admin/users" class="flex items-center space-x-2">
-            <input type="text" name="search" value="<%= search || '' %>" placeholder="Search" class="border rounded px-4 py-2 text-sm" />
-            <% if (search) { %>
-              <button type="button" onclick="clearSearch()" class="px-2 py-1 text-xs bg-gray-200 rounded">Clear</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin – User Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <%- include('../partial/admin/sidebar') %>
+    <!-- Main Content -->
+    <main class="flex-1 p-6">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-semibold">USER</h1>
+        <form method="get" action="/admin/users" class="flex items-center space-x-2">
+          <input type="text" name="search" value="<%= search || '' %>" placeholder="Search" class="border rounded px-4 py-2 text-sm" />
+          <% if (search) { %>
+            <button type="button" onclick="clearSearch()" class="px-2 py-1 text-xs bg-gray-200 rounded">Clear</button>
+          <% } %>
+          <button type="submit" class="px-2 py-1 text-xs bg-blue-600 text-white rounded">Search</button>
+        </form>
+      </div>
+
+      <!-- User Table -->
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
+              <th class="p-3"><input type="checkbox" id="selectAllUsers" /></th>
+              <th class="p-3">Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Mobile</th>
+              <th class="p-3">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (users && users.length) { %>
+              <% users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); %>
+              <% users.forEach(user => { %>
+                <tr class="border-b hover:bg-gray-50">
+                  <td class="p-3"><input type="checkbox" class="user-checkbox" /></td>
+                  <td class="p-3"><%= user.name %></td>
+                  <td class="p-3"><%= user.email %></td>
+                  <td class="p-3"><%= user.mobile %></td>
+                  <td class="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    <label class="inline-flex items-center cursor-pointer">
+                      <input type="checkbox" class="sr-only toggle-user-status" data-id="<%= user._id %>" <%= user.isBlocked ? '' : 'checked' %> />
+                      <div class="w-11 h-6 bg-gray-300 rounded-full shadow-inner relative transition">
+                        <div class="<%= 'dot absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ' + (user.isBlocked ? '' : 'translate-x-5') %>"></div>
+                      </div>
+                    </label>
+                    <span class="ml-2 text-sm font-medium <%= user.isBlocked ? 'text-red-600' : 'text-green-600' %>">
+                      <%= user.isBlocked ? 'Blocked' : 'Active' %>
+                    </span>
+                  </td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr><td colspan="6" class="text-center p-4">No users found.</td></tr>
             <% } %>
-            <button type="submit" class="px-2 py-1 text-xs bg-blue-600 text-white rounded">Search</button>
-          </form>
-        </div>
+          </tbody>
+        </table>
+      </div>
 
-        <!-- User Table -->
-        <div class="bg-white rounded shadow overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
-                <th class="p-3"><input type="checkbox" id="selectAllUsers" /></th>
-                <th class="p-3">Id</th>
-                <th class="p-3">Name</th>
-                <th class="p-3">Email</th>
-                <th class="p-3">Mobile</th>
-                <th class="p-3">Address</th>
-                <th class="p-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% if (users && users.length) { %>
-                <% users.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); %>
-                <% users.forEach(user => { %>
-                  <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3"><input type="checkbox" class="user-checkbox" /></td>
-                    <td class="p-3"><%= user._id %></td>
-                    <td class="p-3"><%= user.name %></td>
-                    <td class="p-3"><%= user.email %></td>
-                    <td class="p-3"><%= user.mobile %></td>
-                    <td class="p-3"><%= user.address %></td>
-                    <td class="p-3 text-sm text-gray-700 whitespace-nowrap">
-                      <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only toggle-user-status" data-id="<%= user._id %>" <%= user.isBlocked ? '' : 'checked' %> />
-                        <div class="w-11 h-6 bg-gray-300 rounded-full shadow-inner relative transition">
-                          <div class="<%= 'dot absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ' + (user.isBlocked ? '' : 'translate-x-5') %>"></div>
-                        </div>
-                      </label>
-                      <span class="ml-2 text-sm font-medium <%= user.isBlocked ? 'text-red-600' : 'text-green-600' %>">
-                        <%= user.isBlocked ? 'Blocked' : 'Active' %>
-                      </span>
-                    </td>
-                  </tr>
-                <% }) %>
-              <% } else { %>
-                <tr><td colspan="8" class="text-center p-4">No users found.</td></tr>
-              <% } %>
-            </tbody>
-          </table>
-        </div>
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-6">
+        <form method="get" action="/admin/users" class="flex items-center space-x-2">
+          <input type="hidden" name="search" value="<%= search || '' %>" />
+          <button type="submit" name="page" value="<%= currentPage - 1 %>" class="px-4 py-2 text-sm bg-white rounded shadow hover:bg-gray-50" <%= currentPage === 1 ? 'disabled' : '' %>>Previous</button>
+        </form>
+        <span class="text-sm text-gray-600">Page <%= currentPage %> of <%= totalPages %></span>
+        <form method="get" action="/admin/users" class="flex items-center space-x-2">
+          <input type="hidden" name="search" value="<%= search || '' %>" />
+          <button type="submit" name="page" value="<%= currentPage + 1 %>" class="px-4 py-2 text-sm bg-white rounded shadow hover:bg-gray-50" <%= currentPage === totalPages ? 'disabled' : '' %>>Next</button>
+        </form>
+      </div>
+    </main>
+  </div>
 
-        <!-- Pagination -->
-        <div class="flex justify-between items-center mt-6">
-          <form method="get" action="/admin/users" class="flex items-center space-x-2">
-            <input type="hidden" name="search" value="<%= search || '' %>" />
-            <button type="submit" name="page" value="<%= currentPage - 1 %>" class="px-4 py-2 text-sm bg-white rounded shadow hover:bg-gray-50" <%= currentPage === 1 ? 'disabled' : '' %>>Previous</button>
-          </form>
-          <span class="text-sm text-gray-600">Page <%= currentPage %> of <%= totalPages %></span>
-          <form method="get" action="/admin/users" class="flex items-center space-x-2">
-            <input type="hidden" name="search" value="<%= search || '' %>" />
-            <button type="submit" name="page" value="<%= currentPage + 1 %>" class="px-4 py-2 text-sm bg-white rounded shadow hover:bg-gray-50" <%= currentPage === totalPages ? 'disabled' : '' %>>Next</button>
-          </form>
-        </div>
-      </main>
-    </div>
+  <script>
+    function clearSearch() {
+      window.location = '/admin/users';
+    }
 
-    <script>
-      function clearSearch() {
-        window.location = '/admin/users';
-      }
+    document.addEventListener('DOMContentLoaded', function () {
+      const toggles = document.querySelectorAll('.toggle-user-status');
 
-      document.addEventListener('DOMContentLoaded', function () {
-        const toggles = document.querySelectorAll('.toggle-user-status');
+      toggles.forEach(toggle => {
+        toggle.addEventListener('change', async function () {
+          const userId = this.getAttribute('data-id');
+          const isBlocked = !this.checked;
 
-        toggles.forEach(toggle => {
-          toggle.addEventListener('change', async function () {
-            const userId = this.getAttribute('data-id');
-            const isBlocked = !this.checked;
+          const result = await fetch(`/admin/users/toggle-block/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isBlocked })
+          });
 
-            const result = await fetch(`/admin/users/toggle-block/${userId}`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ isBlocked })
+          if (result.ok) {
+            Swal.fire({
+              title: 'Updated!',
+              icon: 'success',
+              timer: 1000,
+              showConfirmButton: false
             });
-
-            if (result.ok) {
-              Swal.fire({
-                title: 'Updated!',
-                icon: 'success',
-                timer: 1000,
-                showConfirmButton: false
-              });
-              setTimeout(() => location.reload(), 900);
-            } else {
-              Swal.fire({
-                title: 'Error!',
-                icon: 'error',
-                text: 'Could not update user status.',
-                timer: 1500,
-                showConfirmButton: false
-              });
-            }
-          });
+            setTimeout(() => location.reload(), 900);
+          } else {
+            Swal.fire({
+              title: 'Error!',
+              icon: 'error',
+              text: 'Could not update user status.',
+              timer: 1500,
+              showConfirmButton: false
+            });
+          }
         });
-
-        const selectAll = document.getElementById('selectAllUsers');
-        if (selectAll) {
-          selectAll.addEventListener('change', function () {
-            const checkboxes = document.querySelectorAll('.user-checkbox');
-            checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
-          });
-        }
       });
-    </script>
-  </body>
-  </html>
+
+      const selectAll = document.getElementById('selectAllUsers');
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          const checkboxes = document.querySelectorAll('.user-checkbox');
+          checkboxes.forEach(cb => { cb.checked = selectAll.checked; });
+        });
+      }
+    });
+  </script>
+</body>
+</html>

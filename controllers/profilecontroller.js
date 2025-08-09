@@ -2,6 +2,8 @@ const User = require('../models/user');
 const Address = require('../models/address');
 const WalletTransaction = require('../models/walletTransaction');
 const product = require('../models/product');
+const bcrypt= require('bcrypt')
+const nodemailer= require('nodemailer')
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -62,7 +64,7 @@ exports.postEditProfile = async (req, res) => {
     const { name, phone } = req.body;
     const profilePicture = req.file ? req.file.filename : null;
 
-
+    // Validate file type if uploaded
     if (req.file) {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
       if (!allowedTypes.includes(req.file.mimetype)) {
