@@ -60,11 +60,11 @@ exports.postEditProfile = async (req, res) => {
     if (!userId) {
       return res.redirect('/login');
     }
-
+    
     const { name, phone } = req.body;
     const profilePicture = req.file ? req.file.filename : null;
 
-    // Validate file type if uploaded
+    
     if (req.file) {
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
       if (!allowedTypes.includes(req.file.mimetype)) {
@@ -358,10 +358,15 @@ exports.getWallet = async (req, res) => {
   try {
     const userId = req.session.userId;
     const user = await User.findById(userId);
-    const walletTransactions = await WalletTransaction.find({ userId }).sort({ createdAt: -1 });
 
+    const walletTransactions = await WalletTransaction.find({ userId })
+      .sort({ createdAt: -1 });
 
-    res.render('user/wallet', { user, walletTransactions, currentPage: 'wallet' });
+    res.render('user/wallet', {
+      user,
+      walletTransactions,
+      currentPage: 'wallet'
+    });
   } catch (error) {
     console.error('Error fetching wallet data:', error);
     res.status(500).render('error', { message: 'Failed to load wallet data' });

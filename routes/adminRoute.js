@@ -9,6 +9,7 @@ const adminordercontroller= require('../controllers/adminOrderController');
 const { adminAuth, preventAdminLoginIfLoggedIn, noCache } = require('../middleware/adminauthmiddleware');
 const upload = require('../middleware/upload');
 const validator = require('../middleware/validate');
+const { preventLoginIfLoggedIn } = require('../middleware/userauthmiddleware');
 
 router.get('/', adminAuth, noCache, adminControllers.dashboard);
 router.get('/dashboard', adminAuth, noCache, adminControllers.dashboard);

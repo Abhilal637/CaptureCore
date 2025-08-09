@@ -13,26 +13,33 @@ const adminRoutes = require('./routes/adminRoute');
 const User = require('./models/user');
 const passport = require('./config/passport');
 const validate = require('./middleware/validate');
+const validationRules= require('./middleware/validationRules')
 
 dotenv.config();
-
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-
 connectDB();
-
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your_secret_key',
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 }
+  cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 },
+  rolling: true 
 }));
+
+
+app.use((req, res, next) => {
+  if (req.session && req.session.isAdmin) {
+    req.session.cookie.maxAge = 1000 * 60 * 60 * 4; 
+  }
+  next();
+});
 
 app.use(flash());
 app.use(passport.initialize());
@@ -57,12 +64,10 @@ app.use(async (req, res, next) => {
   next();
 });
 
-
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 app.use('/', userRoute);
 app.use('/admin', adminRoutes);
-
 
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -71,13 +76,11 @@ app.get('/orders', (req, res) => {
   res.render('user/order');
 });
 
-
 global.userSockets = new Map();
 global.io = io;
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
-
 
   socket.on('registerUser', (userId) => {
     if (userId) {
@@ -86,13 +89,11 @@ io.on('connection', (socket) => {
     }
   });
 
-
   socket.on('user_logout', (userId) => {
     global.userSockets.delete(userId.toString());
     console.log(`User ${userId} logged out manually`);
   });
 
- 
   socket.on('disconnect', () => {
     for (const [userId, socketId] of global.userSockets.entries()) {
       if (socketId === socket.id) {
@@ -104,10 +105,8 @@ io.on('connection', (socket) => {
   });
 });
 
-
 app.set('io', io);
 app.set('userSockets', global.userSockets);
-
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

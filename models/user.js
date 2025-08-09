@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     }
   },
   mobile: { 
-    type: String, 
+    type: Number , 
     required: function () {
       return !this.googleId 
     }

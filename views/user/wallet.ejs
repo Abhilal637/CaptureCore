@@ -36,10 +36,10 @@
               <% walletTransactions.forEach(tx => { %>
                 <li class="py-3 flex justify-between items-center">
                   <div>
-                    <!-- Product Name -->
-                    <!-- <p class="text-sm text-gray-700 font-medium"> -->
-                      <!-- <%= tx.productName && tx.productName.trim() !== '' ? tx.productName : '—' %> -->
-                    </p>
+                    <!-- Order ID -->
+                    <% if (tx.orderId) { %>
+                      <p class="text-xs text-gray-600">Order: <%= tx.orderId %></p>
+                    <% } %>
 
                     <!-- Description -->
                     <p class="text-xs text-gray-500">
@@ -75,3 +75,4 @@
   </div>
 </body>
 </html>
+  

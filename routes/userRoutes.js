@@ -95,7 +95,7 @@ router.route('/edit-profile')
   .post(
     isUserLoggedIn,
     sessionSecurity,
-    validator('editProfileRules'),
+    // validator('editProfileRules'),
     checkBlocked,
     upload.single('profileImage'),
     profileController.postEditProfile

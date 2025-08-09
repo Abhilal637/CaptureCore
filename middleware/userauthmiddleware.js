@@ -5,18 +5,36 @@ function isUserLoggedIn(req, res, next) {
             .then(user => {
                 if (user && user.isVerified) {
                     if (user.isBlocked) {
-                        req.session.destroy(() => {
+
+                        
+                        if (req.sessionStore) {
+                            req.sessionStore.all((err, sessions) => {
+                                if (!err && sessions) {
+                                    for (let sid in sessions) {
+                                        const session = sessions[sid];
+                                        if (session.userId && session.userId.toString() === user._id.toString()) {
+                                            req.sessionStore.destroy(sid, (err) => {
+                                                if (err) console.error('Failed to destroy session:', err);
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+                        }
+
+                       
+                        return req.session.destroy(() => {
                             if (req.headers['content-type'] === 'application/json') {
                                 return res.status(401).json({ message: 'User account is blocked' });
                             }
                             return res.redirect('/login?error=user_blocked');
                         });
+
                     } else {
-                        req.user = user; 
+                        req.user = user;
                         return next();
                     }
                 } else {
-                   
                     req.session.destroy(() => {
                         if (req.headers['content-type'] === 'application/json') {
                             return res.status(401).json({ message: 'Session expired' });
@@ -51,21 +69,17 @@ function preventLoginIfLoggedIn(req, res, next) {
 
 function checkSessionTimeout(req, res, next) {
     const sessionTimeout = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-    
+
     if (req.session && req.session.lastActivity) {
         const timeSinceLastActivity = Date.now() - req.session.lastActivity;
-        
         if (timeSinceLastActivity > sessionTimeout) {
             req.session.destroy();
             return res.redirect('/login?error=session_timeout');
         }
     }
-    
-   
     if (req.session) {
         req.session.lastActivity = Date.now();
     }
-    
     next();
 }
 
@@ -75,7 +89,6 @@ function noCache(req, res, next) {
     res.set('Expires', '0');
     next();
 }
-
 
 function optionalAuth(req, res, next) {
     if (req.session && req.session.userId) {
@@ -95,10 +108,7 @@ function optionalAuth(req, res, next) {
     }
 }
 
-
-
 function sessionSecurity(req, res, next) {
-   
     if (req.session && req.session.userId && !req.session.regenerated) {
         req.session.regenerate((err) => {
             if (err) {

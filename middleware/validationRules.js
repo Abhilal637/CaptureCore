@@ -205,7 +205,7 @@ module.exports = {
       .isLength({ min: 6, max: 6 }).withMessage('OTP must be exactly 6 digits')
   ],
 
-  editProfileRules: [
+  editProfileRules : [
   check('name')
     .optional()
     .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters')
@@ -213,14 +213,14 @@ module.exports = {
 
   check('phone')
     .optional()
-    .matches(/^\d{10}$/).withMessage('Phone number must be exactly 10 digits')
+    .matches(/^\d{10}$/).withMessage('Phone must be exactly 10 digits')
     .custom(value => {
       if (/^(\d)\1{9}$/.test(value)) {
         throw new Error('Phone number cannot have all digits the same');
       }
       return true;
-    })
+    }),
 ]
-};
+}
 
 

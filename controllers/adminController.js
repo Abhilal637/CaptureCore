@@ -159,9 +159,9 @@ exports.toggleUserBlockStatus = async (req, res) => {
         const userSockets = req.app.get('userSockets');
         const userSocketId = userSockets.get(id);
         
-        console.log('Socket.io available:', !!io);
-        console.log('User sockets map:', userSockets);
-        console.log('User socket ID:', userSocketId);
+        // console.log('Socket.io available:', !!io);
+        // console.log('User sockets map:', userSockets);
+        // console.log('User socket ID:', userSocketId);
         
         if (userSocketId) {
           io.to(userSocketId).emit('force_logout', {
