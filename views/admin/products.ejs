@@ -1,4 +1,3 @@
-<!-- Updated Admin Product Table View (products.ejs) without ID column -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,10 +13,30 @@
     <!-- Main Content -->
     <main class="flex-1 p-6">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-6">
+      <div class="flex justify-between items-center mb-4">
         <h1 class="text-2xl font-semibold">PRODUCTS</h1>
         <a href="/admin/products/add" class="px-6 py-3 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all">+ Add Product</a>
       </div>
+
+      <!-- Search Bar -->
+      <form method="GET" action="/admin/products" class="mb-4 flex items-center gap-2 max-w-md">
+        <input
+          type="text"
+          name="search"
+          placeholder="Search products..."
+          value="<%= typeof search === 'string' ? search : '' %>"
+          class="flex-grow border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+        <button
+          type="submit"
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+        >
+          Search
+        </button>
+        <% if (search && search.length > 0) { %>
+          <a href="/admin/products" class="bg-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-400 transition">Clear</a>
+        <% } %>
+      </form>
 
       <!-- Product Table -->
       <div class="bg-white rounded shadow overflow-x-auto">
@@ -76,24 +95,42 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      <% if (totalPages && totalPages > 1) { %>
+        <nav class="mt-4 flex justify-center items-center space-x-2 text-sm">
+          <% if (currentPage > 1) { %>
+            <a
+              href="?search=<%= encodeURIComponent(search || '') %>&page=<%= currentPage - 1 %>"
+              class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
+            >&laquo; Prev</a>
+          <% } else { %>
+            <span class="px-3 py-1 rounded border border-gray-300 text-gray-400 cursor-not-allowed">&laquo; Prev</span>
+          <% } %>
+
+          <% for(let p = 1; p <= totalPages; p++) { %>
+            <% if (p === currentPage) { %>
+              <span class="px-3 py-1 rounded bg-green-600 text-white font-semibold"><%= p %></span>
+            <% } else { %>
+              <a
+                href="?search=<%= encodeURIComponent(search || '') %>&page=<%= p %>"
+                class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
+              ><%= p %></a>
+            <% } %>
+          <% } %>
+
+          <% if (currentPage < totalPages) { %>
+            <a
+              href="?search=<%= encodeURIComponent(search || '') %>&page=<%= currentPage + 1 %>"
+              class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
+            >Next &raquo;</a>
+          <% } else { %>
+            <span class="px-3 py-1 rounded border border-gray-300 text-gray-400 cursor-not-allowed">Next &raquo;</span>
+          <% } %>
+        </nav>
+      <% } %>
+
     </main>
   </div>
 </body>
 </html>
-
-<script>
-  function toggleProductStatus(productId, isChecked) {
-    fetch(`/admin/products/${productId}/toggle-active`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (!data.success) alert('Error updating status');
-    })
-    .catch(err => {
-      console.error('Toggle error:', err);
-      alert('Failed to toggle product status');
-    });
-  }
-</script>

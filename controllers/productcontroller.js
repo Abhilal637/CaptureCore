@@ -6,14 +6,45 @@ const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 exports.listProducts = async (req, res) => {
-    try {
-        const products = await product.find({ isDeleted: { $ne: true } }).populate('category').sort({ createdAt: -1 });
-        res.render('admin/products', { products });
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("error loading products");
+  try {
+    const perPage = 10; // items per page
+    const page = parseInt(req.query.page) || 1;
+    const search = req.query.search || '';
+
+    // Build search filter
+    const filter = {
+      isDeleted: { $ne: true },
+    };
+
+    if (search.trim() !== '') {
+      filter.name = { $regex: search.trim(), $options: 'i' };
     }
-}
+
+    // Count total matching documents
+    const totalCount = await product.countDocuments(filter);
+
+    // Fetch paginated results
+    const products = await product
+      .find(filter)
+      .populate('category')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * perPage)
+      .limit(perPage);
+
+    const totalPages = Math.ceil(totalCount / perPage);
+
+    res.render('admin/products', {
+      products,
+      search,
+      currentPage: page,
+      totalPages,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error loading products');
+  }
+};
+
 
 exports.addproduct = async(req,res)=>{
     try{

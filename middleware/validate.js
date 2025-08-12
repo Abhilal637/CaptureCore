@@ -1,52 +1,48 @@
 // middleware/validate.js
+const path = require('path');
 const { validationResult } = require('express-validator');
 
 const validator = (schemaName) => {
   return async (req, res, next) => {
     try {
-      // Get validation rules for the schema
-      const validationRules = require('./validationRules')[schemaName];
-      
-      if (!validationRules) {
-        return next();
+      // Dynamically load validation rules
+      const validationRules = require(path.join(__dirname, 'validationRules'))[schemaName];
+
+      if (!validationRules || !Array.isArray(validationRules) || validationRules.length === 0) {
+        return next(); // No rules found → skip validation
       }
 
-      
-      await Promise.all(validationRules.map(validation => validation.run(req)));
+      // Run all validation checks
+      await Promise.all(validationRules.map(rule => rule.run(req)));
 
-     
+      // Gather validation results
       const errors = validationResult(req);
-      
+      req.validationErrors = {};
+
       if (!errors.isEmpty()) {
-       
-        const formattedErrors = {};
-        errors.array().forEach(error => {
-          if (!formattedErrors[error.path]) {
-            formattedErrors[error.path] = [];
+        errors.array().forEach(err => {
+          if (!req.validationErrors[err.path]) {
+            req.validationErrors[err.path] = [];
           }
-          formattedErrors[error.path].push(error.msg);
+          req.validationErrors[err.path].push(err.msg);
         });
 
-      
-        req.validationErrors = formattedErrors;
-        
-       
-        if (req.xhr || req.headers.accept.indexOf('json') > -1) {
+        // If request expects JSON, send structured error response
+        if (req.xhr || req.accepts('json')) {
           return res.status(400).json({
             success: false,
-            errors: formattedErrors
+            errors: req.validationErrors
           });
         }
-        
-       
-        return next();
+
+        return next(); // Pass errors to route handler if not JSON
       }
 
       next();
-    } catch (error) {
-      console.error('Validation error:', error);
+    } catch (err) {
+      console.error('Validation middleware error:', err);
       req.validationErrors = { general: ['Validation system error'] };
-      return next();
+      next();
     }
   };
 };

@@ -11,180 +11,187 @@
   <div class="flex min-h-screen">
     <%- include('../partial/admin/sidebar') %>
 
-    <div class="flex-1 p-8">
-      <h1 class="text-3xl font-bold mb-6">Orders</h1>
+    <div class="flex-1 flex flex-col">
+     
+      <div class="p-8 flex-1">
+        <h1 class="text-3xl font-bold mb-6">Orders</h1>
 
-      <!-- Search Form -->
-      <form method="GET" action="/admin/orders" class="mb-6 flex gap-2">
-        <input 
-          type="text" 
-          name="search" 
-          value="<%= typeof search !== 'undefined' ? search : '' %>" 
-          placeholder="Search by Order ID or User" 
-          class="border border-gray-300 rounded px-3 py-2 w-64 text-sm"
-        />
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-          Search
-        </button>
-        <% if (search && search.length > 0) { %>
-          <button type="button" id="clearSearchBtn" class="px-4 py-2 bg-gray-400 text-white text-sm rounded hover:bg-gray-500">
-            Clear
+        <!-- Search Form -->
+        <form method="GET" action="/admin/orders" class="mb-6 flex gap-2">
+          <input 
+            type="text" 
+            name="search" 
+            value="<%= typeof search !== 'undefined' ? search : '' %>" 
+            placeholder="Search by Order ID or User" 
+            class="border border-gray-300 rounded px-3 py-2 w-64 text-sm"
+          />
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+            Search
           </button>
-        <% } %>
-      </form>
-
-      <% if (orders && orders.length > 0) { %>
-        <div class="overflow-x-auto bg-white rounded-lg shadow">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Order ID</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">User</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Product Status</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Payment Status</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Date</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Update</th>
-                <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-              <% orders.forEach(order => { %>
-                <tr>
-                  <td class="px-6 py-4 text-sm text-blue-600 font-mono">#<%= order.orderId %></td>
-                  <td class="px-6 py-4 text-sm"><%= order.user?.name || 'N/A' %></td>
-                  <td class="px-6 py-4 text-sm">₹<%= order.totalAmount?.toFixed(2) || '0.00' %></td>
-                  
-                  <!-- Product Statuses -->
-                  <td class="px-6 py-4 text-sm">
-                    <div class="space-y-1">
-                      <% if (order.items && order.items.length > 0) { %>
-                        <% order.items.forEach((item, index) => { %>
-                          <div class="flex items-center justify-between">
-                            <span class="text-xs text-gray-600 truncate max-w-[120px]" title="<%= item.product?.name || 'Product' %>">
-                              <%= item.product?.name || `Product ${index + 1}` %>:
-                            </span>
-                            <% if (item.status === 'Return Requested') { %>
-                              <span class="px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs ml-2">Return Requested</span>
-                            <% } else if (item.status === 'Returned') { %>
-                              <span class="px-2 py-1 bg-green-200 text-green-800 rounded-full text-xs ml-2">Returned</span>
-                            <% } else if (item.status === 'Delivered') { %>
-                              <span class="px-2 py-1 bg-blue-200 text-blue-800 rounded-full text-xs ml-2">Delivered</span>
-                            <% } else if (item.status === 'Shipped') { %>
-                              <span class="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs ml-2">Shipped</span>
-                            <% } else if (item.status === 'Processing') { %>
-                              <span class="px-2 py-1 bg-orange-200 text-orange-800 rounded-full text-xs ml-2">Processing</span>
-                            <% } else { %>
-                              <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs ml-2"><%= item.status || order.status || 'Placed' %></span>
-                            <% } %>
-                          </div>
-                        <% }) %>
-                      <% } else { %>
-                        <% if (order.status === 'Return Requested') { %>
-                          <span class="px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs">Return Requested</span>
-                        <% } else if (order.status === 'Returned') { %>
-                          <span class="px-2 py-1 bg-green-200 text-green-800 rounded-full text-xs">Returned</span>
-                        <% } else { %>
-                          <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs"><%= order.status || 'Placed' %></span>
-                        <% } %>
-                      <% } %>
-                    </div>
-                  </td>
-
-                  <td class="px-6 py-4 text-sm font-semibold">
-                    <% if (order.paymentStatus === 'Paid') { %>
-                      <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Paid</span>
-                    <% } else if (order.paymentStatus === 'Pending') { %>
-                      <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pending</span>
-                    <% } else if (order.paymentStatus === 'Failed') { %>
-                      <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Failed</span>
-                    <% } else { %>
-                      <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"><%= order.paymentStatus %></span>
-                    <% } %>
-                  </td>
-                  <td class="px-6 py-4 text-sm"><%= order.createdAt?.toLocaleDateString() || 'N/A' %></td>
-
-                  <!-- Status Update -->
-                  <td class="px-6 py-4">
-                    <% const allowed = nextStatusMap[order.status] || []; %>
-                    <% if (allowed.length > 0) { %>
-                      <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center">
-                        <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm" required>
-                          <option disabled selected value> -- Select Status -- </option>
-                          <% allowed.forEach(status => { %>
-                            <option value="<%= status %>"><%= status %></option>
-                          <% }) %>
-                        </select>
-                        <button type="submit" class="ml-2 px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Update</button>
-                      </form>
-                    <% } else { %>
-                      <span class="text-gray-500 text-sm">No further updates</span>
-                    <% } %>
-                  </td>
-
-                  <!-- Actions -->
-                  <td class="px-6 py-4 text-sm">
-                    <a href="/admin/orders/<%= order._id %>" class="text-blue-500 hover:underline">View</a>
-
-                    <div class="mt-2 space-y-2">
-                      <% if (order.items && order.items.length > 0) { %>
-                        <% order.items.forEach((item, itemIndex) => { %>
-                          <% if (item.status === 'Return Requested' && !item.returnVerified) { %>
-                            <div class="flex flex-col">
-                              <span class="text-xs text-gray-500 mb-1"><%= item.product?.name || `Product ${itemIndex + 1}` %></span>
-                              <button 
-                                class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 approve-btn"
-                                data-order-id="<%= order._id %>"
-                                data-product-id="<%= item.product._id %>"
-                                data-item-index="<%= itemIndex %>"
-                              >
-                                Approve Return & Refund
-                              </button>
-                            </div>
-                          <% } else if (item.returnVerified) { %>
-                            <div class="flex flex-col">
-                              <span class="text-xs text-gray-500 mb-1"><%= item.product?.name || `Product ${itemIndex + 1}` %></span>
-                              <div class="text-xs text-green-600 font-medium">Return Approved</div>
-                            </div>
-                          <% } %>
-                        <% }) %>
-                      <% } else { %>
-                        <% if ((order.status === 'Return Requested' || order.status === 'Returned') && !order.returnVerified) { %>
-                          <button 
-                            class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 approve-btn"
-                            data-order-id="<%= order._id %>"
-                            data-product-id="<%= order.items && order.items[0] ? order.items[0].product._id : '' %>"
-                          >
-                            Approve Return & Refund
-                          </button>
-                        <% } else if (order.returnVerified) { %>
-                          <div class="text-xs text-green-600 font-medium">Return Approved</div>
-                        <% } %>
-                      <% } %>
-                    </div>
-                  </td>
-                </tr>
-              <% }) %>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <div class="mt-6 flex justify-center space-x-1">
-          <% for (let i = 1; i <= totalPages; i++) { %>
-            <% if (i === currentPage) { %>
-              <span class="px-3 py-1 bg-blue-600 text-white rounded text-sm"><%= i %></span>
-            <% } else { %>
-              <a href="?page=<%= i %><%= search ? '&search=' + encodeURIComponent(search) : '' %>" 
-                class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100">
-                <%= i %>
-              </a>
-            <% } %>
+          <% if (search && search.length > 0) { %>
+            <button type="button" id="clearSearchBtn" class="px-4 py-2 bg-gray-400 text-white text-sm rounded hover:bg-gray-500">
+              Clear
+            </button>
           <% } %>
-        </div>
-      <% } else { %>
-        <p>No orders found.</p>
-      <% } %>
+        </form>
+
+        <% if (orders && orders.length > 0) { %>
+          <div class="overflow-x-auto bg-white rounded-lg shadow">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Order ID</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">User</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Product Status</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Payment Status</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Date</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Update</th>
+                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200">
+                <% orders.forEach(order => { %>
+                  <tr>
+                    <td class="px-6 py-4 text-sm text-blue-600 font-mono">#<%= order.orderId %></td>
+                    <td class="px-6 py-4 text-sm"><%= order.user?.name || 'N/A' %></td>
+                    <td class="px-6 py-4 text-sm">₹<%= order.totalAmount?.toFixed(2) || '0.00' %></td>
+                    
+                    <!-- Product Statuses -->
+                    <td class="px-6 py-4 text-sm">
+                      <div class="space-y-1">
+                        <% if (order.items && order.items.length > 0) { %>
+                          <% order.items.forEach((item, index) => { %>
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs text-gray-600 truncate max-w-[120px]" title="<%= item.product?.name || 'Product' %>">
+                                <%= item.product?.name || `Product ${index + 1}` %>:
+                              </span>
+                              <% if (item.status === 'Return Requested') { %>
+                                <span class="px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs ml-2">Return Requested</span>
+                              <% } else if (item.status === 'Returned') { %>
+                                <span class="px-2 py-1 bg-green-200 text-green-800 rounded-full text-xs ml-2">Returned</span>
+                              <% } else if (item.status === 'Delivered') { %>
+                                <span class="px-2 py-1 bg-blue-200 text-blue-800 rounded-full text-xs ml-2">Delivered</span>
+                              <% } else if (item.status === 'Shipped') { %>
+                                <span class="px-2 py-1 bg-purple-200 text-purple-800 rounded-full text-xs ml-2">Shipped</span>
+                              <% } else if (item.status === 'Processing') { %>
+                                <span class="px-2 py-1 bg-orange-200 text-orange-800 rounded-full text-xs ml-2">Processing</span>
+                              <% } else if (item.status === 'Cancelled') { %> <!-- Added -->
+                                <span class="px-2 py-1 bg-red-200 text-red-800 rounded-full text-xs ml-2">Cancelled</span>
+                              <% } else { %>
+                                <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs ml-2"><%= item.status || order.status || 'Placed' %></span>
+                              <% } %>
+                            </div>
+                          <% }) %>
+                        <% } else { %>
+                          <% if (order.status === 'Return Requested') { %>
+                            <span class="px-2 py-1 bg-yellow-200 text-yellow-800 rounded-full text-xs">Return Requested</span>
+                          <% } else if (order.status === 'Returned') { %>
+                            <span class="px-2 py-1 bg-green-200 text-green-800 rounded-full text-xs">Returned</span>
+                          <% } else if (order.status === 'Cancelled') { %> <!-- Added -->
+                            <span class="px-2 py-1 bg-red-200 text-red-800 rounded-full text-xs">Cancelled</span>
+                          <% } else { %>
+                            <span class="px-2 py-1 bg-gray-200 text-gray-800 rounded-full text-xs"><%= order.status || 'Placed' %></span>
+                          <% } %>
+                        <% } %>
+                      </div>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm font-semibold">
+                      <% if (order.paymentStatus === 'Paid') { %>
+                        <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Paid</span>
+                      <% } else if (order.paymentStatus === 'Pending') { %>
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Pending</span>
+                      <% } else if (order.paymentStatus === 'Failed') { %>
+                        <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Failed</span>
+                      <% } else { %>
+                        <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs"><%= order.paymentStatus %></span>
+                      <% } %>
+                    </td>
+                    <td class="px-6 py-4 text-sm"><%= order.createdAt?.toLocaleDateString() || 'N/A' %></td>
+
+                    <!-- Status Update -->
+                    <td class="px-6 py-4">
+                      <% const allowed = nextStatusMap[order.status] || []; %>
+                      <% if (allowed.length > 0) { %>
+                        <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center">
+                          <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm" required>
+                            <option disabled selected value> -- Select Status -- </option>
+                            <% allowed.forEach(status => { %>
+                              <option value="<%= status %>"><%= status %></option>
+                            <% }) %>
+                          </select>
+                          <button type="submit" class="ml-2 px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Update</button>
+                        </form>
+                      <% } else { %>
+                        <span class="text-gray-500 text-sm">No further updates</span>
+                      <% } %>
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4 text-sm">
+                      <a href="/admin/orders/<%= order._id %>" class="text-blue-500 hover:underline">View</a>
+
+                      <div class="mt-2 space-y-2">
+                        <% if (order.items && order.items.length > 0) { %>
+                          <% order.items.forEach((item, itemIndex) => { %>
+                            <% if (item.status === 'Return Requested' && !item.returnVerified) { %>
+                              <div class="flex flex-col">
+                                <span class="text-xs text-gray-500 mb-1"><%= item.product?.name || `Product ${itemIndex + 1}` %></span>
+                                <button 
+                                  class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 approve-btn"
+                                  data-order-id="<%= order._id %>"
+                                  data-product-id="<%= item.product._id %>"
+                                  data-item-index="<%= itemIndex %>"
+                                >
+                                  Approve Return & Refund
+                                </button>
+                              </div>
+                            <% } else if (item.returnVerified) { %>
+                              <div class="flex flex-col">
+                                <span class="text-xs text-gray-500 mb-1"><%= item.product?.name || `Product ${itemIndex + 1}` %></span>
+                                <div class="text-xs text-green-600 font-medium">Return Approved</div>
+                              </div>
+                            <% } %>
+                          <% }) %>
+                        <% } else { %>
+                          <% if ((order.status === 'Return Requested' || order.status === 'Returned') && !order.returnVerified) { %>
+                            <button 
+                              class="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 approve-btn"
+                              data-order-id="<%= order._id %>"
+                              data-product-id="<%= order.items && order.items[0] ? order.items[0].product._id : '' %>"
+                            >
+                              Approve Return & Refund
+                            </button>
+                          <% } else if (order.returnVerified) { %>
+                            <div class="text-xs text-green-600 font-medium">Return Approved</div>
+                          <% } %>
+                        <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="mt-6 flex justify-center space-x-1">
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <% if (i === currentPage) { %>
+                <span class="px-3 py-1 bg-blue-600 text-white rounded text-sm"><%= i %></span>
+              <% } else { %>
+                <a href="?page=<%= i %><%= search ? '&search=' + encodeURIComponent(search) : '' %>" 
+                  class="px-3 py-1 bg-white border border-gray-300 rounded text-sm hover:bg-gray-100">
+                  <%= i %>
+                </a>
+              <% } %>
+            <% } %>
+          </div>
+        <% } else { %>
+          <p>No orders found.</p>
+        <% } %>
+      </div>
     </div>
   </div>
 

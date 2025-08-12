@@ -1,4 +1,4 @@
-const User = require("../models/user");
+const User = require('../models/user');
 const Product = require("../models/product");
 const bcrypt = require('bcrypt');
 const cloudinary = require("../config/cloudinary");
@@ -77,6 +77,7 @@ exports.getUsers = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
+
 exports.dashboard = (req, res) => {
   const admin = req.session.admin || { name: 'Admin',role: 'Admin' };
   const  stats={
