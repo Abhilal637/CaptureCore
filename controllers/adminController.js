@@ -54,8 +54,7 @@ exports.getUsers = async (req, res) => {
       $or: [
         { name: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } },
-        { mobile: { $regex: search, $options: 'i' } },
-        { address: { $regex: search, $options: 'i' } }
+        
       ]
     };
 
@@ -77,7 +76,6 @@ exports.getUsers = async (req, res) => {
     res.status(500).send("Server Error");
   }
 };
-
 exports.dashboard = (req, res) => {
   const admin = req.session.admin || { name: 'Admin',role: 'Admin' };
   const  stats={

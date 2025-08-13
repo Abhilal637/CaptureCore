@@ -1,67 +1,108 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <title>Edit Profile | CaptureCore</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="/css/user/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts - neutral, modern -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #fafafa;
+    }
+    h1 {
+      font-weight: 600;
+      color: #333333;
+    }
+  </style>
 </head>
-<body class="bg-white font-sans">
+<body class="min-h-screen flex flex-col">
 
   <%- include('../partial/user/navbar') %>
 
-  <div class="max-w-3xl mx-auto py-10 px-4">
-    <h1 class="text-2xl font-semibold mb-6">Edit Profile</h1>
-    
+  <main class="flex-grow max-w-3xl mx-auto bg-white rounded-lg shadow-md border border-gray-200 mt-16 mb-16 p-10">
+    <h1 class="text-3xl mb-10 tracking-tight">Edit Profile</h1>
+
     <% if (error) { %>
-      <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-        ❌ Error: <%= error === 'invalid_file_type' ? 'Please select a valid image file (JPEG, PNG, GIF)' : 'Failed to update profile. Please try again.' %>
+      <div class="mb-8 p-4 bg-gray-100 border border-gray-300 text-gray-700 rounded-md flex items-center space-x-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
+        </svg>
+        <p class="text-sm">
+          ❌ Error: <%= error === 'invalid_file_type' ? 'Please select a valid image file (JPEG, PNG, GIF)' : 'Failed to update profile. Please try again.' %>
+        </p>
       </div>
     <% } %>
 
-    <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="bg-gray-50 p-6 shadow rounded space-y-6">
+    <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="space-y-8">
       <!-- Profile Picture -->
-      <div class="flex items-center gap-6">
-        <div class="w-24 h-24 rounded-full overflow-hidden bg-gray-200">
+      <div class="flex items-center gap-8">
+        <div class="w-28 h-28 rounded-full overflow-hidden bg-gray-50 border border-gray-300 shadow-sm">
           <img id="profilePreview" 
-               src="<%= user?.profilePicture ? '/uploads/' + user.profilePicture : user?.googleProfilePic || 'https://via.placeholder.com/96x96/cccccc/666666?text=Profile' %>" 
-               class="w-full h-full object-cover" 
-               alt="Profile Image">
+               src="<%= user?.profilePicture ? '/uploads/' + user.profilePicture : user?.googleProfilePic || 'https://via.placeholder.com/112x112/eeeeee/bbbbbb?text=Profile' %>" 
+               alt="Profile Image" 
+               class="w-full h-full object-cover" />
         </div>
-        <div>
-          <label for="profileImage" class="block text-sm font-medium text-gray-700">Change Profile Picture</label>
-          <input type="file" name="profileImage" id="profileImage" accept="image/*" class="mt-2 text-sm text-gray-600">
+        <div class="flex flex-col">
+          <label for="profileImage" class="text-gray-600 text-sm mb-1 select-none">Change Profile Picture</label>
+          <input type="file" name="profileImage" id="profileImage" accept="image/*" class="text-gray-500 text-sm">
+          <p class="mt-1 text-xs text-gray-400">JPEG, PNG, GIF formats</p>
         </div>
       </div>
 
       <!-- Name -->
       <div>
-        <label class="block text-sm font-medium text-gray-700">Name</label>
-        <input type="text" name="name" value="<%= user?.name || '' %>" required class="w-full mt-1 px-3 py-2 border rounded">
+        <label for="name" class="block mb-1 text-gray-700 font-semibold select-none">Name <span class="text-gray-400">*</span></label>
+        <input type="text" id="name" name="name" value="<%= user?.name || '' %>" required
+          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
       </div>
 
       <!-- Phone -->
       <div>
-        <label class="block text-sm font-medium text-gray-700">Phone</label>
-        <input type="text" name="phone" value="<%= user?.phone || '' %>" class="w-full mt-1 px-3 py-2 border rounded">
+        <label for="phone" class="block mb-1 text-gray-700 font-semibold select-none">Phone</label>
+        <input type="text" id="phone" name="phone" value="<%= user?.phone || '' %>"
+          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
       </div>
 
-      <!-- Email (readonly) -->
+      <!-- Email -->
       <div>
-        <label class="block text-sm font-medium text-gray-700">Email</label>
-        <input type="email" name="email" value="<%= user?.email || '' %>" readonly class="w-full mt-1 px-3 py-2 border rounded bg-gray-100 cursor-not-allowed">
+        <label class="flex items-center gap-2 mb-1 text-gray-700 font-semibold select-none">
+          Email
+          <button type="button" id="editEmailBtn" aria-label="Edit email"
+                  class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-400 rounded">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M16.732 3.732a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z" />
+            </svg>
+          </button>
+        </label>
+        <input 
+          type="email" 
+          name="email" 
+          id="emailField"
+          value="<%= user?.email || '' %>" 
+          readonly
+          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
       </div>
 
-      <!-- Submit -->
+      <!-- Submit Button -->
       <div class="text-right">
-        <button type="submit" id="submitBtn" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 transition">
+        <button type="submit" id="submitBtn" 
+          class="bg-gray-700 hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 transition">
           <span id="submitText">Update Profile</span>
           <span id="loadingText" class="hidden">Updating...</span>
         </button>
       </div>
     </form>
-  </div>
+  </main>
 
   <script>
     const fileInput = document.getElementById('profileImage');
@@ -69,19 +110,166 @@
     const submitBtn = document.getElementById('submitBtn');
     const submitText = document.getElementById('submitText');
     const loadingText = document.getElementById('loadingText');
-    
+    const editBtn = document.getElementById('editEmailBtn');
+    const emailField = document.getElementById('emailField');
+
+    // Profile Image Preview
     fileInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (file) {
         previewImg.src = URL.createObjectURL(file);
       }
     });
-    
-    // Handle form submission
-    document.querySelector('form').addEventListener('submit', function() {
+
+    // Form Submit Loading State
+    document.querySelector('form').addEventListener('submit', () => {
       submitBtn.disabled = true;
       submitText.classList.add('hidden');
       loadingText.classList.remove('hidden');
+    });
+
+    // Email Change + OTP Popup Logic
+    editBtn.addEventListener('click', async () => {
+      const { value: newEmail } = await Swal.fire({
+        title: 'Change Email',
+        input: 'email',
+        inputLabel: 'Enter new email address',
+        inputPlaceholder: 'you@example.com',
+        confirmButtonText: 'Send OTP',
+        showCancelButton: true,
+        customClass: {
+          popup: 'font-inter',
+          title: 'text-xl font-semibold text-gray-700',
+          confirmButton: 'bg-gray-700 hover:bg-gray-800 text-white',
+          cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+        },
+        buttonsStyling: false,
+        inputValidator: (value) => {
+          if (!value) return 'Please enter an email';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email';
+        }
+      });
+
+      if (newEmail) {
+        try {
+          await fetch('/send-email-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: newEmail })
+          });
+
+          let timer = 60;
+          let resendEnabled = false;
+
+          const otpPopup = Swal.fire({
+            title: `Verify Email`,
+            html: `
+              <p class="mb-4 text-gray-700">We sent an OTP to <b>${newEmail}</b></p>
+              <input id="otpInput" class="swal2-input" placeholder="Enter OTP" style="font-size:1rem;padding:0.6rem;" />
+              <p id="timerText" class="text-sm text-gray-500 mt-2 mb-1">Resend in ${timer}s</p>
+              <button id="resendBtn" class="swal2-confirm swal2-styled" style="display:none; margin-top:10px; background:#6b7280;">Resend OTP</button>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Verify OTP',
+            customClass: {
+              popup: 'font-inter p-6 rounded-md',
+              title: 'text-xl font-semibold text-gray-700',
+              confirmButton: 'bg-gray-700 hover:bg-gray-800 text-white',
+              cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+            },
+            buttonsStyling: false,
+            didOpen: () => {
+              const timerInterval = setInterval(() => {
+                timer--;
+                const timerText = document.getElementById('timerText');
+                if (!resendEnabled) {
+                  timerText.textContent = `Resend in ${timer}s`;
+                }
+
+                if (timer <= 0 && !resendEnabled) {
+                  resendEnabled = true;
+                  document.getElementById('resendBtn').style.display = 'inline-block';
+                  timerText.textContent = '';
+                  clearInterval(timerInterval);
+                }
+              }, 1000);
+
+              document.getElementById('resendBtn').addEventListener('click', async () => {
+                resendEnabled = false;
+                timer = 60;
+                document.getElementById('resendBtn').style.display = 'none';
+                document.getElementById('timerText').textContent = `Resend in ${timer}s`;
+
+                await fetch('/send-email-otp', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email: newEmail })
+                });
+
+                // Restart timer
+                const newInterval = setInterval(() => {
+                  timer--;
+                  const timerText = document.getElementById('timerText');
+                  if (!resendEnabled) {
+                    timerText.textContent = `Resend in ${timer}s`;
+                  }
+
+                  if (timer <= 0 && !resendEnabled) {
+                    resendEnabled = true;
+                    document.getElementById('resendBtn').style.display = 'inline-block';
+                    timerText.textContent = '';
+                    clearInterval(newInterval);
+                  }
+                }, 1000);
+              });
+            },
+            preConfirm: () => {
+              const otpValue = document.getElementById('otpInput').value;
+              if (!otpValue) {
+                Swal.showValidationMessage('Please enter the OTP');
+              }
+              return otpValue;
+            }
+          });
+
+          const { value: otp } = await otpPopup;
+
+          if (otp) {
+            const verifyRes = await fetch('/verify-email-otp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: newEmail, otp })
+            });
+
+            if (verifyRes.ok) {
+              emailField.value = newEmail;
+              Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Email updated successfully!',
+                confirmButtonColor: '#374151',
+                customClass: { popup: 'font-inter' }
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Invalid OTP',
+                text: 'Please try again.',
+                confirmButtonColor: '#dc2626',
+                customClass: { popup: 'font-inter' }
+              });
+            }
+          }
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Could not send OTP. Try again.',
+            confirmButtonColor: '#dc2626',
+            customClass: { popup: 'font-inter' }
+          });
+        }
+      }
     });
   </script>
 

@@ -1,198 +1,1159 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shop | CaptureCore</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 font-sans">
-    <%- include('../partial/user/navbar') %>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop | CaptureCore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card-hover {
+      transition: all 0.3s ease, transform 0.2s ease;
+    }
+    .card-hover:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.15);
+    }
+    .category-link {
+      transition: background 0.25s ease, color 0.25s ease;
+      padding: 8px 14px;
+      border-radius: 6px;
+      display: block;
+    }
+    .category-link:hover {
+      background: #f3f4f6;
+    }
+    .category-active {
+      background: linear-gradient(to right, #111827, #1f2937);
+      color: white;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .btn-outline {
+      border: 2px solid #374151;
+      transition: all 0.2s ease;
+    }
+    .btn-outline:hover {
+      background: #374151;
+      color: white;
+    }
+    
+    /* Filter styles */
+    .filter-section {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 1rem 0;
+    }
+    .filter-section:last-child {
+      border-bottom: none;
+    }
+    .filter-toggle {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .filter-toggle:hover {
+      color: #111827;
+    }
+    .filter-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .filter-content.expanded {
+      max-height: 500px;
+    }
+    .filter-arrow {
+      transition: transform 0.3s ease;
+    }
+    .filter-arrow.rotated {
+      transform: rotate(180deg);
+    }
+    
+    /* Category dropdown styles */
+    .category-dropdown {
+      transition: all 0.3s ease;
+    }
+    .category-dropdown-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .category-dropdown-content.expanded {
+      max-height: 500px;
+    }
+    .category-arrow {
+      transition: transform 0.3s ease;
+    }
+    .category-arrow.rotated {
+      transform: rotate(90deg);
+    }
+    .subcategory-item {
+      transition: all 0.2s ease;
+    }
+    .subcategory-item:hover {
+      background: #f8fafc;
+      transform: translateX(4px);
+    }
+    
+    /* Custom checkbox */
+    .checkbox-custom {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d1d5db;
+      border-radius: 3px;
+      background: white;
+      cursor: pointer;
+      position: relative;
+    }
+    .checkbox-custom:checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+    .checkbox-custom:checked::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 1px;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    /* Price slider */
+    .price-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: #d1d5db;
+      outline: none;
+    }
+    .price-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .price-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #3b82f6;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+  
+  <%- include('../partial/user/navbar') %>
 
-    <!-- Page title -->
-    <section class="text-center py-10 md:py-16">
-      <h2 class="text-3xl md:text-4xl font-light tracking-wide mb-2">SHOP</h2>
-      <p class="text-sm text-gray-500">Home / Shop</p>
-    </section>
+  <!-- Page Header -->
+  <section class="bg-gradient-to-r from-gray-900 to-gray-700 text-white border-b py-10 shadow-md">
+    <div class="container mx-auto px-4 text-center">
+      <h1 class="text-3xl md:text-4xl font-bold mb-3">Shop</h1>
+      <div class="text-gray-300 text-sm">
+        <a href="/" class="hover:text-white transition">Home</a>
+        <span class="mx-2">/</span>
+        <span class="text-white">Shop</span>
+      </div>
+    </div>
+  </section>
 
-    <!-- Products and Sidebar -->
-    <div class="container mx-auto px-4 md:px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
-      
-      <!-- Sidebar -->
-      <aside class="space-y-6">
-        <div>
-          <h3 class="font-semibold mb-2">CATEGORIES</h3>
-          <ul class="text-sm text-gray-600 space-y-1">
-            <li>
-              <a href="/shop" class="<%= !query.category ? 'text-blue-600 font-medium' : 'hover:text-blue-600' %>">
-                All Categories
-              </a>
-            </li>
-            <% categories.forEach(category => { %>
-              <li>
-                <a href="/shop?category=<%= category._id %>" 
-                   class="<%= query.category === category._id.toString() ? 'text-blue-600 font-medium' : 'hover:text-blue-600' %>">
-                  <%= category.name %>
-                </a>
-              </li>
+  <!-- MAIN CONTENT -->
+  <div class="container mx-auto px-4 md:px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-10">
+
+      <!-- Enhanced Sidebar -->
+      <aside class="lg:sticky lg:top-4 h-fit space-y-6">
+        
+        <!-- Categories Section -->
+        <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100">
+          <h3 class="font-bold text-lg mb-4 border-b pb-3 text-gray-800 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+            Categories
+          </h3>
+          <div class="space-y-2">
+            <a href="#" onclick="filterByCategory('')" class="category-link <%= !query.category ? 'category-active' : 'text-gray-700 hover:text-gray-900' %>">
+              All Categories
+            </a>
+            
+            <!-- Main Categories with Dropdown -->
+            <% categories.filter(cat => !cat.parentCategory).forEach(category => { %>
+              <% const subcategories = categories.filter(sub => sub.parentCategory && sub.parentCategory.toString() === category._id.toString()); %>
+              <div class="category-dropdown">
+                <div class="flex items-center justify-between">
+                  <a href="#" onclick="filterByCategory('<%= category._id %>')" 
+                     class="category-link flex-1 <%= query.category === category._id.toString() ? 'category-active' : 'text-gray-700 hover:text-gray-900' %>">
+                    <%= category.name %>
+                  </a>
+                  <% if (subcategories.length > 0) { %>
+                    <button class="category-toggle-btn p-2 hover:bg-gray-100 rounded transition-colors" 
+                            data-category-id="<%= category._id %>"
+                            onclick="toggleCategory('<%= category._id %>')">
+                      <svg class="category-arrow w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </button>
+                  <% } %>
+                </div>
+                
+                <!-- Subcategories Dropdown -->
+                <% if (subcategories.length > 0) { %>
+                  <div class="category-dropdown-content ml-4" id="dropdown-<%= category._id %>">
+                    <div class="space-y-1 mt-2">
+                      <% subcategories.forEach(subcategory => { %>
+                        <a href="#" onclick="filterByCategory('<%= subcategory._id %>')" 
+                           class="subcategory-item category-link text-sm block <%= query.category === subcategory._id.toString() ? 'category-active' : 'text-gray-600 hover:text-gray-800' %>">
+                          └─ <%= subcategory.name %>
+                        </a>
+                      <% }); %>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
             <% }); %>
-          </ul>
+          </div>
         </div>
 
-        <!-- <div>
-          <h3 class="font-semibold mb-2">BRANDS</h3>
-          <div class="flex flex-wrap gap-2 text-sm text-gray-500">
-            <span class="bg-gray-200 px-2 py-1 rounded">DSLR</span>
-            <span class="bg-gray-200 px-2 py-1 rounded">Canon</span>
-            <span class="bg-gray-200 px-2 py-1 rounded">Sony</span>
+        <!-- Filters Section -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+          <div class="p-4 bg-gray-50 border-b">
+            <h3 class="font-bold text-lg text-gray-800">Filters</h3>
           </div>
-        </div> -->
+          
+          <!-- Price Filter -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('price')">
+              <span>PRICE</span>
+              <svg id="price-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="price-content" class="filter-content mt-3">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between text-sm text-gray-700">
+                  <span id="priceDisplay">₹0 – ₹50,000</span>
+                  <button id="clearPriceBtn" type="button" class="text-xs text-red-600 hover:underline hidden">Clear</button>
+                </div>
+                <input id="priceSlider" type="range" class="price-slider" min="0" max="500000" step="1000" value="250000">
+                <div class="flex items-center gap-2">
+                  <select id="minPriceSelect" class="border border-gray-300 px-2 py-1 text-sm rounded flex-1">
+                    <option value="0">Min</option>
+                    <option value="1000">₹1000</option>
+                    <option value="5000">₹5000</option>
+                    <option value="10000">₹10000</option>
+                    <option value="50000">₹50000</option>
+                    <option value="100000">₹100000</option>
+                    <option value="200000">₹200000</option>
+                  </select>
+                  <span class="text-gray-500">to</span>
+                  <select id="maxPriceSelect" class="border border-gray-300 px-2 py-1 text-sm rounded flex-1">
+                    <option value="500000">₹500000</option>
+                    <option value="400000">₹400000</option>
+                    <option value="300000">₹300000</option>
+                    <option value="200000">₹200000</option>
+                    <option value="100000">₹100000</option>
+                    <option value="50000">₹50000</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Brand Filter -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('brand')">
+              <span>BRAND</span>
+              <svg id="brand-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="brand-content" class="filter-content mt-3">
+              <div class="space-y-2 mb-3">
+                <input id="brand-search" type="text" placeholder="Search Brand" class="w-full border border-gray-300 px-3 py-2 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div id="brand-list" class="space-y-2 max-h-40 overflow-y-auto">
+                <% (brandsList || []).forEach(b => { 
+                     const isChecked = (query.brand || '').split(',').map(x => x.toUpperCase()).includes(b.name);
+                %>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="checkbox-custom brand-checkbox" name="brand" value="<%= b.name %>" <%= isChecked ? 'checked' : '' %> />
+                    <span class="text-sm text-gray-700"><%= b.name %> (<%= b.count %>)</span>
+                  </label>
+                <% }) %>
+                <% if (!brandsList || brandsList.length === 0) { %>
+                  <p class="text-xs text-gray-500">No brands found in current selection.</p>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+        
+          <!-- Technical Specs -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('specs')">
+              <span>TECHNICAL SPECS</span>
+              <svg id="specs-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="specs-content" class="filter-content mt-3">
+              <div class="space-y-3">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 mb-2 block">Megapixel</label>
+                  <div class="space-y-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" class="checkbox-custom" name="megapixel" value="12-16" <%= ((query['megapixel']||'').split(',').includes('12-16')) ? 'checked' : '' %> >
+                      <span class="text-sm text-gray-700">12-16 MP</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" class="checkbox-custom" name="megapixel" value="16-24" <%= ((query['megapixel']||'').split(',').includes('16-24')) ? 'checked' : '' %> >
+                      <span class="text-sm text-gray-700">16-24 MP</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" class="checkbox-custom" name="megapixel" value="24+" <%= ((query['megapixel']||'').split(',').includes('24+')) ? 'checked' : '' %> >
+                      <span class="text-sm text-gray-700">24+ MP</span>
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-sm font-medium text-gray-700 mb-2 block">Battery Type</label>
+                  <div class="space-y-1">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" class="checkbox-custom" name="battery" value="lithium-ion" <%= ((query['battery']||'').split(',').includes('lithium-ion')) ? 'checked' : '' %> >
+                      <span class="text-sm text-gray-700">Lithium Ion</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" class="checkbox-custom" name="battery" value="rechargeable" <%= ((query['battery']||'').split(',').includes('rechargeable')) ? 'checked' : '' %> >
+                      <span class="text-sm text-gray-700">Rechargeable</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Camera Type -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('camera-type')">
+              <span>CAMERA TYPE</span>
+              <svg id="camera-type-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="camera-type-content" class="filter-content mt-3">
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="camera-type" value="dslr" <%= ((query['camera-type']||'').split(',').includes('dslr')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">DSLR</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="camera-type" value="mirrorless" <%= ((query['camera-type']||'').split(',').includes('mirrorless')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Mirrorless</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="camera-type" value="point-shoot" <%= ((query['camera-type']||'').split(',').includes('point-shoot')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Point & Shoot</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="camera-type" value="action" <%= ((query['camera-type']||'').split(',').includes('action')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Action Camera</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="camera-type" value="drone" <%= ((query['camera-type']||'').split(',').includes('drone')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Drone Camera</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lens Mount -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('lens-mount')">
+              <span>LENS MOUNT</span>
+              <svg id="lens-mount-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="lens-mount-content" class="filter-content mt-3">
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-mount" value="canon-ef" <%= ((query['lens-mount']||'').split(',').includes('canon-ef')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Canon EF</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-mount" value="canon-rf" <%= ((query['lens-mount']||'').split(',').includes('canon-rf')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Canon RF</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-mount" value="nikon-f" <%= ((query['lens-mount']||'').split(',').includes('nikon-f')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Nikon F</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-mount" value="nikon-z" <%= ((query['lens-mount']||'').split(',').includes('nikon-z')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Nikon Z</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-mount" value="sony-e" <%= ((query['lens-mount']||'').split(',').includes('sony-e')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Sony E</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-mount" value="fujifilm-x" <%= ((query['lens-mount']||'').split(',').includes('fujifilm-x')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Fujifilm X</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Focal Length -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('focal-length')">
+              <span>FOCAL LENGTH</span>
+              <svg id="focal-length-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="focal-length-content" class="filter-content mt-3">
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="14mm" <%= ((query['focal-length']||'').split(',').includes('14mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">14mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="24mm" <%= ((query['focal-length']||'').split(',').includes('24mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">24mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="35mm" <%= ((query['focal-length']||'').split(',').includes('35mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">35mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="50mm" <%= ((query['focal-length']||'').split(',').includes('50mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">50mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="85mm" <%= ((query['focal-length']||'').split(',').includes('85mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">85mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="100mm" <%= ((query['focal-length']||'').split(',').includes('100mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">100mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="200mm" <%= ((query['focal-length']||'').split(',').includes('200mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">200mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="300mm" <%= ((query['focal-length']||'').split(',').includes('300mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">300mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="400mm" <%= ((query['focal-length']||'').split(',').includes('400mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">400mm</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="focal-length" value="600mm" <%= ((query['focal-length']||'').split(',').includes('600mm')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">600mm</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- F-Aperture -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('f-aperture')">
+              <span>F-APERTURE</span>
+              <svg id="f-aperture-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="f-aperture-content" class="filter-content mt-3">
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/1.2" <%= ((query['f-aperture']||'').split(',').includes('f/1.2')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/1.2</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/1.4" <%= ((query['f-aperture']||'').split(',').includes('f/1.4')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/1.4</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/1.8" <%= ((query['f-aperture']||'').split(',').includes('f/1.8')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/1.8</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/2" <%= ((query['f-aperture']||'').split(',').includes('f/2')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/2</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/2.8" <%= ((query['f-aperture']||'').split(',').includes('f/2.8')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/2.8</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/3.5" <%= ((query['f-aperture']||'').split(',').includes('f/3.5')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/3.5</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/4" <%= ((query['f-aperture']||'').split(',').includes('f/4')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/4</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/5.6" <%= ((query['f-aperture']||'').split(',').includes('f/5.6')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/5.6</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/8" <%= ((query['f-aperture']||'').split(',').includes('f/8')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/8</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/11" <%= ((query['f-aperture']||'').split(',').includes('f/11')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/11</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/16" <%= ((query['f-aperture']||'').split(',').includes('f/16')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/16</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="f-aperture" value="f/22" <%= ((query['f-aperture']||'').split(',').includes('f/22')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">f/22</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lens Type -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('lens-type')">
+              <span>LENS TYPE</span>
+              <svg id="lens-type-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="lens-type-content" class="filter-content mt-3">
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-type" value="prime" <%= ((query['lens-type']||'').split(',').includes('prime')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Prime</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-type" value="zoom" <%= ((query['lens-type']||'').split(',').includes('zoom')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Zoom</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-type" value="macro" <%= ((query['lens-type']||'').split(',').includes('macro')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Macro</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-type" value="telephoto" <%= ((query['lens-type']||'').split(',').includes('telephoto')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Telephoto</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-type" value="wide-angle" <%= ((query['lens-type']||'').split(',').includes('wide-angle')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Wide Angle</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="lens-type" value="standard" <%= ((query['lens-type']||'').split(',').includes('standard')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Standard</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Availability -->
+          <div class="filter-section px-4">
+            <button class="filter-toggle" onclick="toggleFilter('availability')">
+              <span>AVAILABILITY</span>
+              <svg id="availability-arrow" class="filter-arrow w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div id="availability-content" class="filter-content mt-3">
+              <div class="space-y-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="availability" value="in-stock" <%= ((query['availability']||'').split(',').includes('in-stock')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">In Stock</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="availability" value="pre-order" <%= ((query['availability']||'').split(',').includes('pre-order')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Pre-order</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="checkbox-custom" name="availability" value="backorder" <%= ((query['availability']||'').split(',').includes('backorder')) ? 'checked' : '' %> >
+                  <span class="text-sm text-gray-700">Back Order</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
       </aside>
 
-      <!-- Product Grid Area -->
-      <div class="md:col-span-3">
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <p class="text-sm text-gray-600 text-center sm:text-left">
-            Showing <%= (currentPage - 1) * limit + 1 %>–<%= Math.min(currentPage * limit, total) %> of <%= total %> results
-            <% if (query.category) { %>
-              <% const selectedCategory = categories.find(cat => cat._id.toString() === query.category) %>
-              <% if (selectedCategory) { %>
-                in <span class="font-medium"><%= selectedCategory.name %></span>
+      <!-- Products Area -->
+      <div class="lg:col-span-3">
+        <!-- Search + Filter -->
+        <div class="bg-white rounded-xl p-6 shadow-md border border-gray-100 mb-6">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <p class="text-gray-600 font-medium text-sm lg:text-base">
+              Showing <%= (currentPage - 1) * limit + 1 %>–<%= Math.min(currentPage * limit, total) %> of <%= total %> products
+              <% if (query.category) { 
+                const selectedCategory = categories.find(c => c._id.toString() === query.category);
+                if (selectedCategory) { %>
+                  in <span class="font-semibold text-gray-900"><%= selectedCategory.name %></span>
+              <% } } %>
+            </p>
+            <!-- Search Form -->
+            <form action="/shop" method="GET" class="flex flex-wrap gap-3 items-center">
+              <% if (query.category) { %>
+                <input type="hidden" name="category" value="<%= query.category %>" />
               <% } %>
-            <% } %>
-          </p>
-
-          <!-- Sort/Search with Clear Filters -->
-          <form action="/shop" method="GET" class="flex flex-wrap gap-2 items-center">
-            <% if (query.category) { %>
-              <input type="hidden" name="category" value="<%= query.category %>" />
-            <% } %>
-            <% if (query.search) { %>
-              <input type="hidden" name="search" value="<%= query.search %>" />
-            <% } %>
-
-            <input
-              type="text"
-              name="search"
-              placeholder="Search..."
-              value="<%= query.search || '' %>"
-              class="border px-3 py-1 text-sm rounded"
-            />
-            <button type="submit" class="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700">
-              Search
-            </button>
-
-            <select name="sort" onchange="this.form.submit()" class="border px-2 py-1 text-sm rounded">
-              <option value="">Sort by</option>
-              <option value="price-asc" <%= query.sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
-              <option value="price-desc" <%= query.sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
-              <option value="az" <%= query.sort === 'az' ? 'selected' : '' %>>Name: A to Z</option>
-              <option value="za" <%= query.sort === 'za' ? 'selected' : '' %>>Name: Z to A</option>
-              <option value="popularity" <%= query.sort === 'popularity' ? 'selected' : '' %>>Most Popular</option>
-              <option value="rating" <%= query.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
-              <option value="new" <%= query.sort === 'new' ? 'selected' : '' %>>Newest</option>
-              <option value="featured" <%= query.sort === 'featured' ? 'selected' : '' %>>Featured</option>
-            </select>
-
-            <% if (query.search || query.category || query.sort) { %>
-              <a href="/shop" class="text-sm text-red-600 underline ml-2">Clear Filters</a>
-            <% } %>
-          </form>
+              <% if (query.search) { %>
+                <input type="hidden" name="search" value="<%= query.search %>" />
+              <% } %>
+              <input
+                type="text"
+                name="search"
+                placeholder="Search products..."
+                value="<%= query.search || '' %>"
+                class="border border-gray-300 px-3 py-2 text-sm rounded-md focus:ring-2 focus:ring-gray-500 focus:outline-none"
+              />
+              <% if (query.brand) { %>
+                <input type="hidden" name="brand" value="<%= query.brand %>" />
+              <% } %>
+              <button type="submit" class="bg-gray-900 text-white px-5 py-2 text-sm rounded-md hover:bg-gray-800 transition">
+                Search
+              </button>
+              <select name="sort" onchange="this.form.submit()" class="border border-gray-300 px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500">
+                <option value="">Sort by</option>
+                <option value="price-asc" <%= query.sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
+                <option value="price-desc" <%= query.sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
+                <option value="az" <%= query.sort === 'az' ? 'selected' : '' %>>Name: A to Z</option>
+                <option value="za" <%= query.sort === 'za' ? 'selected' : '' %>>Name: Z to A</option>
+                <option value="popularity" <%= query.sort === 'popularity' ? 'selected' : '' %>>Most Popular</option>
+                <option value="rating" <%= query.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
+                <option value="new" <%= query.sort === 'new' ? 'selected' : '' %>>Newest</option>
+                <option value="featured" <%= query.sort === 'featured' ? 'selected' : '' %>>Featured</option>
+              </select>
+              <% if (query.search || query.category || query.sort) { %>
+                <a href="/shop" class="text-sm text-red-600 hover:text-red-700 underline">
+                  Clear Filters
+                </a>
+              <% } %>
+            </form>
+          </div>
         </div>
 
-        <!-- Product Cards -->
+        <!-- Product Grid -->
         <% if (products.length === 0) { %>
-          <div class="text-center py-12">
-            <p class="text-gray-500 text-lg">No products found.</p>
+          <div class="text-center py-14 bg-white rounded-xl shadow-md border border-gray-100">
+            <div class="text-gray-400 mb-4">
+              <svg class="mx-auto w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+            <p class="text-gray-500 mb-4">Try adjusting your search or browse our categories</p>
             <% if (query.category || query.search) { %>
-              <a href="/shop" class="text-blue-600 hover:underline mt-2 inline-block">Clear filters</a>
+              <a href="/shop" class="btn-outline text-gray-700 px-6 py-2 rounded-md font-medium inline-block">
+                Browse All Products
+              </a>
             <% } %>
           </div>
         <% } else { %>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-7">
             <% products.forEach(product => { %>
-              <div class="bg-white shadow p-2 hover:shadow-lg transition-shadow cursor-pointer"
+              <div class="bg-white rounded-xl shadow-md border border-gray-100 card-hover overflow-hidden cursor-pointer"
                    onclick="window.location.href='/product/<%= product._id %>'">
-                <img src="<%= product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg' %>" 
-                     alt="<%= product.name %>" 
-                     class="w-full h-64 object-cover rounded" />
-                <h4 class="mt-2 font-semibold text-sm"><%= product.name %></h4>
-                <p class="<%= product.discounted ? 'line-through text-gray-400' : 'text-green-600' %> text-sm">
-                  $<%= product.price %>
-                </p>
-                <% if (product.discounted) { %>
-                  <p class="text-green-600 text-sm">$<%= product.discountPrice %></p>
-                <% } %>
+                <div class="relative">
+                  <img src="<%= product.images && product.images[0] ? product.images[0] : '/images/placeholder.jpg' %>" 
+                       alt="<%= product.name %>" 
+                       class="w-full h-52 object-cover transition-transform duration-300 hover:scale-105" />
+                  <% if (product.discounted) { %>
+                    <span class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                      SALE
+                    </span>
+                  <% } %>
+                </div>
+                <div class="p-4">
+                  <h4 class="font-semibold text-gray-900 mb-3 line-clamp-2 min-h-[48px]">
+                    <%= product.name %>
+                  </h4>
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <% if (product.discounted) { %>
+                        <div class="flex items-center gap-2">
+                          <span class="text-lg font-bold text-green-600">₹<%= product.discountPrice %></span>
+                          <span class="line-through text-gray-400 text-sm">₹<%= product.price %></span>
+                        </div>
+                      <% } else { %>
+                        <span class="text-lg font-bold text-gray-900">₹<%= product.price %></span>
+                      <% } %>
+                    </div>
+                    <div class="text-right">
+                      <div class="flex text-yellow-400 text-sm">★★★★★</div>
+                      <span class="text-xs text-gray-500">(125)</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             <% }); %>
           </div>
 
-            <!-- Pagination -->
-            <% if (total > limit) { %>
-              <div class="flex justify-center mt-10 space-x-2 text-gray-500 flex-wrap">
+          <!-- Pagination -->
+          <% if (total > limit) { %>
+            <div class="flex justify-center items-center mt-10">
+              <div class="flex items-center space-x-1">
                 <% if (currentPage > 1) { %>
-                  <a href="/shop?page=<%= currentPage - 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&laquo;</a>
+                  <a href="/shop?page=<%= currentPage - 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
+                     class="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Previous
+                  </a>
                 <% } %>
-
-                <% for (let i = 1; i <= Math.ceil(total / limit); i++) { %>
+                <%
+                  const totalPages = Math.ceil(total / limit);
+                  const showPages = 5;
+                  let startPage = Math.max(1, currentPage - Math.floor(showPages / 2));
+                  let endPage = Math.min(totalPages, startPage + showPages - 1);
+                  startPage = Math.max(1, endPage - showPages + 1);
+                %>
+                <% if (startPage > 1) { %>
+                  <a href="/shop?page=1<%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
+                     class="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">1</a>
+                  <% if (startPage > 2) { %>
+                    <span class="px-2 py-2 text-gray-400">...</span>
+                  <% } %>
+                <% } %>
+                <% for (let i = startPage; i <= endPage; i++) { %>
                   <a href="/shop?page=<%= i %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
-                    class="<%= currentPage === i ? 'font-semibold text-black' : 'hover:text-black' %>"><%= i %></a>
+                     class="px-3 py-2 text-sm <%= currentPage === i ? 'bg-gray-900 text-white' : 'text-gray-700 bg-white hover:bg-gray-50' %> border border-gray-300 rounded-md">
+                    <%= i %>
+                  </a>
                 <% } %>
-
-                <% if (currentPage < Math.ceil(total / limit)) { %>
-                  <a href="/shop?page=<%= currentPage + 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" class="hover:text-black">&raquo;</a>
+                <% if (endPage < totalPages) { %>
+                  <% if (endPage < totalPages - 1) { %>
+                    <span class="px-2 py-2 text-gray-400">...</span>
+                  <% } %>
+                  <a href="/shop?page=<%= totalPages %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
+                     class="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"><%= totalPages %></a>
+                <% } %>
+                <% if (currentPage < totalPages) { %>
+                  <a href="/shop?page=<%= currentPage + 1 %><%= query.category ? '&category=' + query.category : '' %><%= query.search ? '&search=' + query.search : '' %><%= query.sort ? '&sort=' + query.sort : '' %>" 
+                     class="px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    Next
+                  </a>
                 <% } %>
               </div>
-            <% } %>
+            </div>
           <% } %>
+        <% } %>
       </div>
     </div>
+  </div>
 
-    <!-- Subscribe Section -->
-    <section class="bg-black text-white py-12 mt-20 px-4">
-      <div class="max-w-2xl mx-auto text-center">
-        <h3 class="text-xl font-medium mb-4">SUBSCRIBE US NOW</h3>
-        <p class="text-sm mb-6">Get updates for latest cameras and lenses</p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <input
-            type="email"
-            placeholder="Your email address"
-            class="flex-1 px-4 py-2 text-black rounded"
-          />
-          <button class="bg-gray-800 px-6 py-2 rounded">Subscribe</button>
-        </div>
+  <!-- Newsletter -->
+  <section class="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-14 mt-16">
+    <div class="max-w-2xl mx-auto text-center px-4">
+      <h3 class="text-xl sm:text-2xl font-semibold mb-3">Subscribe to CaptureCore</h3>
+      <p class="text-sm mb-6 text-gray-300">Get updates on the latest cameras and lenses</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <input type="email" placeholder="Your email address" class="flex-1 px-4 py-3 text-black rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400" />
+        <button class="bg-yellow-400 text-gray-900 px-6 py-3 rounded-md font-medium hover:bg-yellow-300 transition">
+          Subscribe
+        </button>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer class="bg-white py-12 border-t mt-20 px-4">
-      <div class="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 text-sm text-gray-600">
-        <div>
-          <img src="/footer-image.jpg" alt="Camera" class="mb-4" />
-          <p>&copy; CaptureCore 2025</p>
+  <!-- Footer -->
+  <footer class="bg-white py-12 border-t mt-16">
+    <div class="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-sm text-gray-600 px-4">
+      <div>
+        <div class="w-12 h-12 bg-gray-900 rounded-full mb-4 flex items-center justify-center shadow-md">
+          <span class="text-white font-bold">CC</span>
         </div>
-        <div>
-          <h4 class="font-semibold mb-3">QUICK LINKS</h4>
-          <ul class="space-y-2">
-            <li><a href="/shop">Shop</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/contact">Contact</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-semibold mb-3">HELP & INFO</h4>
-          <ul class="space-y-2">
-            <li><a href="#">Terms & Conditions</a></li>
-            <li><a href="#">Privacy Policy</a></li>
-            <li><a href="#">FAQs</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-semibold mb-3">CONTACT US</h4>
-          <p>Email: support@capturecore.com</p>
-          <p>Phone: +91 9123456789</p>
-        </div>
+        <p class="mb-4 text-gray-700">Your trusted partner for premium camera equipment.</p>
+        <p>&copy; CaptureCore 2025</p>
       </div>
-    </footer>
-  </body>
+      <div>
+        <h4 class="font-semibold mb-3 text-gray-900">Quick Links</h4>
+        <ul class="space-y-2">
+          <li><a href="/shop" class="hover:text-gray-900 transition-colors">Shop</a></li>
+          <li><a href="/about" class="hover:text-gray-900 transition-colors">About</a></li>
+          <li><a href="/contact" class="hover:text-gray-900 transition-colors">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-gray-900">Help & Info</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="hover:text-gray-900 transition-colors">Terms & Conditions</a></li>
+          <li><a href="#" class="hover:text-gray-900 transition-colors">Privacy Policy</a></li>
+          <li><a href="#" class="hover:text-gray-900 transition-colors">FAQs</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-gray-900">Contact Us</h4>
+        <p class="mb-2">Email: <a href="mailto:support@capturecore.com" class="hover:text-gray-900 transition-colors">support@capturecore.com</a></p>
+        <p>Phone: <a href="tel:+919123456789" class="hover:text-gray-900 transition-colors">+91 9123456789</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript for Category Dropdown and Filters -->
+  <script>
+    // Store expanded state in localStorage
+    const expandedCategories = JSON.parse(localStorage.getItem('expandedCategories') || '[]');
+    const expandedFilters = JSON.parse(localStorage.getItem('expandedFilters') || '["offers", "ratings"]');
+    
+    // Initialize dropdowns on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize category dropdowns
+      expandedCategories.forEach(categoryId => {
+        const dropdown = document.getElementById(`dropdown-${categoryId}`);
+        const arrow = document.querySelector(`[data-category-id="${categoryId}"] .category-arrow`);
+        if (dropdown && arrow) {
+          dropdown.classList.add('expanded');
+          arrow.classList.add('rotated');
+        }
+      });
+      
+      // Initialize filter sections
+      expandedFilters.forEach(filterId => {
+        const content = document.getElementById(`${filterId}-content`);
+        const arrow = document.getElementById(`${filterId}-arrow`);
+        if (content && arrow) {
+          content.classList.add('expanded');
+          arrow.classList.add('rotated');
+        }
+      });
+      
+      // Initialize new filter arrows for closed sections
+      const closedFilters = ['price', 'brand', 'camera-type', 'lens-mount', 'availability'];
+      closedFilters.forEach(filterId => {
+        const arrow = document.getElementById(`${filterId}-arrow`);
+        if (arrow && !expandedFilters.includes(filterId)) {
+          arrow.style.transform = 'rotate(-90deg)';
+        }
+      });
+      
+      // Auto-expand category if a subcategory is currently selected
+      const currentCategory = '<%= query.category %>';
+      if (currentCategory) {
+        const selectedSubcategory = document.querySelector(`a[href="/shop?category=${currentCategory}"]`);
+        if (selectedSubcategory && selectedSubcategory.classList.contains('subcategory-item')) {
+          const parentDropdown = selectedSubcategory.closest('.category-dropdown-content');
+          if (parentDropdown) {
+            const categoryId = parentDropdown.id.replace('dropdown-', '');
+            if (!expandedCategories.includes(categoryId)) {
+              expandedCategories.push(categoryId);
+              localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
+            }
+            parentDropdown.classList.add('expanded');
+            const arrow = document.querySelector(`[data-category-id="${categoryId}"] .category-arrow`);
+            if (arrow) {
+              arrow.classList.add('rotated');
+            }
+          }
+        }
+      }
+
+      // Initialize price UI from query
+      const url = new URL(window.location.href);
+      const priceRange = url.searchParams.get('priceRange');
+      const priceDisplay = document.getElementById('priceDisplay');
+      const slider = document.getElementById('priceSlider');
+      const minSel = document.getElementById('minPriceSelect');
+      const maxSel = document.getElementById('maxPriceSelect');
+      const clearBtn = document.getElementById('clearPriceBtn');
+
+      function fmt(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
+
+      function applyPriceToUI(min, max){
+        priceDisplay.textContent = `${fmt(min)} – ${fmt(max)}`;
+        slider.value = max;
+        minSel.value = String(min);
+        maxSel.value = String(max);
+        clearBtn.classList.toggle('hidden', !(min !== 0 || max !== 500000));
+      }
+
+      if (priceRange && priceRange.includes('_')) {
+        const [min, max] = priceRange.split('_').map(Number);
+        if (!isNaN(min) && !isNaN(max)) {
+          applyPriceToUI(min, max);
+        }
+      } else {
+        applyPriceToUI(0, 500000);
+      }
+
+      function updatePriceParam(min, max){
+        const newUrl = new URL(window.location.href);
+        if (min === 0 && max === 500000) {
+          newUrl.searchParams.delete('priceRange');
+        } else {
+          newUrl.searchParams.set('priceRange', `${min}_${max}`);
+        }
+        newUrl.searchParams.delete('page');
+        // Use AJAX instead of page reload
+        updateProductsWithFilters(newUrl.searchParams);
+      }
+
+      slider?.addEventListener('input', () => {
+        const min = Number(minSel.value || 0);
+        const max = Number(slider.value || 50000);
+        if (max < min) return;
+        applyPriceToUI(min, max);
+      });
+
+      slider?.addEventListener('change', () => {
+        const min = Number(minSel.value || 0);
+        const max = Number(slider.value || 50000);
+        if (max < min) return;
+        updatePriceParam(min, max);
+      });
+
+      minSel?.addEventListener('change', () => {
+        const min = Number(minSel.value || 0);
+        let max = Number(maxSel.value || 50000);
+        if (min > max) { max = min; maxSel.value = String(max); slider.value = String(max); }
+        applyPriceToUI(min, max);
+        updatePriceParam(min, max);
+      });
+
+      maxSel?.addEventListener('change', () => {
+        const min = Number(minSel.value || 0);
+        const max = Number(maxSel.value || 50000);
+        if (max < min) { return; }
+        applyPriceToUI(min, max);
+        updatePriceParam(min, max);
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        applyPriceToUI(0, 500000);
+        updatePriceParam(0, 500000);
+      });
+    });
+    
+    // AJAX function to update products without page reload
+    async function updateProductsWithFilters(searchParams) {
+      try {
+        const response = await fetch(`/shop?${searchParams.toString()}`, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        
+        if (response.ok) {
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Update product grid
+          const newProductGrid = doc.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-3');
+          const currentProductGrid = document.querySelector('.grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-3');
+          if (newProductGrid && currentProductGrid) {
+            currentProductGrid.innerHTML = newProductGrid.innerHTML;
+          }
+          
+          // Update product count
+          const newCount = doc.querySelector('.text-gray-600.font-medium');
+          const currentCount = document.querySelector('.text-gray-600.font-medium');
+          if (newCount && currentCount) {
+            currentCount.innerHTML = newCount.innerHTML;
+          }
+          
+          // Update pagination
+          const newPagination = doc.querySelector('.flex.justify-center.items-center.mt-10');
+          const currentPagination = document.querySelector('.flex.justify-center.items-center.mt-10');
+          if (newPagination && currentPagination) {
+            currentPagination.innerHTML = newPagination.innerHTML;
+          } else if (newPagination && !currentPagination) {
+            const container = document.querySelector('.lg\\:col-span-3');
+            if (container) {
+              container.appendChild(newPagination);
+            }
+          } else if (!newPagination && currentPagination) {
+            currentPagination.remove();
+          }
+          
+          // Update URL without reload
+          const newUrl = new URL(window.location.href);
+          searchParams.forEach((value, key) => {
+            if (value) {
+              newUrl.searchParams.set(key, value);
+            } else {
+              newUrl.searchParams.delete(key);
+            }
+          });
+          window.history.pushState({}, '', newUrl.toString());
+          
+          // Update active category styling
+          updateCategoryActiveState(searchParams.get('category'));
+        }
+      } catch (error) {
+        console.error('Error updating products:', error);
+      }
+    }
+    
+    // Function to filter by category
+    function filterByCategory(categoryId) {
+      const url = new URL(window.location.href);
+      if (categoryId) {
+        url.searchParams.set('category', categoryId);
+      } else {
+        url.searchParams.delete('category');
+      }
+      url.searchParams.delete('page');
+      updateProductsWithFilters(url.searchParams);
+    }
+    
+    // Function to update category active state
+    function updateCategoryActiveState(activeCategoryId) {
+      // Remove all active states
+      document.querySelectorAll('.category-link').forEach(link => {
+        link.classList.remove('category-active');
+        link.classList.add('text-gray-700', 'hover:text-gray-900');
+      });
+      
+      // Add active state to current category
+      if (activeCategoryId) {
+        const activeLink = document.querySelector(`[onclick*="${activeCategoryId}"]`);
+        if (activeLink) {
+          activeLink.classList.remove('text-gray-700', 'hover:text-gray-900');
+          activeLink.classList.add('category-active');
+        }
+      } else {
+        const allCategoriesLink = document.querySelector('[onclick="filterByCategory(\'\')"]');
+        if (allCategoriesLink) {
+          allCategoriesLink.classList.remove('text-gray-700', 'hover:text-gray-900');
+          allCategoriesLink.classList.add('category-active');
+        }
+      }
+    }
+    
+    function toggleCategory(categoryId) {
+      const dropdown = document.getElementById(`dropdown-${categoryId}`);
+      const arrow = document.querySelector(`[data-category-id="${categoryId}"] .category-arrow`);
+      
+      if (dropdown && arrow) {
+        const isExpanded = dropdown.classList.contains('expanded');
+        
+        if (isExpanded) {
+          dropdown.classList.remove('expanded');
+          arrow.classList.remove('rotated');
+          const index = expandedCategories.indexOf(categoryId);
+          if (index > -1) {
+            expandedCategories.splice(index, 1);
+            localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
+          }
+        } else {
+          dropdown.classList.add('expanded');
+          arrow.classList.add('rotated');
+          if (!expandedCategories.includes(categoryId)) {
+            expandedCategories.push(categoryId);
+            localStorage.setItem('expandedCategories', JSON.stringify(expandedCategories));
+          }
+        }
+      }
+    }
+    
+    function toggleFilter(filterId) {
+      const content = document.getElementById(`${filterId}-content`);
+      const arrow = document.getElementById(`${filterId}-arrow`);
+      
+      if (content && arrow) {
+        const isExpanded = content.classList.contains('expanded');
+        
+        if (isExpanded) {
+          content.classList.remove('expanded');
+          arrow.classList.remove('rotated');
+          const index = expandedFilters.indexOf(filterId);
+          if (index > -1) {
+            expandedFilters.splice(index, 1);
+            localStorage.setItem('expandedFilters', JSON.stringify(expandedFilters));
+          }
+        } else {
+          content.classList.add('expanded');
+          arrow.classList.add('rotated');
+          if (!expandedFilters.includes(filterId)) {
+            expandedFilters.push(filterId);
+            localStorage.setItem('expandedFilters', JSON.stringify(expandedFilters));
+          }
+        }
+      }
+    }
+    
+    function updatePriceDisplay(value) {
+      console.log('Price updated to:', value);
+      // You can implement price filtering logic here
+    }
+    
+    // Add keyboard navigation support
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const focusedElement = document.activeElement;
+        if (focusedElement.classList.contains('category-toggle-btn')) {
+          e.preventDefault();
+          const categoryId = focusedElement.getAttribute('data-category-id');
+          toggleCategory(categoryId);
+        }
+      }
+    });
+    
+    // Add filter functionality
+    document.addEventListener('change', function(e) {
+      if (e.target.type === 'checkbox' && e.target.name) {
+        const url = new URL(window.location.href);
+        const paramName = e.target.name;
+        const current = (url.searchParams.get(paramName) || '').split(',').filter(Boolean);
+        const value = e.target.value;
+
+        if (e.target.checked) {
+          if (!current.includes(value)) current.push(value);
+        } else {
+          const idx = current.indexOf(value);
+          if (idx > -1) current.splice(idx, 1);
+        }
+
+        if (current.length) {
+          url.searchParams.set(paramName, current.join(','));
+        } else {
+          url.searchParams.delete(paramName);
+        }
+
+        url.searchParams.delete('page');
+        // Use AJAX instead of page reload
+        updateProductsWithFilters(url.searchParams);
+      }
+    });
+    
+    // Search brand functionality
+    document.addEventListener('input', function(e) {
+      if (e.target.id === 'brand-search') {
+        const searchTerm = e.target.value.toLowerCase();
+        const brandLabels = document.querySelectorAll('#brand-list label');
+        brandLabels.forEach(label => {
+          const brandName = label.querySelector('span').textContent.toLowerCase();
+          label.style.display = brandName.includes(searchTerm) ? 'flex' : 'none';
+        });
+      }
+    });
+  </script>
+
+</body>
 </html>

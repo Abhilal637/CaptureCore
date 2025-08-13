@@ -253,7 +253,8 @@ exports.postAddaddress = async (req, res) => {
 
   try {
     const userId = req.session.userId;
-    const { isDefault, ...addressData } = req.body;
+    const { isDefault, ...addressData } = req.body || {};
+
 
     
     if (isDefault === 'true') {

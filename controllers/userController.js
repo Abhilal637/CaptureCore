@@ -425,7 +425,7 @@ exports.postResetPassword = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const { search = '', sort = '', category = '', priceRange = '', page = 1 } = req.query;
+    const { search = '', sort = '', category = '', priceRange = '', brand = '', megapixel = '', battery = '', 'camera-type': cameraTypeParam = '', 'lens-mount': lensMountParam = '', availability = '', page = 1 } = req.query;
     const limit = 9;
     const skip = (page - 1) * limit;
 
@@ -446,13 +446,90 @@ exports.getProducts = async (req, res) => {
         query.price = { $gte: min, $lte: max };
       }
     }
+    if (!priceRange) {
+      // default price bounds for slider UI; do not constrain query by default
+    }
+
+    if (brand) {
+      // Support comma-separated brands for multi-select
+      const brands = brand.split(',').filter(Boolean);
+      if (brands.length === 1) {
+        query.brand = { $regex: `^${brands[0]}$`, $options: 'i' };
+      } else if (brands.length > 1) {
+        query.brand = { $in: brands.map(b => new RegExp(`^${b}$`, 'i')) };
+      }
+    }
+
+    // Megapixel bucket (e.g., 12-16,16-24,24+)
+    if (megapixel) {
+      const buckets = megapixel.split(',').filter(Boolean);
+      if (buckets.length) {
+        query.megapixelBucket = { $in: buckets.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // Battery Type
+    if (battery) {
+      const vals = battery.split(',').filter(Boolean);
+      if (vals.length) {
+        query.batteryType = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // Camera Type
+    if (cameraTypeParam) {
+      const vals = cameraTypeParam.split(',').filter(Boolean);
+      if (vals.length) {
+        query.cameraType = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // Lens Mount
+    if (lensMountParam) {
+      const vals = lensMountParam.split(',').filter(Boolean);
+      if (vals.length) {
+        query.lensMount = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // Focal Length
+    if (req.query['focal-length']) {
+      const vals = req.query['focal-length'].split(',').filter(Boolean);
+      if (vals.length) {
+        query.focalLength = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // F-Aperture
+    if (req.query['f-aperture']) {
+      const vals = req.query['f-aperture'].split(',').filter(Boolean);
+      if (vals.length) {
+        query.fAperture = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // Lens Type
+    if (req.query['lens-type']) {
+      const vals = req.query['lens-type'].split(',').filter(Boolean);
+      if (vals.length) {
+        query.lensType = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
+
+    // Availability
+    if (availability) {
+      const vals = availability.split(',').filter(Boolean);
+      if (vals.length) {
+        query.availability = { $in: vals.map(v => new RegExp(`^${v}$`, 'i')) };
+      }
+    }
 
     if (category && mongoose.Types.ObjectId.isValid(category)) {
       const cat = await Category.findOne({ _id: category, isDeleted: false, active: true });
       if (cat) {
         query.category = category;
       } else {
-        const categories = await Category.find({ isDeleted: false, active: true });
+        const categories = await Category.find({ isDeleted: false, active: true }).populate('parentCategory', 'name');
         return res.render('user/shop', {
           products: [],
           total: 0,
@@ -493,7 +570,17 @@ exports.getProducts = async (req, res) => {
       .limit(limit);
     const filteredProducts = products.filter(p => p.category);
 
-    const categories = await Category.find({ isDeleted: false, active: true });
+    const categories = await Category.find({ isDeleted: false, active: true }).populate('parentCategory', 'name');
+
+    // Build brand list dynamically from matching products in current query scope (without pagination)
+    const brandAgg = await Product.aggregate([
+      { $match: query },
+      { $group: { _id: { $toUpper: "$brand" }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]);
+    const brandsList = brandAgg
+      .filter(b => b._id)
+      .map(b => ({ name: b._id, count: b.count }));
 
     return res.render('user/shop', {
       products: filteredProducts,
@@ -501,7 +588,8 @@ exports.getProducts = async (req, res) => {
       currentPage: parseInt(page),
       limit,
       query: req.query,
-      categories
+      categories,
+      brandsList
     });
 
   } catch (err) {
@@ -513,7 +601,8 @@ exports.getProducts = async (req, res) => {
       limit: 8,
       query: req.query,
       error: 'Failed to load products',
-      categories: []
+      categories: [],
+      brandsList: []
     });
   }
 };

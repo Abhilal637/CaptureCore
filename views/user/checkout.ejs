@@ -54,8 +54,9 @@
           <p class="text-gray-500">No address found.</p>
         <% } %>
 
-        <div class="mt-4">
-          <a href="/addresses/add" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add New Address</a>
+        <div class="mt-4 flex gap-3">
+          <a href="/addresses/add" class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">Manage Addresses</a>
+          <button type="button" id="openAddAddressModal" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add New Address</button>
         </div>
       </div>
 
@@ -436,6 +437,101 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
       closeModal();
+    }
+  });
+</script>
+
+<!-- Add Address Modal -->
+<div id="addAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg p-8 w-full max-w-md relative shadow-xl">
+    <button id="closeAddModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+    <h2 class="text-2xl font-semibold mb-6">Add Address</h2>
+
+    <form id="addAddressForm">
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+        <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+        <input type="text" name="phone" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+        <input type="text" name="addressLine" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
+          <input type="text" name="city" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+          <input type="text" name="state" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
+          <input type="text" name="pincode" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
+          <input type="text" name="country" class="w-full border border-gray-300 rounded-md px-3 py-2" value="India">
+        </div>
+      </div>
+      <div class="mb-6">
+        <label class="flex items-center gap-2">
+          <input type="checkbox" name="isDefault" class="rounded">
+          <span class="text-sm text-gray-700">Set as default address</span>
+        </label>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" id="cancelAdd" class="flex-1 bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Cancel</button>
+        <button type="submit" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">Save Address</button>
+      </div>
+    </form>
+  </div>
+  </div>
+
+<script>
+  // Add Address modal wiring
+  const addModal = document.getElementById('addAddressModal');
+  const openAddModalBtn = document.getElementById('openAddAddressModal');
+  const closeAddModalBtn = document.getElementById('closeAddModal');
+  const cancelAddBtn = document.getElementById('cancelAdd');
+  const addForm = document.getElementById('addAddressForm');
+
+  function showAddModal(){ addModal.classList.remove('hidden'); }
+  function hideAddModal(){ addModal.classList.add('hidden'); addForm.reset(); }
+
+  openAddModalBtn?.addEventListener('click', showAddModal);
+  closeAddModalBtn?.addEventListener('click', hideAddModal);
+  cancelAddBtn?.addEventListener('click', hideAddModal);
+  addModal?.addEventListener('click', (e) => { if (e.target === addModal) hideAddModal(); });
+
+  addForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(addForm);
+    // Convert checkbox to 'true'/'false' to match controller
+    formData.set('isDefault', formData.get('isDefault') ? 'true' : 'false');
+
+    try {
+      const res = await fetch('/addresses', { // uses POST /addresses in router
+        method: 'POST',
+        body: formData
+      });
+      if (res.ok) {
+        // Reload checkout to display new address
+        window.location.reload();
+      } else {
+        const errorText = await res.text();
+        console.error('Server error:', errorText);
+        alert('Failed to add address. Please check all fields.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error adding address');
     }
   });
 </script>

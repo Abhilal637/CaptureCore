@@ -158,8 +158,21 @@
           if (totalElement && result.totalPrice !== undefined) {
             totalElement.textContent = `₹${result.totalPrice.toFixed(2)}`;
           }
+
+          // Update cart count in navbar
+          updateCartCount();
         } else {
-          alert(result.message || 'Failed to update cart.');
+          // Show SweetAlert for limit errors
+          if (result.message && (result.message.includes('at most 5') || result.message.includes('Only'))) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Quantity Limit',
+              text: result.message,
+              confirmButtonColor: '#3085d6'
+            });
+          } else {
+            alert(result.message || 'Failed to update cart.');
+          }
         }
       });
     });
@@ -186,6 +199,9 @@
           if (totalElement && result.totalPrice !== undefined) {
             totalElement.textContent = `₹${result.totalPrice.toFixed(2)}`;
           }
+
+          // Update cart count in navbar and clear cart button
+          updateCartCount();
         } else {
           alert(result.message || 'Could not remove item.');
         }
@@ -236,6 +252,10 @@
               `;
             }
             
+            // Update cart count in navbar and clear cart button
+            updateCartCount();
+            updateClearCartButton(0);
+            
             Swal.fire('Cleared!', 'Your cart has been cleared successfully.', 'success');
           } else {
             Swal.fire('Error', result.message || 'Failed to clear cart.', 'error');
@@ -266,6 +286,32 @@
       const totalElement = document.getElementById('cart-total');
       if (totalElement) {
         totalElement.textContent = `₹${total.toFixed(2)}`;
+      }
+    }
+
+    // Update cart count in navbar
+    async function updateCartCount() {
+      try {
+        const response = await fetch('/cart/count');
+        const data = await response.json();
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+          cartCountElement.textContent = data.count;
+          cartCountElement.classList.toggle('hidden', data.count === 0);
+        }
+        
+        // Update clear cart button count
+        updateClearCartButton(data.count);
+      } catch (error) {
+        console.error('Error updating cart count:', error);
+      }
+    }
+    
+    // Update clear cart button count
+    function updateClearCartButton(count) {
+      const clearCartBtn = document.getElementById('clear-cart-btn');
+      if (clearCartBtn) {
+        clearCartBtn.textContent = `Clear Cart (${count} items)`;
       }
     }
   </script>

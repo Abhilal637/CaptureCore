@@ -1,10 +1,10 @@
+// models/category.js
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
   name: {
     type: String,
-    required: true,
-    unique: true
+    trim: true, // only trim, no required here
   },
   description: {
     type: String,
@@ -25,8 +25,13 @@ const categorySchema = new mongoose.Schema({
   parentCategory: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
-    default: null 
+    default: null
   }
 });
+
+categorySchema.index(
+  { name: 1, parentCategory: 1 },
+  { unique: true, collation: { locale: 'en', strength: 2 } }
+);
 
 module.exports = mongoose.model('Category', categorySchema);

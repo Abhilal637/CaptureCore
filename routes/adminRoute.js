@@ -5,11 +5,16 @@ const adminControllers = require('../controllers/adminController');
 const categoryControllers = require('../controllers/catergoryController');
 const productControllers = require('../controllers/productcontroller');
 const adminordercontroller= require('../controllers/adminOrderController');
+const adminSessionHandler= require('../middleware/adminSessionHandler')
+const Category = require('../models/category');
 
-const { adminAuth, preventAdminLoginIfLoggedIn, noCache } = require('../middleware/adminauthmiddleware');
+const {adminAuth,
+  preventAdminLoginIfLoggedIn,
+  noCache,
+  checkBlocked } = require('../middleware/adminauthmiddleware');
 const upload = require('../middleware/upload');
 const validator = require('../middleware/validate');
-const { preventLoginIfLoggedIn } = require('../middleware/userauthmiddleware');
+
 
 router.get('/', adminAuth, noCache, adminControllers.dashboard);
 router.get('/dashboard', adminAuth, noCache, adminControllers.dashboard);
@@ -23,7 +28,7 @@ router.post('/login', preventAdminLoginIfLoggedIn, validator('adminLoginRules'),
 router.get('/logout', adminAuth, adminControllers.logout);  // Make sure logout is protected!
 
 // User management routes
-router.get('/users', adminAuth, noCache, adminControllers.getUsers);
+router.get('/users', adminAuth, noCache, adminControllers.getUsers);  
 router.patch('/users/toggle-block/:id', adminAuth, noCache, adminControllers.toggleUserBlockStatus);
 
 // Category routes with validation on add/edit
@@ -49,11 +54,25 @@ router.patch('/category/edit/:id',
 
 router.patch('/category/toggle/:id', adminAuth, noCache, categoryControllers.toggleCategoryStatus);
 
+// Subcategory routes
+router.get('/category/subcategories/:parentId', adminAuth, noCache, categoryControllers.getSubcategories);
+router.get('/category/hierarchy', adminAuth, noCache, categoryControllers.getCategoryHierarchy);
+
 // Product routes with validation and file upload
 router.get('/products', adminAuth, noCache, productControllers.listProducts);
 
-router.get('/products/add', adminAuth, noCache, (req, res) => {
-  res.render('admin/addproduct');
+router.get('/products/add', adminAuth, noCache, async (req, res) => {
+  try {
+    const categories = await Category.find({
+      isDeleted: false,
+      active: true
+    }).populate('parentCategory', 'name').sort({ name: 1 });
+    
+    res.render('admin/addproduct', { categories });
+  } catch (err) {
+    console.error('Error loading categories:', err);
+    res.status(500).send('Error loading categories');
+  }
 });
 
 router.post(

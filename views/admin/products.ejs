@@ -18,22 +18,43 @@
         <a href="/admin/products/add" class="px-6 py-3 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all">+ Add Product</a>
       </div>
 
-      <!-- Search Bar -->
-      <form method="GET" action="/admin/products" class="mb-4 flex items-center gap-2 max-w-md">
+      <!-- Search and Filter Bar -->
+        <form method="GET" action="/admin/products" class="mb-4 flex items-center gap-2 flex-wrap">
         <input
           type="text"
           name="search"
           placeholder="Search products..."
           value="<%= typeof search === 'string' ? search : '' %>"
-          class="flex-grow border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
         />
+          <input
+            type="text"
+            name="brand"
+            placeholder="Brand"
+            value="<%= typeof brandFilter === 'string' ? brandFilter : '' %>"
+            class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        
+        <select name="category" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+          <option value="">All Categories</option>
+          <% (categories || []).forEach(cat => { %>
+            <option value="<%= cat._id %>" <%= categoryFilter === cat._id.toString() ? 'selected' : '' %>>
+              <% if (cat.parentCategory) { %>
+                <%= cat.parentCategory.name %> > <%= cat.name %>
+              <% } else { %>
+                <%= cat.name %>
+              <% } %>
+            </option>
+          <% }) %>
+        </select>
+        
         <button
           type="submit"
           class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
-          Search
+          Filter
         </button>
-        <% if (search && search.length > 0) { %>
+          <% if ((search && search.length > 0) || categoryFilter || brandFilter) { %>
           <a href="/admin/products" class="bg-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-400 transition">Clear</a>
         <% } %>
       </form>
@@ -44,6 +65,7 @@
           <thead>
             <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
               <th class="p-3">Name</th>
+              <th class="p-3">Brand</th>
               <th class="p-3">Category</th>
               <th class="p-3">Price</th>
               <th class="p-3">Stock</th>
@@ -57,6 +79,7 @@
               <% products.forEach(product => { %>
                 <tr class="border-b hover:bg-gray-50">
                   <td class="p-3"><%= product.name %></td>
+                  <td class="p-3"><%= product.brand || '-' %></td>
                   <td class="p-3"><%= product.category ? product.category.name : 'N/A' %></td>
                   <td class="p-3">₹<%= product.price %></td>
                   <td class="p-3"><%= product.stock %></td>
@@ -101,7 +124,7 @@
         <nav class="mt-4 flex justify-center items-center space-x-2 text-sm">
           <% if (currentPage > 1) { %>
             <a
-              href="?search=<%= encodeURIComponent(search || '') %>&page=<%= currentPage - 1 %>"
+              href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= currentPage - 1 %>"
               class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
             >&laquo; Prev</a>
           <% } else { %>
@@ -113,7 +136,7 @@
               <span class="px-3 py-1 rounded bg-green-600 text-white font-semibold"><%= p %></span>
             <% } else { %>
               <a
-                href="?search=<%= encodeURIComponent(search || '') %>&page=<%= p %>"
+                href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= p %>"
                 class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
               ><%= p %></a>
             <% } %>
@@ -121,7 +144,7 @@
 
           <% if (currentPage < totalPages) { %>
             <a
-              href="?search=<%= encodeURIComponent(search || '') %>&page=<%= currentPage + 1 %>"
+              href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= currentPage + 1 %>"
               class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
             >Next &raquo;</a>
           <% } else { %>

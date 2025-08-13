@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <title>Edit Category</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <%- include('../partial/admin/sidebar') %>
+
     <!-- Main Content -->
     <main class="flex-1 p-6">
       <!-- Header -->
@@ -16,21 +18,173 @@
         <h1 class="text-2xl font-semibold">Edit Category</h1>
         <a href="/admin/category" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Back to Categories</a>
       </div>
-      <div class="flex justify-center">
-        <form method="post" action="/admin/category/edit/<%= category._id %>" class="bg-white rounded-lg shadow-lg p-8 w-full max-w-md flex flex-col gap-4">
-          <label class="font-bold text-lg">Category Name</label>
-          <input type="text" name="name" value="<%= category.name %>" class="border rounded px-4 py-2 text-lg" required />
-          <label class="font-bold text-lg">Description</label>
-          <textarea name="description" class="border rounded px-4 py-2 text-lg" required><%= category.description %></textarea>
-          <label class="font-bold text-lg">Status</label>
-          <select name="active" class="border rounded px-4 py-2 text-lg">
-            <option value="true" <%= category.active ? 'selected' : '' %>>Active</option>
-            <option value="false" <%= !category.active ? 'selected' : '' %>>Inactive</option>
-          </select>
-          <button type="submit" class="px-4 py-2 text-lg font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-all">Update Category</button>
-        </form>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Edit Form -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-xl font-semibold mb-4">Edit Category Details</h2>
+          <form method="post" action="/admin/category/edit/<%= category._id %>" class="flex flex-col gap-4">
+            
+            <!-- Category Name -->
+            <div>
+              <label class="block text-sm font-medium mb-1">Category Name</label>
+              <input type="text" name="categoryName" value="<%= category.name %>" 
+                     class="border rounded px-4 py-2 text-lg w-full" required />
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block text-sm font-medium mb-1">Description</label>
+              <textarea name="description" class="border rounded px-4 py-2 text-lg w-full" rows="3"><%= category.description %></textarea>
+            </div>
+
+            <!-- Parent Category (Subcategory Support) -->
+            <div>
+              <label class="block text-sm font-medium mb-1">Parent Category</label>
+              <select name="parentCategory" class="border rounded px-4 py-2 text-lg w-full">
+                <option value="">-- No Parent (Top Level) --</option>
+                <% (parentsForSelect || []).forEach(cat => { %>
+                  <option value="<%= cat._id %>" 
+                          <%= category.parentCategory && String(category.parentCategory) === String(cat._id) ? 'selected' : '' %>>
+                    <%= cat.name %>
+                  </option>
+                <% }); %>
+              </select>
+              <p class="text-xs text-gray-500 mt-1">
+                <% if (category.parentCategory) { %>
+                  This is currently a subcategory. Change to make it a top-level category.
+                <% } else { %>
+                  Select a parent to make this a subcategory, or leave empty for top-level.
+                <% } %>
+              </p>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label class="block text-sm font-medium mb-1">Status</label>
+              <select name="active" class="border rounded px-4 py-2 text-lg w-full">
+                <option value="true" <%= category.active ? 'selected' : '' %>>Active</option>
+                <option value="false" <%= !category.active ? 'selected' : '' %>>Inactive</option>
+              </select>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="px-4 py-2 text-lg font-bold bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition-all">
+              Update Category
+            </button>
+          </form>
+        </div>
+
+        <!-- Category Information -->
+        <div class="space-y-6">
+          <!-- Current Category Info -->
+          <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Category Information</h2>
+            <div class="space-y-3">
+              <div class="flex justify-between">
+                <span class="font-medium">Type:</span>
+                <% if (category.parentCategory) { %>
+                  <span class="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Subcategory</span>
+                <% } else { %>
+                  <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">Main Category</span>
+                <% } %>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Created:</span>
+                <span><%= new Date(category.createdAt).toLocaleDateString() %></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Status:</span>
+                <span class="<%= category.active ? 'text-green-600' : 'text-red-600' %>">
+                  <%= category.active ? 'Active' : 'Inactive' %>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Subcategories (if this is a parent category) -->
+          <% if (!category.parentCategory && subcategories && subcategories.length > 0) { %>
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <h2 class="text-xl font-semibold mb-4">Subcategories (<%= subcategories.length %>)</h2>
+              <div class="space-y-2">
+                <% subcategories.forEach(sub => { %>
+                  <div class="flex items-center justify-between p-3 border rounded">
+                    <div class="flex items-center">
+                      <span class="text-gray-400 mr-2">└─</span>
+                      <span class="font-medium"><%= sub.name %></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-1 <%= sub.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %> text-xs rounded-full">
+                        <%= sub.active ? 'Active' : 'Inactive' %>
+                      </span>
+                      <a href="/admin/category/edit/<%= sub._id %>" class="text-blue-600 hover:text-blue-800 text-sm">Edit</a>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Parent Category Info (if this is a subcategory) -->
+          <% if (category.parentCategory) { %>
+            <div class="bg-white rounded-lg shadow-lg p-6">
+              <h2 class="text-xl font-semibold mb-4">Parent Category</h2>
+              <div class="p-3 border rounded bg-gray-50">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium"><%= category.parentCategory.name %></span>
+                  <a href="/admin/category/edit/<%= category.parentCategory._id %>" class="text-blue-600 hover:text-blue-800 text-sm">View Parent</a>
+                </div>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Danger Zone -->
+          <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 text-red-800">Danger Zone</h2>
+            <p class="text-sm text-red-600 mb-4">
+              Deleting this category will also delete all its subcategories and affect products in this category.
+            </p>
+            <button onclick="deleteCategory('<%= category._id %>')" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-all">
+              Delete Category
+            </button>
+          </div>
+        </div>
       </div>
     </main>
   </div>
+
+  <script>
+    function deleteCategory(categoryId) {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'This will delete the category and all its subcategories. This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            const response = await fetch(`/admin/category/delete/${categoryId}`, {
+              method: 'POST',
+              headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const resData = await response.json();
+            if (response.ok && resData.success) {
+              Swal.fire('Deleted!', 'The category has been deleted.', 'success').then(() => {
+                window.location.href = '/admin/category';
+              });
+            } else {
+              Swal.fire('Error', resData.message || 'Failed to delete category', 'error');
+            }
+          } catch (err) {
+            Swal.fire('Error', 'An unexpected error occurred.', 'error');
+          }
+        }
+      });
+    }
+  </script>
 </body>
 </html>

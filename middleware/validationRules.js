@@ -3,7 +3,8 @@ const { check, body } = require('express-validator');
 
 // ====== Common Patterns ======
 const onlyLettersSpaces = /^[A-Za-z\s]+$/;
-const onlyAlphanumericAndPunctuation = /^[A-Za-z0-9\s.,'"/\-()#&]+$/;
+const onlyAlphanumericAndPunctuation = /^[a-zA-Z0-9\s.,!@#$%^&*()\-_=+<>?;:'"\/\\[\]{}|`~]+$/;
+
 const phoneRegex = /^\d{10}$/;
 const pincodeRegex = /^\d{6}$/;
 
@@ -88,12 +89,13 @@ module.exports = {
   ],
 
   // CATEGORY (Add/Edit)
-  addcategoryRules: [
-    check('categoryName')
-      .notEmpty().withMessage('Category name is required')
-      .matches(onlyLettersSpaces).withMessage('Category name can only contain letters and spaces')
-      .isLength({ min: 2, max: 50 }).withMessage('Category name must be between 2 and 50 characters'),
-  ],
+addCategoryRules :[
+  check('name')
+    .trim()
+    .notEmpty().withMessage('Category name is required')
+    .matches(onlyLettersSpaces).withMessage('Category name can only contain letters and spaces')
+    .isLength({ min: 2, max: 50 }).withMessage('Category name must be between 2 and 50 characters'),
+],  
   editcategoryRules: [
     check('categoryName')
       .notEmpty().withMessage('Category name is required')
@@ -103,24 +105,27 @@ module.exports = {
 
   // PRODUCT (Add/Edit)
   addproductRules: [
-    check('productName')
+    check('name')
       .notEmpty().withMessage('Product name is required')
-      .matches(onlyAlphanumericAndPunctuation).withMessage('Product name contains invalid characters')
+      .matches(/^[\w\s.,!@#%&()'"-]+$/).withMessage('Product name contains invalid characters')
       .isLength({ min: 2, max: 100 }).withMessage('Product name must be between 2 and 100 characters'),
+  
     check('price')
       .notEmpty().withMessage('Price is required')
       .isFloat({ min: 0 }).withMessage('Price must be a positive number'),
+  
     check('stock')
       .notEmpty().withMessage('Stock is required')
       .isInt({ min: 0 }).withMessage('Stock must be a non-negative whole number'),
+  
     check('description')
-      .notEmpty().withMessage('Description is required')
-      .matches(onlyAlphanumericAndPunctuation).withMessage('Description contains invalid characters')
-      .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters'),
+  .notEmpty().withMessage('Description is required')
+  .matches(/^[^<>]+$/).withMessage('Description contains invalid characters')
+  .isLength({ min: 10, max: 1000 }).withMessage('Description must be between 10 and 1000 characters')
   ],
-
+  
   editproductRules: [
-    check('productName')
+    check('name')
       .optional({ checkFalsy: true })
       .matches(onlyAlphanumericAndPunctuation).withMessage('Product name contains invalid characters')
       .isLength({ min: 2, max: 100 }).withMessage('Product name must be between 2 and 100 characters'),
@@ -191,4 +196,24 @@ module.exports = {
       .matches(phoneRegex).withMessage('Phone must be exactly 10 digits')
       .custom(disallowConsecutiveDigits),
   ],
+
+  updateCategoryValidator : [
+  body('categoryName')
+    .trim()
+    .notEmpty().withMessage('Category name is required')
+    .isLength({ max: 50 }).withMessage('Category name must not exceed 50 characters'),
+
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ max: 200 }).withMessage('Description must not exceed 200 characters'),
+
+  body('active')
+    .optional()
+    .isIn(['true', 'false', true, false]).withMessage('Invalid active status'),
+
+  body('parentCategory')
+    .optional({ checkFalsy: true })
+    .isMongoId().withMessage('Invalid parent category ID')
+]
 };

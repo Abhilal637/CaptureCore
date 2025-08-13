@@ -1,115 +1,145 @@
 <!-- Navigation Bar -->
-<nav class="sticky top-0 z-50 bg-white shadow">
+<nav class="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-      
-      <!-- Logo (clickable) -->
-      <a href="/" class="text-xl font-bold">CaptureCore</a>
-  
-      <!-- Nav Links -->
-      <div class="hidden md:flex space-x-6">
-          <a href="/" class="hover:text-gray-600">Home</a>
-          <a href="/shop" class="hover:text-gray-600">Shop</a>
-          <a href="/about" class="hover:text-gray-600">About</a>
-          <a href="/contact" class="hover:text-gray-600">Contact</a>
-      </div>
-  
-      <!-- Icons with proper routes -->
-      <div class="flex items-center space-x-4">
-          <input id="searchInput" type="text" placeholder="Search" class="w-40 h-8 rounded-full border border-gray-200 p-3 bg-white shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 hidden">
-          <a href="#" id="searchToggle" class="text-xl hover:text-gray-600">🔍</a>
-          
-          <% if (user) { %>
-  <!-- Logged in user - show profile dropdown -->
-  <div class="relative">
-    <button id="profileToggle" class="text-xl hover:text-gray-600 focus:outline-none">👤</button>
-    <div id="profileDropdown" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 hidden">
-      <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-      <a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Orders</a>
-      <a href="/wishlist" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wishlist</a>
-      <a href="/addresses" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Addresses</a>
-      <div class="border-t border-gray-100"></div>
-      <form action="/logout" method="POST" class="block">
-        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
-      </form>
-    </div>
-  </div>
-<% } else { %>
-  <!-- Not logged in - show login/signup links -->
-  <div class="flex items-center space-x-2">
-    <a href="/login" class="text-sm px-3 py-1 text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors">Login</a>
-    <a href="/signup" class="text-sm px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors">Sign Up</a>
-  </div>
-<% } %>
 
-          
-          <a href="/cart" class="text-xl hover:text-gray-600 relative">
-            🛒
-            <span id="cartCount" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-          </a>
-          <a href="/wishlist" class="text-xl hover:text-gray-600 relative">
-            ❤️
-            <span id="wishlistCount" class="absolute -top-2 -right-2 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
-          </a>
+    <!-- Logo (clickable) -->
+    <a href="/" class="text-xl font-bold text-gray-800 tracking-tight">CaptureCore</a>
+
+    <!-- Nav Links (hidden on mobile) -->
+    <div class="hidden md:flex space-x-8">
+      <a href="/" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium">Home</a>
+      <a href="/shop" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium">Shop</a>
+      <a href="/about" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium">About</a>
+      <a href="/contact" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-medium">Contact</a>
+    </div>
+
+    <!-- Icons & Search -->
+    <div class="flex items-center space-x-4">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Search products..."
+        class="w-40 h-9 rounded-full border border-gray-200 px-4 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-transparent transition-all duration-200 hidden text-sm"
+      />
+      <a href="#" id="searchToggle" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 p-2 rounded-full hover:bg-gray-100">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </a>
+
+      <!-- User Profile Dropdown -->
+      <% if (user) { %>
+      <div class="relative">
+        <button
+          id="profileToggle"
+          class="text-gray-600 hover:text-gray-900 transition-colors duration-200 p-2 rounded-full hover:bg-gray-100 focus:outline-none"
+          aria-haspopup="true"
+          aria-expanded="false"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </button>
+        <div
+          id="profileDropdown"
+          class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 hidden border border-gray-100"
+          role="menu"
+          aria-orientation="vertical"
+          aria-labelledby="profileToggle"
+        >
+          <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" role="menuitem">Profile</a>
+          <a href="/orders" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" role="menuitem">My Orders</a>
+          <a href="/wishlist" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" role="menuitem">Wishlist</a>
+          <a href="/addresses" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" role="menuitem">Addresses</a>
+          <div class="border-t border-gray-100 my-1"></div>
+          <form action="/logout" method="POST" class="block" role="menuitem">
+            <button
+              type="submit"
+              class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Logout
+            </button>
+          </form>
+        </div>
       </div>
-  
-      <!-- Hamburger (mobile) -->
-      <div class="md:hidden text-2xl cursor-pointer" id="mobileMenuToggle">
-          ☰
+      <% } else { %>
+      <div class="flex items-center space-x-2">
+        <a href="/login" class="text-sm px-3 py-1 text-gray-600 hover:text-gray-800 border border-gray-300 rounded hover:border-gray-400 transition-colors">Login</a>
+        <a href="/signup" class="text-sm px-3 py-1 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors">Sign Up</a>
       </div>
+      <% } %>
+
+      <a href="/cart" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 p-2 rounded-full hover:bg-gray-100 relative">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293A1 1 0 007 16h2m0 0a2 2 0 104 0m-4 0a2 2 0 104 0"
+          />
+        </svg>
+        <span id="cartCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+      </a>
+
+      <a href="/wishlist" class="text-gray-600 hover:text-gray-900 transition-colors duration-200 p-2 rounded-full hover:bg-gray-100 relative">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+          />
+        </svg>
+        <span id="wishlistCount" class="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+      </a>
+    </div>
+
+    <!-- Hamburger (mobile) -->
+    <div class="md:hidden text-gray-600 cursor-pointer p-2" id="mobileMenuToggle">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </div>
+
   </div>
 </nav>
 
-
-
-<!-- JavaScript for Navigation -->
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-      // Search toggle functionality
-      const searchToggle = document.getElementById('searchToggle');
-      const searchInput = document.getElementById('searchInput');
-      
-      if (searchToggle && searchInput) {
-          searchToggle.addEventListener('click', function(e) {
-              e.preventDefault();
-              searchInput.classList.toggle('hidden');
-              if (!searchInput.classList.contains('hidden')) {
-                  searchInput.focus();
-              }
-          });
-          
-          // Hide search when clicking outside
-          document.addEventListener('click', function(e) {
-              if (!searchToggle.contains(e.target) && !searchInput.contains(e.target)) {
-                  searchInput.classList.add('hidden');
-              }
-          });
-      }
+  document.addEventListener('DOMContentLoaded', function () {
+    // Search toggle
+    const searchToggle = document.getElementById('searchToggle');
+    const searchInput = document.getElementById('searchInput');
+    if (searchToggle && searchInput) {
+      searchToggle.addEventListener('click', e => {
+        e.preventDefault();
+        searchInput.classList.toggle('hidden');
+        if (!searchInput.classList.contains('hidden')) {
+          searchInput.focus();
+        }
+      });
+      document.addEventListener('click', e => {
+        if (!searchToggle.contains(e.target) && !searchInput.contains(e.target)) {
+          searchInput.classList.add('hidden');
+        }
+      });
+    }
 
-      // Profile dropdown functionality (only if user is logged in)
-      const profileToggle = document.getElementById('profileToggle');
-      const profileDropdown = document.getElementById('profileDropdown');
-      
-      if (profileToggle && profileDropdown) {
-          profileToggle.addEventListener('click', function(e) {
-              e.preventDefault();
-              profileDropdown.classList.toggle('hidden');
-          });
-          
-          // Hide dropdown when clicking outside
-          document.addEventListener('click', function(e) {
-              if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
-                  profileDropdown.classList.add('hidden');
-              }
-          });
-      }
+    // Profile dropdown toggle
+    const profileToggle = document.getElementById('profileToggle');
+    const profileDropdown = document.getElementById('profileDropdown');
+    if (profileToggle && profileDropdown) {
+      profileToggle.addEventListener('click', e => {
+        e.preventDefault();
+        profileDropdown.classList.toggle('hidden');
+      });
+      document.addEventListener('click', e => {
+        if (!profileToggle.contains(e.target) && !profileDropdown.contains(e.target)) {
+          profileDropdown.classList.add('hidden');
+        }
+      });
+    }
 
-      // Mobile menu toggle (basic functionality)
-      const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-      if (mobileMenuToggle) {
-          mobileMenuToggle.addEventListener('click', function() {
-              // Add mobile menu functionality here if needed
-              console.log('Mobile menu clicked');
-          });
-      }
+    // Mobile menu toggle (you can extend functionality here)
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    if (mobileMenuToggle) {
+      mobileMenuToggle.addEventListener('click', () => {
+        console.log('Mobile menu clicked');
+        // Add your mobile menu open/close logic here
+      });
+    }
   });
 </script>

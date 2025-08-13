@@ -48,6 +48,8 @@ exports.getCartPage = async (req, res) => {
     res.status(500).send('Server Error');
   }
 };
+const MAX_PER_PRODUCT = 5; // maximum quantity per product per user
+
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -100,22 +102,24 @@ exports.addToCart = async (req, res) => {
 
     const existingItem = cart.items.find(item => item.product.toString() === productId);
     if (existingItem) {
-    const newQuantity = existingItem.quantity + quantity;
-    if (newQuantity > product.stock) {
-    return res.status(400).json({
-      success: false,
-      message: `Only ${product.stock} items available in stock`,
-    });
-   }
-     existingItem.quantity = newQuantity;
+      const cap = Math.min(product.stock, MAX_PER_PRODUCT);
+      const newQuantity = existingItem.quantity + quantity;
+      if (newQuantity > cap) {
+        const errorMsg = newQuantity > product.stock
+          ? `Only ${product.stock} items available in stock`
+          : `You can add at most ${MAX_PER_PRODUCT} of this item`;
+        return res.status(400).json({ success: false, message: errorMsg });
+      }
+      existingItem.quantity = newQuantity;
   } else {
-    if (quantity > product.stock) {
-    return res.status(400).json({
-      success: false,
-      message: `Only ${product.stock} items available in stock`,
-    });
-  }
-  cart.items.push({ product: productId, quantity });
+    const cap = Math.min(product.stock, MAX_PER_PRODUCT);
+    if (quantity > cap) {
+      const errorMsg = quantity > product.stock
+        ? `Only ${product.stock} items available in stock`
+        : `You can add at most ${MAX_PER_PRODUCT} of this item`;
+      return res.status(400).json({ success: false, message: errorMsg });
+    }
+    cart.items.push({ product: productId, quantity });
 }
 
 
@@ -192,15 +196,22 @@ exports.updateCartItemQuantity = async (req, res) => {
       return res.status(404).json({ message: 'Product category is currently unavailable' });
     }
 
-    if (quantity > product.stock) {
-      return res.status(400).json({ message: `Only ${product.stock} items available in stock` });
-    }
-
+    // Allow decrementing even if stock is lower than current cart quantity
     const cart = await Cart.findOne({ user: userId }).populate('items.product');
     if (!cart) return res.status(404).json({ message: 'Cart not found' });
 
     const item = cart.items.find(item => item.product._id.toString() === productId);
     if (!item) return res.status(404).json({ message: 'Item not found in cart' });
+
+    // If increasing quantity, check limits
+    if (quantity > item.quantity) {
+      if (quantity > product.stock) {
+        return res.status(400).json({ message: `Only ${product.stock} items available in stock` });
+      }
+      if (quantity > MAX_PER_PRODUCT) {
+        return res.status(400).json({ message: `You can add at most ${MAX_PER_PRODUCT} of this item` });
+      }
+    }
 
     if (quantity < 1) {
       cart.items = cart.items.filter(item => item.product._id.toString() !== productId);

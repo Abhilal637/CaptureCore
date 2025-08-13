@@ -10,6 +10,8 @@ exports.listProducts = async (req, res) => {
     const perPage = 10; // items per page
     const page = parseInt(req.query.page) || 1;
     const search = req.query.search || '';
+    const categoryFilter = req.query.category || '';
+    const brandFilter = req.query.brand || '';
 
     // Build search filter
     const filter = {
@@ -18,6 +20,16 @@ exports.listProducts = async (req, res) => {
 
     if (search.trim() !== '') {
       filter.name = { $regex: search.trim(), $options: 'i' };
+    }
+
+    // Filter by category
+    if (categoryFilter) {
+      filter.category = categoryFilter;
+    }
+
+    // Filter by brand
+    if (brandFilter) {
+      filter.brand = { $regex: brandFilter, $options: 'i' };
     }
 
     // Count total matching documents
@@ -33,9 +45,18 @@ exports.listProducts = async (req, res) => {
 
     const totalPages = Math.ceil(totalCount / perPage);
 
+    // Get all categories for filter dropdown
+    const categories = await Category.find({
+      isDeleted: false,
+      active: true
+    }).populate('parentCategory', 'name').sort({ name: 1 });
+
     res.render('admin/products', {
       products,
+      categories,
       search,
+      categoryFilter,
+      brandFilter,
       currentPage: page,
       totalPages,
     });
@@ -52,20 +73,12 @@ exports.addproduct = async(req,res)=>{
             return res.status(400).send('upload at least 3 images')
         }
         
-        const { name, description, price, category: categoryName,stock } = req.body;
+        const { name, description, price, brand, megapixelBucket, batteryType, cameraType, lensMount, focalLength, fAperture, lensType, availability, category: categoryId, stock } = req.body;
         
-        
-        let category = await Category.findOne({ name: categoryName, isDeleted: false });
+        // Find category by ID instead of name
+        let category = await Category.findById(categoryId);
         if (!category) {
-           
-            category = new Category({
-                name: categoryName,
-                description: categoryName,
-                active: true,
-                isDeleted: false
-                
-            });
-            await category.save();
+            return res.status(400).send('Invalid category selected');
         }
         
         const imagePaths = []
@@ -84,6 +97,15 @@ exports.addproduct = async(req,res)=>{
             name: name,
             description: description,
             price: price,
+            brand: brand,
+            megapixelBucket: megapixelBucket || undefined,
+            batteryType: batteryType || undefined,
+            cameraType: cameraType || undefined,
+            lensMount: lensMount || undefined,
+            focalLength: focalLength || undefined,
+            fAperture: fAperture || undefined,
+            lensType: lensType || undefined,
+            availability: availability || (Number(stock) > 0 ? 'in-stock' : 'backorder'),
             category: category._id,
             images: imagePaths,
             isBlocked: false,
@@ -106,7 +128,17 @@ exports.editProduct = async (req, res) => {
     try {
         const prod = await product.findById(req.params.id).populate('category');
         if (!prod) return res.status(404).send("Product not found");
-        res.render('admin/editprodcutpage', { product: prod });
+        
+        // Get all categories for selection
+        const categories = await Category.find({
+            isDeleted: false,
+            active: true
+        }).populate('parentCategory', 'name').sort({ name: 1 });
+        
+        res.render('admin/editprodcutpage', { 
+            product: prod,
+            categories 
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send("error loading product");
@@ -116,15 +148,33 @@ exports.editProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, description, stock, croppedImages = [], existingImages = [] } = req.body;
+    const { name, description, stock, brand, megapixelBucket, batteryType, cameraType, lensMount, focalLength, fAperture, lensType, availability, category, croppedImages = [], existingImages = [] } = req.body;
     const productId = req.params.id;
 
     const currentProduct = await product.findById(productId);
 
+    // Validate category if provided
+    if (category) {
+      const categoryExists = await Category.findById(category);
+      if (!categoryExists) {
+        return res.status(400).send('Invalid category selected');
+      }
+    }
+
     const updatedFields = {
       ...(name && { name }),
       ...(description && { description }),
+      ...(brand && { brand }),
+      ...(megapixelBucket && { megapixelBucket }),
+      ...(batteryType && { batteryType }),
+      ...(cameraType && { cameraType }),
+      ...(lensMount && { lensMount }),
+      ...(focalLength && { focalLength }),
+      ...(fAperture && { fAperture }),
+      ...(lensType && { lensType }),
+      ...(availability && { availability }),
       ...(stock && { stock: parseInt(stock) }),
+      ...(category && { category }),
       isListed: currentProduct.isListed,
       isActive: currentProduct.isActive,
       isBlocked: currentProduct.isBlocked,

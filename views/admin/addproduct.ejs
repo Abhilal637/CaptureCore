@@ -21,15 +21,123 @@
           <input type="text" name="name" placeholder="Product Name" required class="w-full border p-2 rounded" />
           <textarea name="description" placeholder="Description" required class="w-full border p-2 rounded"></textarea>
           <input type="number" name="price" placeholder="Price" required class="w-full border p-2 rounded" />
+          <input type="text" name="brand" placeholder="Brand" class="w-full border p-2 rounded" />
 
-          <!-- Category Select and Add -->
-          <div class="flex flex-col sm:flex-row gap-2">
-            <select name="category" class="w-full border p-2 rounded">
+          <!-- Specs -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm mb-1">Megapixel</label>
+              <select name="megapixelBucket" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="12-16">12-16 MP</option>
+                <option value="16-24">16-24 MP</option>
+                <option value="24+">24+ MP</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Battery Type</label>
+              <select name="batteryType" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="lithium-ion">Lithium Ion</option>
+                <option value="rechargeable">Rechargeable</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Camera Type</label>
+              <select name="cameraType" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="dslr">DSLR</option>
+                <option value="mirrorless">Mirrorless</option>
+                <option value="point-shoot">Point & Shoot</option>
+                <option value="action">Action Camera</option>
+                <option value="drone">Drone Camera</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Lens Mount</label>
+              <select name="lensMount" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="canon-ef">Canon EF</option>
+                <option value="canon-rf">Canon RF</option>
+                <option value="nikon-f">Nikon F</option>
+                <option value="nikon-z">Nikon Z</option>
+                <option value="sony-e">Sony E</option>
+                <option value="fujifilm-x">Fujifilm X</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Focal Length</label>
+              <select name="focalLength" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="14mm">14mm</option>
+                <option value="24mm">24mm</option>
+                <option value="35mm">35mm</option>
+                <option value="50mm">50mm</option>
+                <option value="85mm">85mm</option>
+                <option value="100mm">100mm</option>
+                <option value="200mm">200mm</option>
+                <option value="300mm">300mm</option>
+                <option value="400mm">400mm</option>
+                <option value="600mm">600mm</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">F-Aperture</label>
+              <select name="fAperture" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="f/1.2">f/1.2</option>
+                <option value="f/1.4">f/1.4</option>
+                <option value="f/1.8">f/1.8</option>
+                <option value="f/2">f/2</option>
+                <option value="f/2.8">f/2.8</option>
+                <option value="f/3.5">f/3.5</option>
+                <option value="f/4">f/4</option>
+                <option value="f/5.6">f/5.6</option>
+                <option value="f/8">f/8</option>
+                <option value="f/11">f/11</option>
+                <option value="f/16">f/16</option>
+                <option value="f/22">f/22</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Lens Type</label>
+              <select name="lensType" class="w-full border p-2 rounded">
+                <option value="">Select</option>
+                <option value="prime">Prime</option>
+                <option value="zoom">Zoom</option>
+                <option value="macro">Macro</option>
+                <option value="telephoto">Telephoto</option>
+                <option value="wide-angle">Wide Angle</option>
+                <option value="standard">Standard</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm mb-1">Availability</label>
+              <select name="availability" class="w-full border p-2 rounded">
+                <option value="">Auto (by stock)</option>
+                <option value="in-stock">In Stock</option>
+                <option value="pre-order">Pre-order</option>
+                <option value="backorder">Back Order</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Category Selection -->
+          <div>
+            <label class="block text-sm mb-1">Category</label>
+            <select name="category" required class="w-full border p-2 rounded">
               <option value="">Select Category</option>
-              <option value="Camera">Camera</option>
-              <option value="Lens">Lens</option>
+              <% (categories || []).forEach(cat => { %>
+                <option value="<%= cat._id %>">
+                  <% if (cat.parentCategory) { %>
+                    <%= cat.parentCategory.name %> > <%= cat.name %>
+                  <% } else { %>
+                    <%= cat.name %>
+                  <% } %>
+                </option>
+              <% }) %>
             </select>
-            <input type="text" name="newCategory" placeholder="Or enter new category" class="w-full border p-2 rounded" />
+            <p class="text-xs text-gray-500 mt-1">Select a category for this product. Subcategories are shown as "Parent > Child".</p>
           </div>
 
           <input type="number" name="stock" placeholder="Stock"  class="w-full border p-2 rounded" />
