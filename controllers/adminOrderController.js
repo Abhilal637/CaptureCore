@@ -15,9 +15,9 @@ exports.listOrder = async (req, res) => {
   try {
     const perPage = 8; 
     const page = parseInt(req.query.page) || 1;
-
     const search = req.query.search || '';
-    const sort = req.query.sort === 'old' ? 1 : -1;
+    const sort = req.query.sort || 'date';
+    const order = req.query.order || 'desc';
 
     const matchStage = search ? {
       $or: [
@@ -25,6 +25,16 @@ exports.listOrder = async (req, res) => {
         { 'user.name': { $regex: search, $options: 'i' } }
       ]
     } : {};
+
+    // Define sort options
+    let sortStage = {};
+    if (sort === 'date') {
+      sortStage = { createdAt: order === 'asc' ? 1 : -1 };
+    } else if (sort === 'amount') {
+      sortStage = { total: order === 'asc' ? 1 : -1 };
+    } else if (sort === 'status') {
+      sortStage = { status: 1 };
+    }
 
     // Count total matching orders
     const totalOrdersAgg = await Order.aggregate([
@@ -41,7 +51,7 @@ exports.listOrder = async (req, res) => {
       { $lookup: { from: 'users', localField: 'user', foreignField: '_id', as: 'user' } },
       { $unwind: '$user' },
       { $match: matchStage },
-      { $sort: { createdAt: sort } },
+      { $sort: sortStage },
       { $skip: (page - 1) * perPage },
       { $limit: perPage }
     ]);
@@ -49,8 +59,20 @@ exports.listOrder = async (req, res) => {
     const orderIds = ordersAgg.map(o => o._id);
     let orders = await Order.find({ _id: { $in: orderIds } })
       .populate('user')
-      .populate('items.product')
-      .sort({ createdAt: sort });
+      .populate('items.product');
+
+    // Apply sorting to the final result
+    if (sort === 'date') {
+      orders.sort((a, b) => order === 'asc' ? a.createdAt - b.createdAt : b.createdAt - a.createdAt);
+    } else if (sort === 'amount') {
+      orders.sort((a, b) => {
+        const aTotal = a.total || 0;
+        const bTotal = b.total || 0;
+        return order === 'asc' ? aTotal - bTotal : bTotal - aTotal;
+      });
+    } else if (sort === 'status') {
+      orders.sort((a, b) => a.status.localeCompare(b.status));
+    }
 
     orders.forEach(order => {
       order.totalAmount = Array.isArray(order.items)
@@ -79,6 +101,7 @@ exports.listOrder = async (req, res) => {
       currentPage: page,
       search,
       sort,
+      order,
       nextStatusMap
     });
   } catch (err) {
@@ -112,7 +135,6 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (!order) return res.status(404).send('Order not found');
 
-    // Allow multiple possible next statuses
     const validTransitions = {
       'Placed': ['Confirmed', 'Cancelled'],
       'Confirmed': ['Shipped', 'Cancelled'],
@@ -120,21 +142,21 @@ exports.updateOrderStatus = async (req, res) => {
       'Out for Delivery': ['Delivered']
     };
 
-    if (
-      !validTransitions[order.status] ||
-      !validTransitions[order.status].includes(status)
-    ) {
-      return res
-        .status(400)
-        .send(`Invalid status transition from ${order.status} to ${status}`);
+    if (!validTransitions[order.status] || !validTransitions[order.status].includes(status)) {
+      return res.status(400).send(`Invalid status transition from ${order.status} to ${status}`);
     }
 
     order.status = status;
 
     if (status === 'Delivered') {
       order.paymentStatus = 'Paid';
+      // mark all items delivered that are not cancelled
+      order.items.forEach(item => {
+        if (item.status !== 'Cancelled') item.status = 'Delivered';
+      });
     } else if (status === 'Cancelled') {
-      order.paymentStatus = 'Cancelled';
+      order.paymentStatus = 'Pending'; // keep pending until refunds, as requested
+      order.items.forEach(item => { item.status = 'Cancelled'; });
     }
 
     await order.save();
@@ -157,32 +179,45 @@ exports.verifyReturnAndRefund = async (req, res) => {
             return res.status(400).send('Invalid return request');
         }
 
-        // Mark as Returned
+        // Mark as Returned and approved
         item.status = 'Returned';
+        item.returnApproved = true;
+        item.returnRequested = false;
+        item.isReturned = true;
+
+        // Restore stock for this item
+        try {
+          const product = await Product.findById(productId);
+          if (product) {
+            product.stock += (item.quantity || 1);
+            await product.save();
+          }
+        } catch (stockErr) {
+          console.error('Stock restore failed:', stockErr);
+        }
+
+        // Refund just this product to wallet
+        const refundAmount = (item.price || 0) * (item.quantity || 1);
+        if (refundAmount > 0) {
+            try {
+                await refundToWallet(order.user, refundAmount, `Refund for returned product in order ${order.orderId}`, order.orderId);
+            } catch (walletErr) {
+                console.error('Wallet refund error:', walletErr);
+            }
+        }
 
         // If all items are returned, update overall order status
         if (order.items.every(i => i.status === 'Returned')) {
             order.status = 'Returned';
-            order.paymentStatus = 'Refunded';
-        }
-
-        // Refund just this product
-        const refundAmount = item.price * item.quantity;
-        if (refundAmount > 0) {
-            let wallet = await Wallet.findOne({ userId: order.user });
-            if (!wallet) {
-                wallet = new Wallet({ userId: order.user, balance: 0, transactions: [] });
-            }
-            wallet.balance += refundAmount;
-            wallet.transactions.push({
-                type: 'Credit',
-                amount: refundAmount,
-                description: `Refund for returned product in order ${order.orderId}`
-            });
-            await wallet.save();
+            // Keep paymentStatus within enum; refund handled via wallet
         }
 
         await order.save();
+
+        // Respond JSON for fetch() callers; redirect otherwise
+        if (req.is('application/json') || req.xhr || (req.headers.accept || '').includes('application/json')) {
+          return res.status(200).json({ success: true, message: 'Return approved and amount refunded to wallet.' });
+        }
         res.redirect(`/admin/orders/${order._id}`);
     } catch (err) {
         console.error('Error verifying return', err);
@@ -204,15 +239,20 @@ exports.cancelOrder = async (req, res) => {
         order.status = 'Cancelled';
         order.paymentStatus = 'Cancelled';
 
-        // Restock products
-        for (let item of order.items) {
-            await Product.findByIdAndUpdate(item.product, {
-                $inc: { stock: item.quantity }
-            });
+        // Restore product stock
+        for (const item of order.items) {
+            if (item.status !== 'Cancelled') {
+                const product = await Product.findById(item.product);
+                if (product) {
+                    product.stock += item.quantity;
+                    await product.save();
+                }
+                item.status = 'Cancelled';
+            }
         }
 
         await order.save();
-        res.redirect('/orders');
+        res.redirect(`/admin/orders/${order._id}`);
     } catch (err) {
         console.error('Error cancelling order', err);
         res.status(500).send('Server Error');

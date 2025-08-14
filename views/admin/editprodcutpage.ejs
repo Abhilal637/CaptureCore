@@ -40,26 +40,22 @@
 
       <!-- Specs -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
+        <div id="cameraSpecs" class="spec-group hidden">
           <label class="block text-sm font-medium">Megapixel</label>
-          <select name="megapixelBucket" class="mt-1 w-full border rounded px-3 py-2">
+          <select name="megapixelBucket" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="12-16" <%= product.megapixelBucket === '12-16' ? 'selected' : '' %>>12-16 MP</option>
             <option value="16-24" <%= product.megapixelBucket === '16-24' ? 'selected' : '' %>>16-24 MP</option>
             <option value="24+" <%= product.megapixelBucket === '24+' ? 'selected' : '' %>>24+ MP</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Battery Type</label>
-          <select name="batteryType" class="mt-1 w-full border rounded px-3 py-2">
+          <label class="block text-sm font-medium mt-3">Battery Type</label>
+          <select name="batteryType" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="lithium-ion" <%= product.batteryType === 'lithium-ion' ? 'selected' : '' %>>Lithium Ion</option>
             <option value="rechargeable" <%= product.batteryType === 'rechargeable' ? 'selected' : '' %>>Rechargeable</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Camera Type</label>
-          <select name="cameraType" class="mt-1 w-full border rounded px-3 py-2">
+          <label class="block text-sm font-medium mt-3">Camera Type</label>
+          <select name="cameraType" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="dslr" <%= product.cameraType === 'dslr' ? 'selected' : '' %>>DSLR</option>
             <option value="mirrorless" <%= product.cameraType === 'mirrorless' ? 'selected' : '' %>>Mirrorless</option>
@@ -68,9 +64,9 @@
             <option value="drone" <%= product.cameraType === 'drone' ? 'selected' : '' %>>Drone Camera</option>
           </select>
         </div>
-        <div>
+        <div id="lensSpecs" class="spec-group hidden">
           <label class="block text-sm font-medium">Lens Mount</label>
-          <select name="lensMount" class="mt-1 w-full border rounded px-3 py-2">
+          <select name="lensMount" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="canon-ef" <%= product.lensMount === 'canon-ef' ? 'selected' : '' %>>Canon EF</option>
             <option value="canon-rf" <%= product.lensMount === 'canon-rf' ? 'selected' : '' %>>Canon RF</option>
@@ -79,10 +75,8 @@
             <option value="sony-e" <%= product.lensMount === 'sony-e' ? 'selected' : '' %>>Sony E</option>
             <option value="fujifilm-x" <%= product.lensMount === 'fujifilm-x' ? 'selected' : '' %>>Fujifilm X</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Focal Length</label>
-          <select name="focalLength" class="mt-1 w-full border rounded px-3 py-2">
+          <label class="block text-sm font-medium mt-3">Focal Length</label>
+          <select name="focalLength" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="14mm" <%= product.focalLength === '14mm' ? 'selected' : '' %>>14mm</option>
             <option value="24mm" <%= product.focalLength === '24mm' ? 'selected' : '' %>>24mm</option>
@@ -95,10 +89,8 @@
             <option value="400mm" <%= product.focalLength === '400mm' ? 'selected' : '' %>>400mm</option>
             <option value="600mm" <%= product.focalLength === '600mm' ? 'selected' : '' %>>600mm</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">F-Aperture</label>
-          <select name="fAperture" class="mt-1 w-full border rounded px-3 py-2">
+          <label class="block text-sm font-medium mt-3">F-Aperture</label>
+          <select name="fAperture" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="f/1.2" <%= product.fAperture === 'f/1.2' ? 'selected' : '' %>>f/1.2</option>
             <option value="f/1.4" <%= product.fAperture === 'f/1.4' ? 'selected' : '' %>>f/1.4</option>
@@ -113,10 +105,8 @@
             <option value="f/16" <%= product.fAperture === 'f/16' ? 'selected' : '' %>>f/16</option>
             <option value="f/22" <%= product.fAperture === 'f/22' ? 'selected' : '' %>>f/22</option>
           </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">Lens Type</label>
-          <select name="lensType" class="mt-1 w-full border rounded px-3 py-2">
+          <label class="block text-sm font-medium mt-3">Lens Type</label>
+          <select name="lensType" class="mt-1 w-full border rounded px-3 py-2" disabled>
             <option value="">Select</option>
             <option value="prime" <%= product.lensType === 'prime' ? 'selected' : '' %>>Prime</option>
             <option value="zoom" <%= product.lensType === 'zoom' ? 'selected' : '' %>>Zoom</option>
@@ -220,6 +210,23 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <script>
     let currentCropper;
+    const categorySelect = document.getElementById('category');
+    function setGroupVisible(groupEl, visible){
+      if (!groupEl) return;
+      groupEl.classList.toggle('hidden', !visible);
+      groupEl.querySelectorAll('select, input, textarea').forEach(el => { el.disabled = !visible; });
+    }
+    function updateSpecGroups(){
+      const selectedText = (categorySelect.options[categorySelect.selectedIndex]?.textContent || '').toLowerCase();
+      const isLens = selectedText.includes('lens');
+      const isCamera = selectedText.includes('camera');
+      const cameraSpecs = document.getElementById('cameraSpecs');
+      const lensSpecs = document.getElementById('lensSpecs');
+      setGroupVisible(cameraSpecs, isCamera && !isLens);
+      setGroupVisible(lensSpecs, isLens);
+    }
+    categorySelect?.addEventListener('change', updateSpecGroups);
+    updateSpecGroups();
     let currentIndex;
 
     const imageInputs = document.querySelectorAll('.imageInput');

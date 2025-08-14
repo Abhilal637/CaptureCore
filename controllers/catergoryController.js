@@ -12,7 +12,6 @@ exports.listCategories = async (req, res) => {
     const limit = 10;
     const skip = (page - 1) * limit;
     const search = req.query.search ? req.query.search.trim() : '';
-    const parentFilter = req.query.parent || '';
 
     const query = { isDeleted: false };
 
@@ -23,55 +22,21 @@ exports.listCategories = async (req, res) => {
       ];
     }
 
-    // Filter by parent category
-    if (parentFilter === 'top-level') {
-      query.parentCategory = null;
-    } else if (parentFilter && parentFilter !== 'all') {
-      query.parentCategory = parentFilter;
-    }
-
     const total = await Category.countDocuments(query);
 
     const categories = await Category.find(query)
-      .populate('parentCategory', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    // Get all parent categories for filter dropdown
-    const allParents = await Category.find({
-      parentCategory: null,
-      isDeleted: false,
-      active: true
-    }).sort({ name: 1 }).lean();
-
-    // Get subcategories count for each parent
-    const subcategoryCounts = await Category.aggregate([
-      { $match: { parentCategory: { $ne: null }, isDeleted: false } },
-      { $group: { _id: '$parentCategory', count: { $sum: 1 } } }
-    ]);
-
-    const subcategoryMap = {};
-    subcategoryCounts.forEach(item => {
-      subcategoryMap[item._id.toString()] = item.count;
-    });
-
-    // Add subcategory count to parent categories
-    allParents.forEach(parent => {
-      parent.subcategoryCount = subcategoryMap[parent._id.toString()] || 0;
-    });
-
     res.render('admin/category', {
       categories,
-      allParents,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       total,
       limit,
-      search,
-      parentFilter,
-      selectedParent: parentFilter
+      search
     });
   } catch (err) {
     console.error(err);
@@ -79,7 +44,7 @@ exports.listCategories = async (req, res) => {
   }
 };
 
-/** ADD (supports optional parentCategory) */
+/** ADD */
 exports.addCategory = async (req, res) => {
   try {
     // express-validator result check
@@ -90,43 +55,32 @@ exports.addCategory = async (req, res) => {
 
     const name = req.body.name?.trim();
     const description = req.body.description?.trim() || '';
-    const parentCategory =
-      req.body.parentCategory && req.body.parentCategory !== '' ? req.body.parentCategory : null;
 
-    if (parentCategory) {
-      const parent = await Category.findOne({ _id: parentCategory, isDeleted: false });
-      if (!parent) return res.status(400).send("Invalid parent category");
-    }
-
+    // Check if category name already exists
     const existing = await Category.findOne({
       name,
-      parentCategory: parentCategory,
       isDeleted: false
     }).collation({ locale: 'en', strength: 2 });
 
     if (existing) {
-      return res.status(400).send('Category already exists under the selected parent.');
+      return res.status(400).send('Category name already exists.');
     }
 
-    await Category.create({
+    const newCategory = new Category({
       name,
       description,
-      active: true,
-      isDeleted: false,
-      parentCategory
+      active: true
     });
 
+    await newCategory.save();
     res.redirect('/admin/category');
   } catch (err) {
-    console.error('Error adding category:', err);
-    if (err.code === 11000) {
-      return res.status(400).send('Category already exists under the selected parent.');
-    }
-    res.status(500).send("Error adding category: " + err.message);
+    console.error(err);
+    res.status(500).send('Error adding category');
   }
 };
 
-/** DELETE (soft delete) + cascade to its descendants */
+/** DELETE (soft delete) */
 exports.deleteCategory = async (req, res) => {
   try {
     const id = req.params.id;
@@ -137,18 +91,33 @@ exports.deleteCategory = async (req, res) => {
       return res.redirect('/admin/category');
     }
 
-    const descendants = await getDescendantIds(id);
+    // Check if category has products
+    const Product = require('../models/product');
+    const productCount = await Product.countDocuments({ 
+      category: id, 
+      isDeleted: false 
+    });
 
-    await Category.updateMany(
-      { _id: { $in: [id, ...descendants] } },
-      { $set: { isDeleted: true, active: false } }
-    );
+    if (productCount > 0) {
+      const message = `Cannot delete category. It has ${productCount} product(s) associated with it.`;
+      if (req.xhr || req.is('application/json')) {
+        return res.status(400).json({ success: false, message });
+      }
+      req.flash?.('error', message);
+      return res.redirect('/admin/category');
+    }
 
-    if (req.xhr) return res.status(200).json({ success: true });
+    // Soft delete the category
+    await Category.findByIdAndUpdate(id, { 
+      isDeleted: true, 
+      active: false 
+    });
+
+    if (req.xhr || req.is('application/json')) return res.status(200).json({ success: true });
     res.redirect("/admin/category");
   } catch (err) {
     console.error(err);
-    if (req.xhr) return res.status(500).json({ success: false, message: 'Internal error' });
+    if (req.xhr || req.is('application/json')) return res.status(500).json({ success: false, message: 'Internal error' });
     res.status(500).send("error deleting category");
   }
 };
@@ -159,25 +128,9 @@ exports.editcategory = async (req, res) => {
     const cat = await Category.findById(req.params.id).lean();
     if (!cat) return res.status(404).send("category not found");
 
-    // Get all potential parent categories (excluding self and descendants)
-    const descendants = await getDescendantIds(cat._id);
-    const parentsForSelect = await Category.find({
-      parentCategory: null,
-      isDeleted: false,
-      _id: { $nin: [cat._id, ...descendants] }
-    }).sort({ name: 1 }).lean();
-
-    // Get subcategories of current category
-    const subcategories = await Category.find({
-      parentCategory: cat._id,
-      isDeleted: false
-    }).sort({ name: 1 }).lean();
-
+    // Render simplified edit page without hierarchy data
     res.render('admin/editcategory', { 
-      category: cat, 
-      parentsForSelect,
-      subcategories,
-      descendants: descendants.map(id => id.toString())
+      category: cat
     });
   } catch (err) {
     console.error(err);
@@ -196,8 +149,8 @@ exports.updateCategory = async (req, res) => {
     const name = req.body.categoryName?.trim();
     const description = req.body.description?.trim() || '';
     const activeBool = normalizeBool(req.body.active);
-    const parentCategory =
-      req.body.parentCategory && req.body.parentCategory !== '' ? req.body.parentCategory : null;
+    // Parent category removed; force to null
+    const parentCategory = null;
 
     const cat = await Category.findOne({ _id: categoryId, isDeleted: false });
     if (!cat) return res.status(404).send('Category not found.');
@@ -217,7 +170,6 @@ exports.updateCategory = async (req, res) => {
     const existing = await Category.findOne({
       _id: { $ne: categoryId },
       name,
-      parentCategory: parentCategory,
       isDeleted: false
     }).collation({ locale: 'en', strength: 2 });
 
@@ -229,7 +181,7 @@ exports.updateCategory = async (req, res) => {
       name,
       description,
       active: activeBool,
-      parentCategory
+      parentCategory: null
     });
 
     res.redirect('/admin/category');

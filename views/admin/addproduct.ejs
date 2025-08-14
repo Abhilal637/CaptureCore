@@ -25,92 +25,101 @@
 
           <!-- Specs -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm mb-1">Megapixel</label>
-              <select name="megapixelBucket" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="12-16">12-16 MP</option>
-                <option value="16-24">16-24 MP</option>
-                <option value="24+">24+ MP</option>
-              </select>
+            <!-- Camera Specs -->
+            <div id="cameraSpecs" class="spec-group hidden">
+              <div>
+                <label class="block text-sm mb-1">Megapixel</label>
+                <select name="megapixelBucket" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="12-16">12-16 MP</option>
+                  <option value="16-24">16-24 MP</option>
+                  <option value="24+">24+ MP</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">Battery Type</label>
+                <select name="batteryType" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="lithium-ion">Lithium Ion</option>
+                  <option value="rechargeable">Rechargeable</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">Camera Type</label>
+                <select name="cameraType" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="dslr">DSLR</option>
+                  <option value="mirrorless">Mirrorless</option>
+                  <option value="point-shoot">Point & Shoot</option>
+                  <option value="action">Action Camera</option>
+                  <option value="drone">Drone Camera</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="block text-sm mb-1">Battery Type</label>
-              <select name="batteryType" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="lithium-ion">Lithium Ion</option>
-                <option value="rechargeable">Rechargeable</option>
-              </select>
+
+            <!-- Lens Specs -->
+            <div id="lensSpecs" class="spec-group hidden">
+              <div>
+                <label class="block text-sm mb-1">Lens Mount</label>
+                <select name="lensMount" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="canon-ef">Canon EF</option>
+                  <option value="canon-rf">Canon RF</option>
+                  <option value="nikon-f">Nikon F</option>
+                  <option value="nikon-z">Nikon Z</option>
+                  <option value="sony-e">Sony E</option>
+                  <option value="fujifilm-x">Fujifilm X</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">Focal Length</label>
+                <select name="focalLength" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="14mm">14mm</option>
+                  <option value="24mm">24mm</option>
+                  <option value="35mm">35mm</option>
+                  <option value="50mm">50mm</option>
+                  <option value="85mm">85mm</option>
+                  <option value="100mm">100mm</option>
+                  <option value="200mm">200mm</option>
+                  <option value="300mm">300mm</option>
+                  <option value="400mm">400mm</option>
+                  <option value="600mm">600mm</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">F-Aperture</label>
+                <select name="fAperture" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="f/1.2">f/1.2</option>
+                  <option value="f/1.4">f/1.4</option>
+                  <option value="f/1.8">f/1.8</option>
+                  <option value="f/2">f/2</option>
+                  <option value="f/2.8">f/2.8</option>
+                  <option value="f/3.5">f/3.5</option>
+                  <option value="f/4">f/4</option>
+                  <option value="f/5.6">f/5.6</option>
+                  <option value="f/8">f/8</option>
+                  <option value="f/11">f/11</option>
+                  <option value="f/16">f/16</option>
+                  <option value="f/22">f/22</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm mb-1">Lens Type</label>
+                <select name="lensType" class="w-full border p-2 rounded" disabled>
+                  <option value="">Select</option>
+                  <option value="prime">Prime</option>
+                  <option value="zoom">Zoom</option>
+                  <option value="macro">Macro</option>
+                  <option value="telephoto">Telephoto</option>
+                  <option value="wide-angle">Wide Angle</option>
+                  <option value="standard">Standard</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label class="block text-sm mb-1">Camera Type</label>
-              <select name="cameraType" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="dslr">DSLR</option>
-                <option value="mirrorless">Mirrorless</option>
-                <option value="point-shoot">Point & Shoot</option>
-                <option value="action">Action Camera</option>
-                <option value="drone">Drone Camera</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm mb-1">Lens Mount</label>
-              <select name="lensMount" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="canon-ef">Canon EF</option>
-                <option value="canon-rf">Canon RF</option>
-                <option value="nikon-f">Nikon F</option>
-                <option value="nikon-z">Nikon Z</option>
-                <option value="sony-e">Sony E</option>
-                <option value="fujifilm-x">Fujifilm X</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm mb-1">Focal Length</label>
-              <select name="focalLength" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="14mm">14mm</option>
-                <option value="24mm">24mm</option>
-                <option value="35mm">35mm</option>
-                <option value="50mm">50mm</option>
-                <option value="85mm">85mm</option>
-                <option value="100mm">100mm</option>
-                <option value="200mm">200mm</option>
-                <option value="300mm">300mm</option>
-                <option value="400mm">400mm</option>
-                <option value="600mm">600mm</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm mb-1">F-Aperture</label>
-              <select name="fAperture" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="f/1.2">f/1.2</option>
-                <option value="f/1.4">f/1.4</option>
-                <option value="f/1.8">f/1.8</option>
-                <option value="f/2">f/2</option>
-                <option value="f/2.8">f/2.8</option>
-                <option value="f/3.5">f/3.5</option>
-                <option value="f/4">f/4</option>
-                <option value="f/5.6">f/5.6</option>
-                <option value="f/8">f/8</option>
-                <option value="f/11">f/11</option>
-                <option value="f/16">f/16</option>
-                <option value="f/22">f/22</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm mb-1">Lens Type</label>
-              <select name="lensType" class="w-full border p-2 rounded">
-                <option value="">Select</option>
-                <option value="prime">Prime</option>
-                <option value="zoom">Zoom</option>
-                <option value="macro">Macro</option>
-                <option value="telephoto">Telephoto</option>
-                <option value="wide-angle">Wide Angle</option>
-                <option value="standard">Standard</option>
-              </select>
-            </div>
+
+            <!-- Availability (common) -->
             <div>
               <label class="block text-sm mb-1">Availability</label>
               <select name="availability" class="w-full border p-2 rounded">
@@ -125,15 +134,11 @@
           <!-- Category Selection -->
           <div>
             <label class="block text-sm mb-1">Category</label>
-            <select name="category" required class="w-full border p-2 rounded">
+            <select name="category" required class="w-full border p-2 rounded" id="categorySelect">
               <option value="">Select Category</option>
               <% (categories || []).forEach(cat => { %>
-                <option value="<%= cat._id %>">
-                  <% if (cat.parentCategory) { %>
-                    <%= cat.parentCategory.name %> > <%= cat.name %>
-                  <% } else { %>
-                    <%= cat.name %>
-                  <% } %>
+                <option value="<%= cat._id %>" data-label="<%= (cat.parentCategory ? (cat.parentCategory.name + ' > ' + cat.name) : cat.name) %>">
+                  <%= (cat.parentCategory ? (cat.parentCategory.name + ' > ' + cat.name) : cat.name) %>
                 </option>
               <% }) %>
             </select>
@@ -183,6 +188,28 @@
     const croppedImagesPreview = document.getElementById('croppedImagesPreview');
     const submitBtn = document.querySelector('button[type="submit"]');
     const productForm = document.getElementById('productForm');
+    const categorySelect = document.getElementById('categorySelect');
+
+    function setGroupVisible(groupEl, visible){
+      if (!groupEl) return;
+      groupEl.classList.toggle('hidden', !visible);
+      // enable/disable inputs within
+      groupEl.querySelectorAll('select, input, textarea').forEach(el => { el.disabled = !visible; });
+    }
+
+    function updateSpecGroups(){
+      const selected = categorySelect.options[categorySelect.selectedIndex];
+      const label = (selected?.dataset?.label || '').toLowerCase();
+      const isLens = label.includes('lens');
+      const isCamera = label.includes('camera');
+      const cameraSpecs = document.getElementById('cameraSpecs');
+      const lensSpecs = document.getElementById('lensSpecs');
+      setGroupVisible(cameraSpecs, isCamera && !isLens);
+      setGroupVisible(lensSpecs, isLens);
+    }
+
+    categorySelect?.addEventListener('change', updateSpecGroups);
+    updateSpecGroups();
 
     imageInput.addEventListener('change', function () {
       if (!this.files.length) return;

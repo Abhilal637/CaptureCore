@@ -746,6 +746,12 @@ exports.logout = (req, res) => {
             (p.category && p.category.isBlocked)
           ) continue;
 
+          // Stock guard for checkout page
+          if (p.stock < item.quantity) {
+            req.session.checkoutError = `"${p.name}" has only ${p.stock} in stock. Please adjust quantity.`;
+            return res.redirect('/cart');
+          }
+
           const itemTotal = item.quantity * p.price;
           subtotal += itemTotal;
 
@@ -787,3 +793,5 @@ exports.logout = (req, res) => {
       res.status(500).send('Server Error');
     }
   };
+
+  

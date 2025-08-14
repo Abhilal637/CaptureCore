@@ -35,6 +35,31 @@
           <% } %>
         </form>
 
+        <!-- Sorting Options -->
+        <div class="mb-4 flex gap-2 items-center">
+          <span class="text-sm font-medium text-gray-700">Sort by:</span>
+          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=date&order=desc" 
+             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= (!sort || sort === 'date') && (!order || order === 'desc') ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
+            Date (Newest)
+          </a>
+          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=date&order=asc" 
+             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'date' && order === 'asc' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
+            Date (Oldest)
+          </a>
+          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=amount&order=desc" 
+             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'amount' && order === 'desc' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
+            Amount (High to Low)
+          </a>
+          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=amount&order=asc" 
+             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'amount' && order === 'asc' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
+            Amount (Low to High)
+          </a>
+          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=status" 
+             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'status' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
+            Status
+          </a>
+        </div>
+
         <% if (orders && orders.length > 0) { %>
           <div class="overflow-x-auto bg-white rounded-lg shadow">
             <table class="min-w-full divide-y divide-gray-200">

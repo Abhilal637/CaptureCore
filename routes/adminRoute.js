@@ -12,7 +12,7 @@ const {adminAuth,
   preventAdminLoginIfLoggedIn,
   noCache,
   checkBlocked } = require('../middleware/adminauthmiddleware');
-const upload = require('../middleware/upload');
+const { diskUpload, memoryUpload } = require('../middleware/upload');
 const validator = require('../middleware/validate');
 
 
@@ -41,14 +41,22 @@ router.post('/category/add',
   categoryControllers.addCategory
 );
 
-router.get('/category/delete/:id', adminAuth, noCache, categoryControllers.deleteCategory);
+router.post('/category/delete/:id', adminAuth, noCache, categoryControllers.deleteCategory);
 
 router.get('/category/edit/:id', adminAuth, noCache, categoryControllers.editcategory);
 
+// Support both PATCH (API-style) and POST (form submit)
 router.patch('/category/edit/:id',
   adminAuth,
   noCache,
   validator('editcategoryRules'), // Validate input before editing
+  categoryControllers.updateCategory
+);
+
+router.post('/category/edit/:id',
+  adminAuth,
+  noCache,
+  validator('editcategoryRules'),
   categoryControllers.updateCategory
 );
 
@@ -79,7 +87,7 @@ router.post(
   '/products/add',
   adminAuth,
   noCache,
-  upload.array('images', 5),
+  memoryUpload.array('images', 5),
   validator('addproductRules'), // Validate new product inputs
   productControllers.addproduct
 );
@@ -90,7 +98,7 @@ router.post(
   '/products/edit/:id',
   adminAuth,
   noCache,
-  upload.array('images', 3),
+  memoryUpload.array('images', 3),
   validator('editproductRules'), // Validate edited product inputs
   productControllers.updateProduct
 );
@@ -103,6 +111,8 @@ router.get('/orders/:id', adminAuth, noCache, adminordercontroller.viewOrderDeta
 
 router.post('/orders/:id/update-status', adminAuth, noCache, adminordercontroller.updateOrderStatus);
 router.post('/orders/:orderId/items/:productId/verify-return', adminAuth, noCache, adminordercontroller.verifyReturnAndRefund);
+
+
 
 
 module.exports = router;

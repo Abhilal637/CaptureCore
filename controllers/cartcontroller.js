@@ -37,11 +37,15 @@ exports.getCartPage = async (req, res) => {
       return total + item.quantity * item.product.price;
     }, 0);
 
+    const checkoutError = req.session.checkoutError || null;
+    req.session.checkoutError = null;
+
     res.render('user/cart', {
       user: res.locals.user,
       cartItems,
       totalPrice,
-      removedItems
+      removedItems,
+      checkoutError,
     });
   } catch (err) {
     console.error('Error loading cart:', err);

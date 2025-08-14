@@ -43,7 +43,7 @@
       </div>
     <% } %>
 
-    <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="space-y-8">
+    <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="space-y-8" id="editProfileForm">
       <!-- Profile Picture -->
       <div class="flex items-center gap-8">
         <div class="w-28 h-28 rounded-full overflow-hidden bg-gray-50 border border-gray-300 shadow-sm">
@@ -61,16 +61,18 @@
 
       <!-- Name -->
       <div>
-        <label for="name" class="block mb-1 text-gray-700 font-semibold select-none">Name <span class="text-gray-400">*</span></label>
-        <input type="text" id="name" name="name" value="<%= user?.name || '' %>" required
+        <label for="name" class="block mb-1 text-gray-700 font-semibold select-none">Name</label>
+        <input type="text" id="name" name="name" value="<%= user?.name || '' %>"
           class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
+        <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
       <!-- Phone -->
       <div>
         <label for="phone" class="block mb-1 text-gray-700 font-semibold select-none">Phone</label>
-        <input type="text" id="phone" name="phone" value="<%= user?.phone || '' %>"
+        <input type="text" id="phone" name="phone" value="<%= (user?.mobile || user?.phone) || '' %>"
           class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
+        <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
       <!-- Email -->
@@ -102,6 +104,10 @@
         </button>
       </div>
     </form>
+    <script src="/js/inline-validator.js"></script>
+    <script>
+      attachInlineValidation(document.getElementById('editProfileForm'));
+    </script>
   </main>
 
   <script>

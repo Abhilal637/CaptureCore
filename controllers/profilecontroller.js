@@ -4,6 +4,9 @@ const WalletTransaction = require('../models/walletTransaction');
 const product = require('../models/product');
 const bcrypt= require('bcrypt')
 const nodemailer= require('nodemailer')
+require('dotenv').config()
+const otpService = require('../utils/otpHelper');
+
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -72,9 +75,12 @@ exports.postEditProfile = async (req, res) => {
       }
     }
 
-    const updateData = { name, phone };
+    const updateData = { name };
+    if (phone && phone.trim()) {
+      updateData.mobile = phone.trim();
+    }
     if (profilePicture) {
-      updateData.profilePicture = profilePicture;
+      updateData.profilePicture = profilePicture; // store filename only
     }
 
     await User.findByIdAndUpdate(userId, updateData, { new: true });
@@ -106,18 +112,19 @@ exports.sendOtpForEmail = async (req, res) => {
     req.session.emailOtp = otp
 
     const transporter = nodemailer.createTransport({
-      service: 'Gmail',
+      service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-
       }
     })
 
     await transporter.sendMail({
+      from: process.env.EMAIL_USER,
       to: newEmail,
-      subject: 'verify Your Email',
-      html: `<p>Your OTP for updating email is <b>${otp}</b><p>`
+      subject: 'Verify Your Email',
+      text: `Your OTP for updating email is ${otp}`,
+      html: `<p>Your OTP for updating email is <b>${otp}</b></p>`
     })
 
 
@@ -371,5 +378,86 @@ exports.getWallet = async (req, res) => {
   } catch (error) {
     console.error('Error fetching wallet data:', error);
     res.status(500).render('error', { message: 'Failed to load wallet data' });
+  }
+};
+
+// Send email OTP for profile update
+exports.sendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    // Check if email is already in use by another user
+    const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email is already in use' });
+    }
+
+    const otp = otpService.generateOtp();
+    const otpExpiry = Date.now() + 2 * 60 * 1000; // 2 minutes
+
+    // Update user's OTP
+    await User.findByIdAndUpdate(userId, { otp, otpExpiry });
+
+    // Send OTP email
+    await transporter.sendMail({
+      from: 'capturecore792@gmail.com',
+      to: email,
+      subject: 'Email Change OTP',
+      text: `Your OTP for changing email is: ${otp}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Email Change Verification</h2>
+          <p>You requested to change your email address. Use the following OTP to verify:</p>
+          <div style="background: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+            <h1 style="color: #007bff; font-size: 32px; margin: 0;">${otp}</h1>
+          </div>
+          <p>This OTP will expire in 2 minutes.</p>
+          <p>If you didn't request this change, please ignore this email.</p>
+        </div>
+      `
+    });
+
+    res.json({ success: true, message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Error sending email OTP:', error);
+    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+  }
+};
+
+// Verify email OTP and update email
+exports.verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    const userId = req.session.userId;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if OTP is valid and not expired
+    if (user.otp !== otp || user.otpExpiry < Date.now()) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+    }
+
+    // Update email
+    user.email = email;
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'Email updated successfully' });
+  } catch (error) {
+    console.error('Error verifying email OTP:', error);
+    res.status(500).json({ success: false, message: 'Failed to verify OTP' });
   }
 };

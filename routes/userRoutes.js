@@ -10,7 +10,7 @@ const orderController = require('../controllers/orderController');
 
 const validator = require('../middleware/validate');
 const validationRules = require('../middleware/validationRules');
-const upload = require('../middleware/upload');
+const { diskUpload } = require('../middleware/upload');
 
 const {
   isUserLoggedIn,
@@ -104,9 +104,13 @@ router.route('/edit-profile')
   .get(userAccess, profileController.getEditProfile)
   .post(
     userAccess,
-    upload.single('profileImage'),
+    diskUpload.single('profileImage'),
     profileController.postEditProfile
   );
+
+// // Email OTP routes
+// router.post('/send-email-otp', userAccess, profileController.sendEmailOTP);
+// router.post('/verify-email-otp', userAccess, profileController.verifyEmailOTP);
 
 router.get('/edit-email', userAccess, profileController.getEditEmail);
 router.post('/email/send-otp', userAccess, profileController.sendOtpForEmail);

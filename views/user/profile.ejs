@@ -218,14 +218,7 @@
                         <span>Change Password</span>
                     </a>
                 </li>
-                <li>
-                    <a href="/edit-email" class="sidebar-link">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        <span>Edit Email</span>
-                    </a>
-                </li>
+                
                 <li>
                     <a href="/orders" class="sidebar-link">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,14 +270,16 @@
 
       <!-- Profile Picture Section -->
       <section class="mb-10 flex flex-col items-center">
-        <div class="profile-avatar">
-          <% if (user && user.profileImage) { %>
-            <img src="<%= user.profileImage %>" alt="Profile Picture" />  
-          <% } else { %>
-            <img src="/images/default-avatar.png" alt="Default Avatar" />
-          <% } %>
+        <div class="relative profile-avatar">
+          <% const avatarSrc = (user && user.profilePicture) ? ('/uploads/' + user.profilePicture + '?t=' + Date.now()) : '/images/default-avatar.png'; %>
+          <img src="<%= avatarSrc %>" alt="Profile Picture" />
+          <button onclick="window.location.href='/edit-profile'" class="absolute bottom-1 right-1 bg-white rounded-full p-2 shadow hover:shadow-md" title="Edit profile picture">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M17.414 2.586a2 2 0 010 2.828l-8.5 8.5a1 1 0 01-.293.2l-3 1a1 1 0 01-1.266-1.266l1-3a1 1 0 01.2-.293l8.5-8.5a2 2 0 012.828 0z" />
+              <path fill-rule="evenodd" d="M2 13.5A1.5 1.5 0 003.5 15h3a.5.5 0 000-1h-3a.5.5 0 01-.5-.5v-3a.5.5 0 00-1 0v3z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
-        <a href="/profile/change-picture" class="bg-blue-600 hover:bg-blue-700 mt-4">Change Profile Picture</a>
       </section>
 
       <!-- Profile Information Cards -->

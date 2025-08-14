@@ -47,8 +47,14 @@ exports.placeOrder = async (req, res) => {
       for (const item of cart.items) {
         const product = item.product;
 
-        if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < item.quantity) {
+        if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
           continue;
+        }
+
+        // Stock guard: if not enough stock, return with an error
+        if (product.stock < item.quantity) {
+          req.session.checkoutError = `"${product.name}" has only ${product.stock} in stock. Please adjust quantity.`;
+          return res.redirect('/cart');
         }
 
         const itemTotal = item.quantity * product.price;
@@ -218,38 +224,25 @@ exports.cancelOrderItem = async (req, res) => {
     const order = await Order.findOne({ orderId, user: userId });
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
+      return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
     if (order.status === 'Delivered') {
-      return res.status(400).json({
-        success: false,
-        message: 'Delivered orders cannot be cancelled'
-      });
+      return res.status(400).json({ success: false, message: 'Delivered orders cannot be cancelled' });
     }
 
     const item = order.items.find(i => i.product.toString() === productId);
-
     if (!item) {
-      return res.status(400).json({
-        success: false,
-        message: 'Item not found in order'
-      });
+      return res.status(400).json({ success: false, message: 'Item not found in order' });
     }
 
-    if (item.isCancelled) {
-      return res.status(400).json({
-        success: false,
-        message: 'Item is already cancelled'
-      });
+    if (item.isCancelled || item.status === 'Cancelled') {
+      return res.status(400).json({ success: false, message: 'Item is already cancelled' });
     }
 
     item.isCancelled = true;
+    item.status = 'Cancelled';
     item.cancelReason = reason || '';
-
 
     const product = await Product.findById(productId);
     if (product) {
@@ -257,8 +250,7 @@ exports.cancelOrderItem = async (req, res) => {
       await product.save();
     }
 
-
-    const allItemsCancelled = order.items.every(i => i.isCancelled);
+    const allItemsCancelled = order.items.every(i => i.isCancelled || i.status === 'Cancelled');
     if (allItemsCancelled) {
       order.status = 'Cancelled';
       order.cancelReason = 'All items cancelled';
@@ -273,10 +265,7 @@ exports.cancelOrderItem = async (req, res) => {
 
   } catch (err) {
     console.error('Error cancelling item in order:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -337,13 +326,18 @@ exports.downloadInvoice = async (req, res) => {
     .text('Email: support@capturecore.com | Phone: +91-9876543210', 50, 95)
     .text('GST: 07AABCU9603R1ZX | PAN: AABCU9603R', 50, 110);
 
+  // Title bar
   doc
-    .fontSize(20)
+    .rect(50, 120, 500, 28)
+    .fill('#f3f4f6')
+    .stroke()
+    .fillColor('#111827')
+    .fontSize(18)
     .font('Helvetica-Bold')
-    .text('INVOICE', { align: 'center' })
-    .moveDown();
+    .text('INVOICE', 60, 126, { align: 'left' })
+    .fillColor('#000');
 
-  const startY = doc.y;
+  const startY = 160;
 
   doc
     .fontSize(12)
@@ -363,11 +357,11 @@ exports.downloadInvoice = async (req, res) => {
     .text('Billing Address:', 300, startY)
     .font('Helvetica')
     .fontSize(10)
-    .text(`${address?.name || 'N/A'}`, 300, startY + 20)
-    .text(`${address?.address || 'N/A'}`, 300, startY + 35, { width: 250 })
+    .text(`${address?.fullName || 'N/A'}`, 300, startY + 20)
+    .text(`${address?.addressLine || 'N/A'}`, 300, startY + 35, { width: 250 })
     .text(`${address?.city || 'N/A'}, ${address?.state || 'N/A'}`, 300, startY + 50)
     .text(`Pin: ${address?.pincode || 'N/A'}`, 300, startY + 65)
-    .text(`Phone: ${address?.mobile || 'N/A'}`, 300, startY + 80);
+    .text(`Phone: ${address?.phone || 'N/A'}`, 300, startY + 80);
 
   doc.y = startY + 110;
 
@@ -396,7 +390,7 @@ exports.downloadInvoice = async (req, res) => {
 
   order.items.forEach((item, index) => {
     doc
-      .text(item.product?.name || 'Unknown Product', 50, currentY, { width: 250 })
+      .text(item.product?.name || item.productName || 'Unknown Product', 50, currentY, { width: 250 })
       .text(formatCurrency(item.price), 300, currentY, { width: 80, align: 'center' })
       .text(item.quantity.toString(), 380, currentY, { width: 50, align: 'center' })
       .text(formatCurrency(item.total || item.price * item.quantity), 430, currentY, { width: 120, align: 'right' });

@@ -37,10 +37,11 @@
                   value="<%= address._id %>" 
                   class="accent-blue-600 mt-1"
                   required
+                  <%= (defaultAddress && defaultAddress === address._id.toString()) ? 'checked' : '' %>)
                 >
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold address-name"><%= address.name %></h3>
-                  <p class="address-details"><%= address.street %>, <%= address.city %>, <%= address.state %>, <%= address.zipCode %></p>
+                  <h3 class="text-lg font-semibold address-name"><%= address.fullName %></h3>
+                  <p class="address-details"><%= address.addressLine %>, <%= address.city %>, <%= address.state %>, <%= address.pincode %></p>
                   <p class="address-phone">Phone: <%= address.phone %></p>
                   <% if (defaultAddress === address._id.toString()) { %>
                     <span class="text-sm text-green-600 font-medium">Default Address</span>
@@ -144,12 +145,12 @@
       <input type="hidden" name="addressId" id="editAddressId">
       
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
         <input type="text" name="name" id="editName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
       
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Street</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
         <input type="text" name="street" id="editStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
       
@@ -164,7 +165,7 @@
       </div>
       
       <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Zip Code</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
         <input type="text" name="zipCode" id="editZipCode" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
       </div>
       
@@ -199,7 +200,8 @@
 <!-- Pass addresses data to JavaScript -->
 <script type="application/json" id="addresses-data"><%- JSON.stringify(addresses || []) %></script>
 
-<script>
+  <script src="/js/inline-validator.js"></script>
+  <script>
   let addresses = [];
   
   // Load addresses data safely
@@ -219,11 +221,11 @@
       addresses = Array.from(addressCards).map(card => {
         return {
           _id: card.dataset.addressId,
-          name: card.querySelector('.address-name')?.textContent || '',
-          street: '', // We'll extract this from the details
+          fullName: card.querySelector('.address-name')?.textContent || '',
+          addressLine: '', // extract below if needed
           city: '',
           state: '',
-          zipCode: '',
+          pincode: '',
           phone: card.querySelector('.address-phone')?.textContent.replace('Phone: ', '') || ''
         };
       });
@@ -267,16 +269,16 @@
           const details = card.querySelector('.address-details')?.textContent || '';
           const phone = card.querySelector('.address-phone')?.textContent.replace('Phone: ', '') || '';
           
-          // Parse address details (format: "street, city, state, zipCode")
+          // Parse address details (format: "addressLine, city, state, pincode")
           const detailsParts = details.split(', ');
           
           address = {
             _id: addressId,
-            name: name,
-            street: detailsParts[0] || '',
+            fullName: name,
+            addressLine: detailsParts[0] || '',
             city: detailsParts[1] || '',
             state: detailsParts[2] || '',
-            zipCode: detailsParts[3] || '',
+            pincode: detailsParts[3] || '',
             phone: phone,
             isDefault: card.querySelector('.text-green-600') !== null
           };
@@ -289,11 +291,11 @@
       if (address) {
         // Populate modal form
         document.getElementById('editAddressId').value = address._id;
-        document.getElementById('editName').value = address.name || '';
-        document.getElementById('editStreet').value = address.street || '';
+        document.getElementById('editName').value = address.fullName || '';
+        document.getElementById('editStreet').value = address.addressLine || '';
         document.getElementById('editCity').value = address.city || '';
         document.getElementById('editState').value = address.state || '';
-        document.getElementById('editZipCode').value = address.zipCode || '';
+        document.getElementById('editZipCode').value = address.pincode || '';
         document.getElementById('editPhone').value = address.phone || '';
         document.getElementById('editIsDefault').checked = address.isDefault || false;
         
@@ -324,6 +326,9 @@
     form.reset();
   }
 
+  // Attach generic inline validator (server-driven)
+  window.attachInlineValidation(form);
+
   // Form submission
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -336,20 +341,21 @@
     saveBtn.textContent = 'Saving...';
     loadingOverlay.classList.remove('hidden');
     
-    // Prepare form data (matching your backend expectations)
-    const formData = new FormData();
-    formData.append('name', document.getElementById('editName').value);
-    formData.append('street', document.getElementById('editStreet').value);
-    formData.append('city', document.getElementById('editCity').value);
-    formData.append('state', document.getElementById('editState').value);
-    formData.append('zipCode', document.getElementById('editZipCode').value);
-    formData.append('phone', document.getElementById('editPhone').value);
-    formData.append('isDefault', document.getElementById('editIsDefault').checked);
+    // Prepare URL-encoded form data to match backend parser/validator
+    const body = new URLSearchParams();
+    body.set('fullName', document.getElementById('editName').value);
+    body.set('addressLine', document.getElementById('editStreet').value);
+    body.set('city', document.getElementById('editCity').value);
+    body.set('state', document.getElementById('editState').value);
+    body.set('pincode', document.getElementById('editZipCode').value);
+    body.set('phone', document.getElementById('editPhone').value);
+    body.set('isDefault', document.getElementById('editIsDefault').checked ? 'true' : 'false');
     
     try {
       const response = await fetch(`/addresses/edit/${addressId}`, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
       });
       
       if (response.ok) {
@@ -358,11 +364,11 @@
         if (addressIndex !== -1) {
           addresses[addressIndex] = {
             ...addresses[addressIndex],
-            name: document.getElementById('editName').value,
-            street: document.getElementById('editStreet').value,
+            fullName: document.getElementById('editName').value,
+            addressLine: document.getElementById('editStreet').value,
             city: document.getElementById('editCity').value,
             state: document.getElementById('editState').value,
-            zipCode: document.getElementById('editZipCode').value,
+            pincode: document.getElementById('editZipCode').value,
             phone: document.getElementById('editPhone').value,
             isDefault: document.getElementById('editIsDefault').checked
           };
@@ -374,6 +380,11 @@
         // Show success message
         showNotification('Address updated successfully!', 'success');
         closeModal();
+        
+        // Refresh the page to show updated addresses
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
         
       } else {
         // If server returns an error, show message
@@ -399,9 +410,9 @@
     if (addressCard) {
       const address = addresses.find(a => a._id === addressId);
       if (address) {
-        addressCard.querySelector('.address-name').textContent = address.name;
+        addressCard.querySelector('.address-name').textContent = address.fullName;
         addressCard.querySelector('.address-details').textContent = 
-          `${address.street}, ${address.city}, ${address.state}, ${address.zipCode}`;
+          `${address.addressLine}, ${address.city}, ${address.state}, ${address.pincode}`;
         addressCard.querySelector('.address-phone').textContent = `Phone: ${address.phone}`;
       }
     }
@@ -450,7 +461,7 @@
     <form id="addAddressForm">
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-        <input type="text" name="name" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        <input type="text" name="fullName" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
@@ -501,6 +512,7 @@
   const closeAddModalBtn = document.getElementById('closeAddModal');
   const cancelAddBtn = document.getElementById('cancelAdd');
   const addForm = document.getElementById('addAddressForm');
+  if (addForm) { window.attachInlineValidation(addForm); }
 
   function showAddModal(){ addModal.classList.remove('hidden'); }
   function hideAddModal(){ addModal.classList.add('hidden'); addForm.reset(); }
@@ -512,14 +524,22 @@
 
   addForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(addForm);
-    // Convert checkbox to 'true'/'false' to match controller
-    formData.set('isDefault', formData.get('isDefault') ? 'true' : 'false');
+    // Convert to URL-encoded to work with express.urlencoded and validators
+    const body = new URLSearchParams();
+    body.set('fullName', addForm.querySelector('input[name="fullName"]').value);
+    body.set('phone', addForm.querySelector('input[name="phone"]').value);
+    body.set('addressLine', addForm.querySelector('input[name="addressLine"]').value);
+    body.set('city', addForm.querySelector('input[name="city"]').value);
+    body.set('state', addForm.querySelector('input[name="state"]').value);
+    body.set('pincode', addForm.querySelector('input[name="pincode"]').value);
+    body.set('country', addForm.querySelector('input[name="country"]').value || 'India');
+    body.set('isDefault', addForm.querySelector('input[name="isDefault"]').checked ? 'true' : 'false');
 
     try {
       const res = await fetch('/addresses', { // uses POST /addresses in router
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
       });
       if (res.ok) {
         // Reload checkout to display new address

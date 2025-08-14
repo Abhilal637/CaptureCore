@@ -96,11 +96,30 @@
     </div>
 <!-- SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Checkout error data for Swal -->
+<script type="application/json" id="checkout-error-data"><%- JSON.stringify(checkoutError || null) %></script>
 
 
 
 <!-- Replace your existing <script> section with this updated one -->
   <script>
+    // Show stock error if present from checkout redirect
+    let checkoutErrorMsg = null;
+    try {
+      const errEl = document.getElementById('checkout-error-data');
+      if (errEl && errEl.textContent.trim()) {
+        checkoutErrorMsg = JSON.parse(errEl.textContent);
+      }
+    } catch (_) {}
+    if (checkoutErrorMsg) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Stock issue',
+        text: checkoutErrorMsg,
+        confirmButtonColor: '#3085d6'
+      });
+    }
+
     // Quantity Update Handler
     document.querySelectorAll('.quantity-btn').forEach(button => {
       button.addEventListener('click', async function () {

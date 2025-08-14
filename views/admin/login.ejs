@@ -26,13 +26,14 @@
           </div>
         <% } %>
 
-        <form action="/admin/login" method="POST" class="space-y-5">
+        <form action="/admin/login" method="POST" class="space-y-5" id="adminLoginForm">
           <!-- Email -->
           <div>
             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
             <input type="email" name="email" id="email" 
               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:outline-none"
               placeholder="Your email address">
+            <p class="field-error mt-1 text-sm text-red-600"></p>
           </div>
 
           <!-- Password -->
@@ -41,6 +42,7 @@
             <input type="password" name="password" id="password" 
               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring focus:ring-indigo-200 focus:outline-none"
               placeholder="Your password">
+            <p class="field-error mt-1 text-sm text-red-600"></p>
           </div>
 
           <!-- Remember me -->
@@ -57,6 +59,10 @@
               LOGIN
             </button>
           </div>
+        <script src="/js/inline-validator.js"></script>
+        <script>
+          attachInlineValidation(document.getElementById('adminLoginForm'));
+        </script>
         </form>
     
       </div>

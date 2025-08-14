@@ -24,19 +24,21 @@
             <div class="text-sm text-gray-600">Price: ₹<%= item.product.price.toFixed(2) %></div>
 
             <!-- Status Badge -->
-            <% if (item.isCancelled) { %>
+            <% if (item.isCancelled || item.status === 'Cancelled') { %>
               <span class="text-red-600 text-sm font-semibold">Cancelled</span>
-            <% } else if (item.isReturned) { %>
+            <% } else if (item.isReturned || item.status === 'Returned') { %>
               <span class="text-yellow-600 text-sm font-semibold">Returned</span>
             <% } else { %>
               <!-- Cancel Product -->
               <div class="mt-2 space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-3">
                 <input type="hidden" name="orderId" value="<%= order.orderId %>">
                 <input type="hidden" name="productId" value="<%= item.product._id %>">
-                <textarea name="reason" placeholder="Cancel reason (optional)" class="w-full sm:w-64 px-3 py-1 border rounded cancel-reason"></textarea>
-                <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded cancel-item-btn" 
-                        data-order-id="<%= order.orderId %>" 
-                        data-product-id="<%= item.product._id %>">Cancel Product</button>
+                <!-- <textarea name="reason" placeholder="Cancel reason (optional)" class="w-full sm:w-64 px-3 py-1 border rounded cancel-reason"></textarea> -->
+                <% if (item.status !== 'Delivered') { %>
+                  <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded cancel-item-btn" 
+                          data-order-id="<%= order.orderId %>" 
+                          data-product-id="<%= item.product._id %>">Cancel Product</button>
+                <% } %>
               </div>
 
               <% if (order.status === 'Delivered') { %>
