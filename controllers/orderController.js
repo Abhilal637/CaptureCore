@@ -5,6 +5,7 @@ const Order = require('../models/order');
 const PDFDocument = require('pdfkit');
 const { PluginConfigurationInstance } = require('twilio/lib/rest/flexApi/v1/pluginConfiguration');
 const { generateOrderId } = require('../utils/otpHelper');
+const { STATUS_CODES, MESSAGES, ORDER_STATUS } = require('../utils/constants');
 
 
 exports.placeOrder = async (req, res) => {
@@ -20,7 +21,7 @@ exports.placeOrder = async (req, res) => {
       const product = await Product.findById(productId);
 
       if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < quantity) {
-        return res.status(400).send('Product unavailable');
+        return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.STOCK_UNAVAILABLE);
       }
 
       const itemTotal = quantity * product.price;
@@ -51,7 +52,7 @@ exports.placeOrder = async (req, res) => {
           continue;
         }
 
-        // Stock guard: if not enough stock, return with an error
+        
         if (product.stock < item.quantity) {
           req.session.checkoutError = `"${product.name}" has only ${product.stock} in stock. Please adjust quantity.`;
           return res.redirect('/cart');
@@ -84,7 +85,7 @@ exports.placeOrder = async (req, res) => {
     }
 
     const address = await Address.findOne({ _id: addressId, user: userId });
-    if (!address) return res.status(404).send('Address not found');
+    if (!address) return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.ERROR.ADDRESS_NOT_FOUND);
 
     const tax = totalAmount * 0.05;
     const discount = totalAmount > 1000 ? totalAmount * 0.1 : 0;
@@ -111,7 +112,7 @@ exports.placeOrder = async (req, res) => {
     res.redirect('/orderSuccess');
   } catch (error) {
     console.error('Error placing order:', error);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error');
   }
 };
 
@@ -122,7 +123,7 @@ exports.getOrderSuccess = async (req, res) => {
     })
   } catch (error) {
     console.log('Error loading sucess Page', error)
-    res.status(500).send('Server Error')
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error')
   }
 }
 
@@ -154,9 +155,11 @@ exports.getOrders = async (req, res) => {
     });
   } catch (error) {
     console.error('Error loading orders:', error);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error');
   }
 };
+
+
 
 exports.cancelOrder = async (req, res) => {
   try {
@@ -167,21 +170,21 @@ exports.cancelOrder = async (req, res) => {
     const order = await Order.findOne({ orderId, user: userId });
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
         message: 'Order not found'
       });
     }
 
     if (order.status === 'Delivered') {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Delivered orders cannot be cancelled'
       });
     }
 
     if (order.status === 'Cancelled') {
-      return res.status(400).json({
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
         message: 'Order is already cancelled'
       });
@@ -210,12 +213,15 @@ exports.cancelOrder = async (req, res) => {
     });
   } catch (err) {
     console.error('Error cancelling order:', err);
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Server error'
     });
   }
 };
+
+
+
 exports.cancelOrderItem = async (req, res) => {
   try {
     const { orderId, productId, reason } = req.body;
@@ -224,20 +230,20 @@ exports.cancelOrderItem = async (req, res) => {
     const order = await Order.findOne({ orderId, user: userId });
 
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
     }
 
     if (order.status === 'Delivered') {
-      return res.status(400).json({ success: false, message: 'Delivered orders cannot be cancelled' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Delivered orders cannot be cancelled' });
     }
 
     const item = order.items.find(i => i.product.toString() === productId);
     if (!item) {
-      return res.status(400).json({ success: false, message: 'Item not found in order' });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item not found in order' });
     }
 
     if (item.isCancelled || item.status === 'Cancelled') {
-      return res.status(400).json({ success: false, message: 'Item is already cancelled' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item is already cancelled' });
     }
 
     item.isCancelled = true;
@@ -265,7 +271,7 @@ exports.cancelOrderItem = async (req, res) => {
 
   } catch (err) {
     console.error('Error cancelling item in order:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -280,7 +286,7 @@ exports.getOrderDetails = async (req, res) => {
       .populate('address');
 
     if (!order) {
-      return res.status(404).render('user/orderNotFound', { currentPage: 'orders' });
+      return res.status(STATUS_CODES.NOT_FOUND).render('user/orderNotFound', { currentPage: 'orders' });
     }
 
     res.render('user/orderDetails', {
@@ -289,7 +295,7 @@ exports.getOrderDetails = async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading order details:', err);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error');
   }
 };
 
@@ -300,7 +306,7 @@ exports.downloadInvoice = async (req, res) => {
     .populate('address');
 
   if (!order || order.user.toString() !== req.session.userId) {
-    return res.status(404).send('Invoice not found');
+    return res.status(STATUS_CODES.NOT_FOUND).send('Invoice not found');
   }
 
   const doc = new PDFDocument({
@@ -482,7 +488,7 @@ exports.searchOrders = async (req, res) => {
     });
   } catch (error) {
     console.log('Error searching orders:', error);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error');
   }
 };
 
@@ -493,28 +499,49 @@ exports.returnOrderItem = async (req, res) => {
 
     const order = await Order.findOne({ orderId, user: userId });
     if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.ORDER_NOT_FOUND 
+      });
     }
 
     const item = order.items.find(i => i.product.toString() === productId);
     if (!item) {
-      return res.status(404).json({ success: false, message: 'Product not found in order' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND 
+      });
     }
 
-    if (item.status === 'Returned' || item.status === 'Return Requested') {
-      return res.status(400).json({ success: false, message: 'Item already returned or return requested' });
+    if (item.status === ORDER_STATUS.RETURNED || item.status === ORDER_STATUS.RETURN_REQUESTED) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.ITEM_ALREADY_RETURNED 
+      });
     }
 
-    item.isReturned = false;
+    
     item.returnReason = reason || '';
-    item.status = 'Return Requested';
-    order.status = 'Return Requested';
+    item.status = ORDER_STATUS.RETURN_REQUESTED;
+    item.returnRequested = true;
+    
+   
+    if (order.status !== ORDER_STATUS.RETURN_REQUESTED) {
+      order.status = ORDER_STATUS.RETURN_REQUESTED;
+    }
+    
     await order.save();
 
-    res.json({ success: true, message: 'Return requested successfully' });
+    res.status(STATUS_CODES.OK).json({ 
+      success: true, 
+      message: MESSAGES.SUCCESS.RETURN_REQUESTED 
+    });
   } catch (error) {
     console.error('Error in returnOrderItem:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
+      success: false, 
+      message: MESSAGES.ERROR.SERVER_ERROR 
+    });
   }
 };
 
@@ -526,42 +553,42 @@ exports.returnEntireOrder = async (req, res) => {
     const order = await Order.findOne({ orderId, user: userId });
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(STATUS_CODES.NOT_FOUND).json({
         success: false,
-        message: 'Order not found'
+        message: MESSAGES.ERROR.ORDER_NOT_FOUND
       });
     }
 
-    if (order.status !== 'Delivered') {
-      return res.status(400).json({
+    if (order.status !== ORDER_STATUS.DELIVERED) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
         success: false,
-        message: 'Order is not eligible for return'
+        message: MESSAGES.ERROR.ORDER_NOT_ELIGIBLE_FOR_RETURN
       });
     }
 
-
-    order.status = 'Returned';
+  
+    order.status = ORDER_STATUS.RETURN_REQUESTED;
     order.returnReason = reason;
     order.returnDate = new Date();
 
-
+    
     for (let item of order.items) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { stock: item.quantity }
-      });
+      item.status = ORDER_STATUS.RETURN_REQUESTED;
+      item.returnRequested = true;
+      item.returnReason = reason;
     }
 
     await order.save();
 
-    res.json({
+    res.status(STATUS_CODES.OK).json({
       success: true,
-      message: 'Order returned successfully'
+      message: MESSAGES.SUCCESS.RETURN_REQUESTED
     });
   } catch (err) {
     console.error('Return error:', err);
-    res.status(500).json({
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: 'Server error'
+      message: MESSAGES.ERROR.SERVER_ERROR
     });
   }
 };

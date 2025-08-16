@@ -20,39 +20,17 @@
     <div class="w-full max-w-md px-6">
       <form method="POST" action="/login" class="space-y-5" id="loginForm">
 
-        <% if (error) { %>
-          <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 text-sm">
-            <%= error %>
-          </div>
-        <% } %>
-
         <div>
           <label class="text-xs block mb-2 tracking-wide" for="email">EMAIL</label>
-          <% if (locals.errors && errors.email) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.email.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
-          <input type="text" name="email" id="email" placeholder="EMAIL"
+          <input type="email" name="email" id="email" placeholder="EMAIL"
             value="<%= locals.body && body.email ? body.email : '' %>"
-            class="w-full border border-gray-400 px-4 py-2 text-sm <%= locals.errors && errors.email ? 'border-red-500' : '' %>">
-          <p class="field-error mt-1 text-xs text-red-600"></p>
+            class="w-full border border-gray-400 px-4 py-2 text-sm" data-required>
         </div>
 
         <div>
           <label class="text-xs block mb-2 tracking-wide" for="password">PASSWORD</label>
-          <% if (locals.errors && errors.password) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.password.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
           <input type="password" name="password" id="password" placeholder="PASSWORD" 
-            class="w-full border border-gray-400 px-4 py-2 text-sm <%= locals.errors && errors.password ? 'border-red-500' : '' %>">
-          <p class="field-error mt-1 text-xs text-red-600"></p>
+            class="w-full border border-gray-400 px-4 py-2 text-sm" data-required minlength="8">
         </div>
 
         <div class="text-left">
@@ -75,13 +53,19 @@
           </a>
         </div>
 
-      <script src="/js/inline-validator.js"></script>
-      <script>
-        attachInlineValidation(document.getElementById('loginForm'));
-      </script>
       </form>
     </div>
   </main>
+
+  <script src="/js/inline-validator.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginForm = document.getElementById('loginForm');
+      if (loginForm) {
+        window.attachInlineValidation(loginForm);
+      }
+    });
+  </script>
 
   <!-- Footer -->
   <footer class="bg-white text-sm text-gray-700 mt-20">

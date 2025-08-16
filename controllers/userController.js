@@ -13,6 +13,7 @@ const { error } = require('console');
 const Cart = require('../models/cart');
 const Address = require('../models/address');
 const wishlist = require('../models/wishlist');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants');
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -22,7 +23,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/; // min 8 chars, at least 1 letter & 1 number
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/; 
 const phoneRegex = /^\d{10,15}$/;
 const nameRegex = /^[A-Za-z\s]{2,50}$/;
 
@@ -32,7 +33,7 @@ exports.getSignup=(req,res)=>{
 exports.postSignup = async (req, res) => {
   const { name = req.body.username, email, password, phone, confirm_password } = req.body;
 
-  // Check for validation errors
+
   if (req.validationErrors) {
     return res.render('user/signup', {
       errors: req.validationErrors,
@@ -194,7 +195,6 @@ exports.getLogin = (req, res) => {
 exports.postlogin = async (req, res) => {
     const { email, password } = req.body;
 
-    // Check for validation errors
     if (req.validationErrors) {
         return res.render('user/login', {
             errors: req.validationErrors,
@@ -205,7 +205,6 @@ exports.postlogin = async (req, res) => {
 
     console.log('Login attempt:', { email, password });
 
-    // ✅ Regex Validation
     if (!email || !emailRegex.test(email)) {
         return res.render('user/login', { error: 'Please enter a valid email address.' });
     }
@@ -224,7 +223,7 @@ exports.postlogin = async (req, res) => {
             return res.render('user/login', { error: 'Invalid email or password' });
         }
 
-        // ✅ Blocked user check (new)
+        
         if (user.isBlocked) {
             return res.render('user/login', {
                 error: 'Your account has been blocked by the admin. Please contact support.',
@@ -259,7 +258,7 @@ exports.postlogin = async (req, res) => {
 exports.postlogin = async (req, res) => {
     const { email, password } = req.body;
 
-    // Check for validation errors
+    
     if (req.validationErrors) {
         return res.render('user/login', {
             errors: req.validationErrors,
@@ -270,7 +269,7 @@ exports.postlogin = async (req, res) => {
 
     console.log('Login attempt:', { email, password });
 
-    // ✅ Regex Validation
+    
     if (!email || !emailRegex.test(email)) {
         return res.render('user/login', { error: 'Please enter a valid email address.' });
     }
@@ -289,7 +288,7 @@ exports.postlogin = async (req, res) => {
             return res.render('user/login', { error: 'Invalid email or password' });
         }
 
-        // ✅ Blocked user check (new)
+       
         if (user.isBlocked) {
             return res.render('user/login', {
                 error: 'Your account has been blocked by the admin. Please contact support.',
@@ -447,11 +446,11 @@ exports.getProducts = async (req, res) => {
       }
     }
     if (!priceRange) {
-      // default price bounds for slider UI; do not constrain query by default
+    
     }
 
     if (brand) {
-      // Support comma-separated brands for multi-select
+   
       const brands = brand.split(',').filter(Boolean);
       if (brands.length === 1) {
         query.brand = { $regex: `^${brands[0]}$`, $options: 'i' };
@@ -460,7 +459,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Megapixel bucket (e.g., 12-16,16-24,24+)
+    
     if (megapixel) {
       const buckets = megapixel.split(',').filter(Boolean);
       if (buckets.length) {
@@ -468,7 +467,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Battery Type
+ 
     if (battery) {
       const vals = battery.split(',').filter(Boolean);
       if (vals.length) {
@@ -476,7 +475,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Camera Type
+   
     if (cameraTypeParam) {
       const vals = cameraTypeParam.split(',').filter(Boolean);
       if (vals.length) {
@@ -484,7 +483,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Lens Mount
+  
     if (lensMountParam) {
       const vals = lensMountParam.split(',').filter(Boolean);
       if (vals.length) {
@@ -492,7 +491,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Focal Length
+    
     if (req.query['focal-length']) {
       const vals = req.query['focal-length'].split(',').filter(Boolean);
       if (vals.length) {
@@ -500,7 +499,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // F-Aperture
+    
     if (req.query['f-aperture']) {
       const vals = req.query['f-aperture'].split(',').filter(Boolean);
       if (vals.length) {
@@ -508,7 +507,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Lens Type
+    
     if (req.query['lens-type']) {
       const vals = req.query['lens-type'].split(',').filter(Boolean);
       if (vals.length) {
@@ -516,7 +515,7 @@ exports.getProducts = async (req, res) => {
       }
     }
 
-    // Availability
+    
     if (availability) {
       const vals = availability.split(',').filter(Boolean);
       if (vals.length) {
@@ -572,7 +571,7 @@ exports.getProducts = async (req, res) => {
 
     const categories = await Category.find({ isDeleted: false, active: true }).populate('parentCategory', 'name');
 
-    // Build brand list dynamically from matching products in current query scope (without pagination)
+    
     const brandAgg = await Product.aggregate([
       { $match: query },
       { $group: { _id: { $toUpper: "$brand" }, count: { $sum: 1 } } },
@@ -673,13 +672,13 @@ exports.toggleUserBlockStatus = async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found.' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ message: 'User not found.' });
     }
 
-    res.status(200).json({ message: 'User status updated.', user });
+    res.status(STATUS_CODES.OK).json({ message: 'User status updated.', user }); 
   } catch (error) {
     console.error('Toggle user block error:', error);
-    res.status(500).json({ message: 'Server error.' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: 'Server error.' });     
   }
 };
 
@@ -746,7 +745,6 @@ exports.logout = (req, res) => {
             (p.category && p.category.isBlocked)
           ) continue;
 
-          // Stock guard for checkout page
           if (p.stock < item.quantity) {
             req.session.checkoutError = `"${p.name}" has only ${p.stock} in stock. Please adjust quantity.`;
             return res.redirect('/cart');
@@ -790,7 +788,7 @@ exports.logout = (req, res) => {
       });
     } catch (error) {
       console.error('Error loading checkout page:', error);
-      res.status(500).send('Server Error');
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error'); 
     }
   };
 

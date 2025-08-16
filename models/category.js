@@ -1,10 +1,10 @@
-// models/category.js
+
 const mongoose = require('mongoose');
 
 const categorySchema = new mongoose.Schema({
   name: {
     type: String,
-    trim: true, // only trim, no required here
+    trim: true, 
   },
   description: {
     type: String,

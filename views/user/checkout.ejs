@@ -5,6 +5,7 @@
   <title>Checkout | CaptureCore</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/inline-validator.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
   <%- include('../partial/user/navbar') %>
@@ -136,42 +137,42 @@
   </div>
 
 <!-- Address Edit Modal -->
-<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+<div id="editAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
   <div class="bg-white rounded-lg p-8 w-full max-w-md relative shadow-xl">
     <button id="closeEditModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
     <h2 class="text-2xl font-semibold mb-6">Edit Address</h2>
     
-    <form id="editAddressForm">
+    <form id="editAddressForm" action="/addresses/edit" method="POST">
       <input type="hidden" name="addressId" id="editAddressId">
       
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-        <input type="text" name="name" id="editName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" name="fullName" id="editName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" data-required>
       </div>
       
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-        <input type="text" name="street" id="editStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" name="addressLine" id="editStreet" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" data-required>
       </div>
       
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
-        <input type="text" name="city" id="editCity" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" name="city" id="editCity" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" data-required>
       </div>
       
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
-        <input type="text" name="state" id="editState" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" name="state" id="editState" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" data-required>
       </div>
       
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
-        <input type="text" name="zipCode" id="editZipCode" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" name="pincode" id="editZipCode" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" data-required maxlength="6" pattern="[0-9]*" inputmode="numeric">
       </div>
       
       <div class="mb-6">
         <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-        <input type="text" name="phone" id="editPhone" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" name="phone" id="editPhone" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" data-required maxlength="10" pattern="[0-9]*" inputmode="numeric">
       </div>
       
       <div class="mb-6">
@@ -200,7 +201,6 @@
 <!-- Pass addresses data to JavaScript -->
 <script type="application/json" id="addresses-data"><%- JSON.stringify(addresses || []) %></script>
 
-  <script src="/js/inline-validator.js"></script>
   <script>
   let addresses = [];
   
@@ -299,9 +299,12 @@
         document.getElementById('editPhone').value = address.phone || '';
         document.getElementById('editIsDefault').checked = address.isDefault || false;
         
+        // Update form action to include address ID
+        document.getElementById('editAddressForm').action = `/addresses/edit/${address._id}`;
+        
         console.log('About to show modal');
         // Show modal
-        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
         document.getElementById('editName').focus();
       } else {
         console.error('Address not found with ID:', addressId);
@@ -322,87 +325,16 @@
   });
 
   function closeModal() {
-    modal.classList.add('hidden');
+    modal.style.display = 'none';
     form.reset();
   }
 
   // Attach generic inline validator (server-driven)
+  console.log('Attaching inline validation to edit form...');
   window.attachInlineValidation(form);
+  console.log('Inline validation attached to edit form');
 
-  // Form submission
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const addressId = document.getElementById('editAddressId').value;
-    const saveBtn = document.getElementById('saveAddressBtn');
-    
-    // Disable button and show loading
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-    loadingOverlay.classList.remove('hidden');
-    
-    // Prepare URL-encoded form data to match backend parser/validator
-    const body = new URLSearchParams();
-    body.set('fullName', document.getElementById('editName').value);
-    body.set('addressLine', document.getElementById('editStreet').value);
-    body.set('city', document.getElementById('editCity').value);
-    body.set('state', document.getElementById('editState').value);
-    body.set('pincode', document.getElementById('editZipCode').value);
-    body.set('phone', document.getElementById('editPhone').value);
-    body.set('isDefault', document.getElementById('editIsDefault').checked ? 'true' : 'false');
-    
-    try {
-      const response = await fetch(`/addresses/edit/${addressId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString()
-      });
-      
-      if (response.ok) {
-        // Update the address in our local array
-        const addressIndex = addresses.findIndex(a => a._id === addressId);
-        if (addressIndex !== -1) {
-          addresses[addressIndex] = {
-            ...addresses[addressIndex],
-            fullName: document.getElementById('editName').value,
-            addressLine: document.getElementById('editStreet').value,
-            city: document.getElementById('editCity').value,
-            state: document.getElementById('editState').value,
-            pincode: document.getElementById('editZipCode').value,
-            phone: document.getElementById('editPhone').value,
-            isDefault: document.getElementById('editIsDefault').checked
-          };
-        }
-        
-        // Update the UI immediately
-        updateAddressCard(addressId);
-        
-        // Show success message
-        showNotification('Address updated successfully!', 'success');
-        closeModal();
-        
-        // Refresh the page to show updated addresses
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-        
-      } else {
-        // If server returns an error, show message
-        const errorText = await response.text();
-        showNotification('Failed to update address. Please try again.', 'error');
-        console.error('Server error:', errorText);
-      }
-      
-    } catch (error) {
-      console.error('Network error:', error);
-      showNotification('Network error. Please check your connection.', 'error');
-    } finally {
-      // Reset button state
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save Address';
-      loadingOverlay.classList.add('hidden');
-    }
-  });
+
 
   // Update address card in the UI
   function updateAddressCard(addressId) {
@@ -446,49 +378,49 @@
 
   // Handle keyboard shortcuts
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+    if (e.key === 'Escape' && modal.style.display !== 'none') {
       closeModal();
     }
   });
 </script>
 
 <!-- Add Address Modal -->
-<div id="addAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+<div id="addAddressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
   <div class="bg-white rounded-lg p-8 w-full max-w-md relative shadow-xl">
     <button id="closeAddModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
     <h2 class="text-2xl font-semibold mb-6">Add Address</h2>
 
-    <form id="addAddressForm">
+    <form id="addAddressForm" action="/addresses" method="POST">
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-        <input type="text" name="fullName" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        <input type="text" name="fullName" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-        <input type="text" name="phone" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        <input type="text" name="phone" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required maxlength="10" pattern="[0-9]*" inputmode="numeric">
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-        <input type="text" name="addressLine" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+        <input type="text" name="addressLine" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
-          <input type="text" name="city" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+          <input type="text" name="city" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
-          <input type="text" name="state" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+          <input type="text" name="state" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
-          <input type="text" name="pincode" class="w-full border border-gray-300 rounded-md px-3 py-2" required>
+          <input type="text" name="pincode" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required maxlength="6" pattern="[0-9]*" inputmode="numeric">
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
-          <input type="text" name="country" class="w-full border border-gray-300 rounded-md px-3 py-2" value="India">
+          <input type="text" name="country" class="w-full border border-gray-300 rounded-md px-3 py-2" value="India" data-required>
         </div>
       </div>
       <div class="mb-6">
@@ -512,46 +444,128 @@
   const closeAddModalBtn = document.getElementById('closeAddModal');
   const cancelAddBtn = document.getElementById('cancelAdd');
   const addForm = document.getElementById('addAddressForm');
-  if (addForm) { window.attachInlineValidation(addForm); }
+  if (addForm) { 
+    console.log('Attaching inline validation to add form...');
+    window.attachInlineValidation(addForm); 
+    console.log('Inline validation attached to add form');
+  }
 
-  function showAddModal(){ addModal.classList.remove('hidden'); }
-  function hideAddModal(){ addModal.classList.add('hidden'); addForm.reset(); }
+  function showAddModal(){ 
+    console.log('Opening add modal...');
+    addModal.style.display = 'flex'; 
+    console.log('Modal should be visible now');
+  }
+  function hideAddModal(){ 
+    console.log('Hiding add modal...');
+    addModal.style.display = 'none'; 
+    addForm.reset(); 
+  }
 
-  openAddModalBtn?.addEventListener('click', showAddModal);
-  closeAddModalBtn?.addEventListener('click', hideAddModal);
-  cancelAddBtn?.addEventListener('click', hideAddModal);
-  addModal?.addEventListener('click', (e) => { if (e.target === addModal) hideAddModal(); });
+  console.log('Setting up add modal event listeners...');
+  console.log('openAddModalBtn:', openAddModalBtn);
+  console.log('addModal:', addModal);
+  
+  if (openAddModalBtn) {
+    openAddModalBtn.addEventListener('click', function(e) {
+      console.log('Add button clicked!');
+      e.preventDefault();
+      showAddModal();
+    });
+  }
+  
+  if (closeAddModalBtn) {
+    closeAddModalBtn.addEventListener('click', hideAddModal);
+  }
+  
+  if (cancelAddBtn) {
+    cancelAddBtn.addEventListener('click', hideAddModal);
+  }
+  
+  if (addModal) {
+    addModal.addEventListener('click', (e) => { 
+      if (e.target === addModal) {
+        console.log('Clicked outside modal, closing...');
+        hideAddModal(); 
+      }
+    });
+  }
 
-  addForm?.addEventListener('submit', async (e) => {
+  // Add input restrictions for phone and pincode fields
+  const phoneInputs = document.querySelectorAll('input[name="phone"]');
+  const pincodeInputs = document.querySelectorAll('input[name="pincode"]');
+  
+  // Phone input restrictions
+  phoneInputs.forEach(input => {
+    input.addEventListener('input', function(e) {
+      // Remove any non-digit characters
+      let value = e.target.value.replace(/\D/g, '');
+      
+      // Limit to 10 digits
+      if (value.length > 10) {
+        value = value.slice(0, 10);
+      }
+      
+      e.target.value = value;
+    });
+  });
+  
+  // Pincode input restrictions
+  pincodeInputs.forEach(input => {
+    input.addEventListener('input', function(e) {
+      // Remove any non-digit characters
+      let value = e.target.value.replace(/\D/g, '');
+      
+      // Limit to 6 digits
+      if (value.length > 6) {
+        value = value.slice(0, 6);
+      }
+      
+      e.target.value = value;
+    });
+  });
+
+  // Custom submit handler for add address form to stay in checkout
+  addForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    // Convert to URL-encoded to work with express.urlencoded and validators
-    const body = new URLSearchParams();
-    body.set('fullName', addForm.querySelector('input[name="fullName"]').value);
-    body.set('phone', addForm.querySelector('input[name="phone"]').value);
-    body.set('addressLine', addForm.querySelector('input[name="addressLine"]').value);
-    body.set('city', addForm.querySelector('input[name="city"]').value);
-    body.set('state', addForm.querySelector('input[name="state"]').value);
-    body.set('pincode', addForm.querySelector('input[name="pincode"]').value);
-    body.set('country', addForm.querySelector('input[name="country"]').value || 'India');
-    body.set('isDefault', addForm.querySelector('input[name="isDefault"]').checked ? 'true' : 'false');
-
+    
+    // Let the inline validator handle validation first
+    const isValid = validateAllFields(addForm);
+    if (!isValid) {
+      return false;
+    }
+    
+    // If validation passes, submit via AJAX
+    const formData = new FormData(addForm);
+    const urlSearchParams = new URLSearchParams();
+    formData.forEach((value, key) => urlSearchParams.append(key, value));
+    
     try {
-      const res = await fetch('/addresses', { // uses POST /addresses in router
+      const response = await fetch('/addresses', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString()
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: urlSearchParams.toString()
       });
-      if (res.ok) {
-        // Reload checkout to display new address
+      
+      if (response.ok) {
+        // Success - reload the page to show the new address
         window.location.reload();
       } else {
-        const errorText = await res.text();
-        console.error('Server error:', errorText);
-        alert('Failed to add address. Please check all fields.');
+        // Handle validation errors
+        const html = await response.text();
+        const errors = extractValidationErrors(html);
+        
+        if (errors && Object.keys(errors).length > 0) {
+          showErrors(addForm, errors);
+        } else {
+          alert('Failed to add address. Please try again.');
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert('Network error adding address');
+    } catch (error) {
+      console.error('Error adding address:', error);
+      alert('Network error. Please try again.');
     }
   });
 </script>

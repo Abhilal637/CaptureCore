@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants');
 
 async function isUserLoggedIn(req, res, next) {
   try {
@@ -59,7 +60,7 @@ async function optionalAuth(req, res, next) {
   } catch (err) {
     console.error('Optional auth error:', err);
   }
-  next();
+  next(); 
 }
 
 function sessionSecurity(req, res, next) {
@@ -80,7 +81,7 @@ function sessionSecurity(req, res, next) {
 
 function handleAuthFail(req, res, query, jsonMessage) {
   if (req.headers['content-type'] === 'application/json') {
-    return res.status(401).json({ message: jsonMessage });
+    return res.status(STATUS_CODES.UNAUTHORIZED).json({ message: jsonMessage });
   }
   return res.redirect(`/login?error=${query}`);
 }

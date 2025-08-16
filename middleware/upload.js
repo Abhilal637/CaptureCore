@@ -2,7 +2,6 @@
 const multer = require('multer');
 const path = require('path');
 
-// Disk storage for profile pictures and simple uploads
 const diskStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'public/uploads/');
@@ -25,7 +24,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Two uploaders: disk and memory
+
 const diskUpload = multer({
   storage: diskStorage,
   limits: { fileSize: 1024 * 1024 * 15 },

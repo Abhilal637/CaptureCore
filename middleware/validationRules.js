@@ -15,7 +15,7 @@ const disallowConsecutiveDigits = (value) => {
   return true;
 };
 
-// ====== Validation Schemas ======
+
 module.exports = {
   // USER SIGNUP
   userSignupRules: [

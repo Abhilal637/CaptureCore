@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Signup | CaptureCore</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/inline-validator.js"></script>
   
   
   <style>
@@ -28,65 +29,30 @@
       <% if (error) { %>
         <p class="text-red-500 text-center mb-4"><%= error %></p>
       <% } %>
-      <form action="/signup" method="POST" class="space-y-5">
+      <form action="/signup" method="POST" class="space-y-5" id="signupForm">
         <div>
-          <% if (locals.errors && errors.name) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.name.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
           <input type="text" name="name" placeholder="name" 
             value="<%= locals.body && body.name ? body.name : '' %>"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.name ? 'border-red-500' : '' %>" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" data-required />
         </div>
         <div>
-          <% if (locals.errors && errors.email) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.email.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
           <input type="email" name="email" placeholder="EMAIL ADDRESS" 
             value="<%= locals.body && body.email ? body.email : '' %>"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.email ? 'border-red-500' : '' %>" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" data-required />
         </div>
         <div>
-          <% if (locals.errors && errors.phone) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.phone.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
-          <input type="text" name="phone" placeholder="PHONE NUMBER" 
+          <input type="tel" name="phone" placeholder="PHONE NUMBER" 
             value="<%= locals.body && body.phone ? body.phone : '' %>"
             maxlength="10"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.phone ? 'border-red-500' : '' %>" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" data-required />
         </div>
         <div>
-          <% if (locals.errors && errors.password) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.password.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
           <input type="password" name="password" placeholder="PASSWORD"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.password ? 'border-red-500' : '' %>" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" data-required minlength="8" />
         </div>
         <div>
-          <% if (locals.errors && errors.confirm_password) { %>
-            <div class="text-red-500 text-xs mb-1">
-              <% errors.confirm_password.forEach(error => { %>
-                <p><%= error %></p>
-              <% }) %>
-            </div>
-          <% } %>
           <input type="password" name="confirm_password" placeholder="CONFIRM PASSWORD"
-            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black <%= locals.errors && errors.confirm_password ? 'border-red-500' : '' %>" />
+            class="w-full border border-gray-300 text-xs px-3 py-2 focus:outline-none focus:ring-1 focus:ring-black" data-required />
         </div>
         <div>
           <button type="submit"
@@ -169,6 +135,12 @@
   
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      // Attach inline validation to signup form
+      const signupForm = document.getElementById('signupForm');
+      if (signupForm) {
+        window.attachInlineValidation(signupForm);
+      }
+      
       const phoneInput = document.querySelector('input[name="phone"]');
       
       if (phoneInput) {

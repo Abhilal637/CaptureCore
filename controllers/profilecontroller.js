@@ -6,6 +6,7 @@ const bcrypt= require('bcrypt')
 const nodemailer= require('nodemailer')
 require('dotenv').config()
 const otpService = require('../utils/otpHelper');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants');
 
 exports.getProfile = async (req, res) => {
   try {
@@ -80,7 +81,7 @@ exports.postEditProfile = async (req, res) => {
       updateData.mobile = phone.trim();
     }
     if (profilePicture) {
-      updateData.profilePicture = profilePicture; // store filename only
+      updateData.profilePicture = profilePicture;
     }
 
     await User.findByIdAndUpdate(userId, updateData, { new: true });
@@ -131,7 +132,7 @@ exports.sendOtpForEmail = async (req, res) => {
     res.redirect('/verify-email')
   } catch (error) {
     console.log('Error sending OTP:', error);
-    res.status(500).send('something went wrong')
+      res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('something went wrong')
   }
 }
 
@@ -248,7 +249,15 @@ exports.getAddress = (req, res) => {
 
 exports.postAddaddress = async (req, res) => {
 
+  const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
+
   if (req.validationErrors) {
+    if (isAjax) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+        success: false, 
+        errors: req.validationErrors 
+      });
+    }
     return res.render('user/add-address', {
       currentPage: 'add-address',
       errors: req.validationErrors,
@@ -262,22 +271,35 @@ exports.postAddaddress = async (req, res) => {
     const userId = req.session.userId;
     const { isDefault, ...addressData } = req.body || {};
 
-
     
     if (isDefault === 'true') {
       await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
     }
 
-    
     await Address.create({
       ...addressData,
       user: userId,
       isDefault: isDefault === 'true'
     });
 
+    if (isAjax) {
+      return res.status(STATUS_CODES.OK).json({ 
+        success: true, 
+        message: MESSAGES.SUCCESS.ADDRESS_ADDED 
+      });
+    }
+
     res.redirect('/addresses');
   } catch (error) {
     console.error('Error adding address:', error);
+    
+    if (isAjax) {
+      return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
+        success: false, 
+        error: MESSAGES.ERROR.SERVER_ERROR 
+      });
+    }
+    
     res.render('user/add-address', {
       currentPage: 'add-address',
       error: 'Failed to add address. Please try again.',
@@ -320,7 +342,7 @@ exports.postEditAddress = async (req, res) => {
     const addressId = req.params.id;
     const { isDefault, ...addressData } = req.body;
 
-    // If this address is being set as default, first set all other addresses to false
+   
     if (isDefault === 'true') {
       await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
     }
@@ -377,33 +399,33 @@ exports.getWallet = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching wallet data:', error);
-    res.status(500).render('error', { message: 'Failed to load wallet data' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).render('error', { message: 'Failed to load wallet data' });  
   }
 };
 
-// Send email OTP for profile update
+
 exports.sendEmailOTP = async (req, res) => {
   try {
     const { email } = req.body;
     const userId = req.session.userId;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not authenticated' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not authenticated' });
     }
 
-    // Check if email is already in use by another user
+    
     const existingUser = await User.findOne({ email, _id: { $ne: userId } });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email is already in use' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Email is already in use' });
     }
 
     const otp = otpService.generateOtp();
-    const otpExpiry = Date.now() + 2 * 60 * 1000; // 2 minutes
+    const otpExpiry = Date.now() + 2 * 60 * 1000; 
 
-    // Update user's OTP
+
     await User.findByIdAndUpdate(userId, { otp, otpExpiry });
 
-    // Send OTP email
+
     await transporter.sendMail({
       from: 'capturecore792@gmail.com',
       to: email,
@@ -425,31 +447,29 @@ exports.sendEmailOTP = async (req, res) => {
     res.json({ success: true, message: 'OTP sent successfully' });
   } catch (error) {
     console.error('Error sending email OTP:', error);
-    res.status(500).json({ success: false, message: 'Failed to send OTP' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to send OTP' });
   }
 };
 
-// Verify email OTP and update email
+
 exports.verifyEmailOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
     const userId = req.session.userId;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not authenticated' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not authenticated' });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
 
-    // Check if OTP is valid and not expired
     if (user.otp !== otp || user.otpExpiry < Date.now()) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Invalid or expired OTP' });
     }
 
-    // Update email
     user.email = email;
     user.otp = undefined;
     user.otpExpiry = undefined;
@@ -458,6 +478,6 @@ exports.verifyEmailOTP = async (req, res) => {
     res.json({ success: true, message: 'Email updated successfully' });
   } catch (error) {
     console.error('Error verifying email OTP:', error);
-    res.status(500).json({ success: false, message: 'Failed to verify OTP' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to verify OTP' });
   }
 };

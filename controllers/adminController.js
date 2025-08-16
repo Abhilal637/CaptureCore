@@ -4,7 +4,8 @@ const bcrypt = require('bcrypt');
 const cloudinary = require("../config/cloudinary");
 const streamifier = require('streamifier');
 const Order=require('../models/order');
-const PDFDocument = require('pdfkit'); 
+const PDFDocument = require('pdfkit');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants'); 
 
 
 function setNoCache(res) {
@@ -73,7 +74,7 @@ exports.getUsers = async (req, res) => {
       search
     });
   } catch (err) {
-    res.status(500).send("Server Error");
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
   }
 };
 exports.dashboard = (req, res) => {
@@ -126,7 +127,7 @@ exports.postAddProduct = async (req, res) => {
 
   } catch (err) {
     console.log('upload error', err);
-    res.status(500).send('upload failed');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.FILE_TOO_LARGE);
   }
 };
 
@@ -142,7 +143,7 @@ exports.toggleUserBlockStatus = async (req, res) => {
     const user = await User.findById(id);
     if (!user) {
       console.log('User not found with ID:', id);
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ error: MESSAGES.ERROR.USER_NOT_FOUND });
     }
 
     console.log('Found user:', user.name, 'Current isBlocked:', user.isBlocked);
@@ -158,9 +159,7 @@ exports.toggleUserBlockStatus = async (req, res) => {
         const userSockets = req.app.get('userSockets');
         const userSocketId = userSockets.get(id);
         
-        // console.log('Socket.io available:', !!io);
-        // console.log('User sockets map:', userSockets);
-        // console.log('User socket ID:', userSocketId);
+        
         
         if (userSocketId) {
           io.to(userSocketId).emit('force_logout', {
@@ -179,7 +178,7 @@ exports.toggleUserBlockStatus = async (req, res) => {
     res.json({ success: true, message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully` });
   } catch (err) {
     console.error('Error toggling user block status:', err);
-    res.status(500).json({ error: 'Could not update user status' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 

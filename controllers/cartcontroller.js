@@ -1,6 +1,7 @@
 const Cart = require('../models/cart');
 const User= require('../models/user');
 const Product = require('../models/product');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants');
 
 exports.getCartPage = async (req, res) => {
   try {
@@ -49,7 +50,7 @@ exports.getCartPage = async (req, res) => {
     });
   } catch (err) {
     console.error('Error loading cart:', err);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
   }
 };
 const MAX_PER_PRODUCT = 5; // maximum quantity per product per user
@@ -64,7 +65,7 @@ exports.addToCart = async (req, res) => {
     if (!userId) {
       const errorMsg = 'Authentication required';
       return req.headers['content-type'] === 'application/json'
-        ? res.status(401).json({ success: false, message: errorMsg })
+        ? res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: errorMsg })
         : res.redirect('/login');
     }
 
@@ -73,21 +74,21 @@ exports.addToCart = async (req, res) => {
     if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
       const errorMsg = 'Product not found or unavailable';
       return req.headers['content-type'] === 'application/json'
-        ? res.status(404).json({ success: false, message: errorMsg })
+        ? res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: errorMsg })
         : res.redirect('/wishlist');
     }
 
     if (product.category?.isBlocked) {
       const errorMsg = 'Product category is currently unavailable';
       return req.headers['content-type'] === 'application/json'
-        ? res.status(404).json({ success: false, message: errorMsg })
+        ? res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: errorMsg })
         : res.redirect('/wishlist');
     }
 
     if (product.stock < quantity) {
       const errorMsg = `Only ${product.stock} items available in stock`;
       return req.headers['content-type'] === 'application/json'
-        ? res.status(400).json({ success: false, message: errorMsg })
+        ? res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: errorMsg })
         : res.redirect('/wishlist');
     }
 
@@ -112,7 +113,7 @@ exports.addToCart = async (req, res) => {
         const errorMsg = newQuantity > product.stock
           ? `Only ${product.stock} items available in stock`
           : `You can add at most ${MAX_PER_PRODUCT} of this item`;
-        return res.status(400).json({ success: false, message: errorMsg });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: errorMsg });
       }
       existingItem.quantity = newQuantity;
   } else {
@@ -121,7 +122,7 @@ exports.addToCart = async (req, res) => {
       const errorMsg = quantity > product.stock
         ? `Only ${product.stock} items available in stock`
         : `You can add at most ${MAX_PER_PRODUCT} of this item`;
-      return res.status(400).json({ success: false, message: errorMsg });
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: errorMsg });
     }
     cart.items.push({ product: productId, quantity });
 }
@@ -130,7 +131,7 @@ exports.addToCart = async (req, res) => {
     await cart.save();
 
     if (req.headers['content-type'] === 'application/json') {
-      return res.status(200).json({ success: true, message: 'Product added to cart successfully', cartItemCount: cart.items.length });
+      return res.status(STATUS_CODES.OK).json({ success: true, message: 'Product added to cart successfully', cartItemCount: cart.items.length });
     } else {
       return res.redirect('/cart');
     }
@@ -138,7 +139,7 @@ exports.addToCart = async (req, res) => {
     console.error('Error adding to cart:', err);
     const errorMsg = 'Server Error. Please try again.';
     if (req.headers['content-type'] === 'application/json') {
-      return res.status(500).json({ success: false, message: errorMsg });
+      return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: errorMsg });
     } else {
       return res.redirect('/wishlist');
     }
@@ -151,16 +152,16 @@ exports.getCartCount = async (req, res) => {
   try {
     const userId = req.session.userId;
     if (!userId) {
-      return res.status(200).json({ count: 0 });
+      return res.status(STATUS_CODES.OK).json({ count: 0 });
     }
 
     const userCart =await Cart.findOne({ user: userId });
     const count = userCart ? userCart.items.length : 0;
     
-    res.status(200).json({ count });
+    res.status(STATUS_CODES.OK).json({ count });
   } catch (err) {
     console.error('Error getting cart count:', err);
-    res.status(500).json({ count: 0 });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ count: 0 });
   }
 };
 
@@ -189,31 +190,31 @@ exports.updateCartItemQuantity = async (req, res) => {
     const productId = req.params.productId;
     const { quantity } = req.body;
 
-    if (!userId) return res.status(401).json({ message: 'Not logged in' });
+    if (!userId) return res.status(STATUS_CODES.UNAUTHORIZED).json({ message: 'Not logged in' });
 
     const product = await Product.findById(productId).populate('category');
     if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      return res.status(404).json({ message: 'Product is no longer available' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ message: 'Product is no longer available' });
     }
 
     if (product.category && product.category.isBlocked) {
-      return res.status(404).json({ message: 'Product category is currently unavailable' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ message: 'Product category is currently unavailable' });
     }
 
     // Allow decrementing even if stock is lower than current cart quantity
     const cart = await Cart.findOne({ user: userId }).populate('items.product');
-    if (!cart) return res.status(404).json({ message: 'Cart not found' });
+    if (!cart) return res.status(STATUS_CODES.NOT_FOUND).json({ message: 'Cart not found' });  
 
     const item = cart.items.find(item => item.product._id.toString() === productId);
-    if (!item) return res.status(404).json({ message: 'Item not found in cart' });
+    if (!item) return res.status(STATUS_CODES.NOT_FOUND).json({ message: 'Item not found in cart' });
 
     // If increasing quantity, check limits
     if (quantity > item.quantity) {
       if (quantity > product.stock) {
-        return res.status(400).json({ message: `Only ${product.stock} items available in stock` });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ message: `Only ${product.stock} items available in stock` });
       }
       if (quantity > MAX_PER_PRODUCT) {
-        return res.status(400).json({ message: `You can add at most ${MAX_PER_PRODUCT} of this item` });
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ message: `You can add at most ${MAX_PER_PRODUCT} of this item` });
       }
     }
 
@@ -231,7 +232,7 @@ exports.updateCartItemQuantity = async (req, res) => {
 
     const itemSubtotal = quantity * product.price;
 
-    res.status(200).json({
+    res.status(STATUS_CODES.OK).json({
       message: 'Quantity updated successfully',
       totalPrice,
       itemSubtotal,
@@ -240,7 +241,7 @@ exports.updateCartItemQuantity = async (req, res) => {
     });
   } catch (err) {
     console.error('Error updating cart item quantity:', err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
   }
 };
 
@@ -250,24 +251,24 @@ exports.clearCart = async (req, res) => {
     const userId = req.session.userId;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'User not authenticated' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'User not authenticated' });
     }
 
     const cart = await Cart.findOne({ user: userId });
     if (!cart) {
-      return res.status(404).json({ success: false, message: 'Cart not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Cart not found' });
     }
 
     cart.items = [];
     await cart.save();
 
     if (req.headers['content-type'] === 'application/json') {
-      return res.status(200).json({ success: true, message: 'Cart cleared successfully' });
+      return res.status(STATUS_CODES.OK).json({ success: true, message: 'Cart cleared successfully' });
     } else {
       return res.redirect('/cart');
     }
   } catch (err) {
     console.error('Error clearing Cart:', err);
-    return res.status(500).json({ success: false, message: 'Server Error while clearing cart' });
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server Error while clearing cart' });
   }
 };

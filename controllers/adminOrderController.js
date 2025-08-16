@@ -8,6 +8,7 @@ const Order=require('../models/order');
 const PDFDocument = require('pdfkit'); 
 
 const { refundToWallet } = require('../utils/wallet');
+const { STATUS_CODES, MESSAGES, ORDER_STATUS } = require('../utils/constants');
 
 
 
@@ -106,7 +107,7 @@ exports.listOrder = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
   }
 };
 
@@ -116,7 +117,7 @@ exports.viewOrderDetails = async (req, res) => {
       .populate('user')
       .populate('items.product'); 
 
-    if (!order) return res.status(404).send('Order not found');
+    if (!order) return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.ERROR.ORDER_NOT_FOUND);
 
     const totalAmount = typeof order.totalAmount === 'number' 
       ? order.totalAmount 
@@ -125,7 +126,7 @@ exports.viewOrderDetails = async (req, res) => {
     res.render('admin/orderDetail', { order, totalAmount });
   } catch (err) {
     console.error('Error loading order details:', err);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
   }
 };
 exports.updateOrderStatus = async (req, res) => {
@@ -133,7 +134,7 @@ exports.updateOrderStatus = async (req, res) => {
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
 
-    if (!order) return res.status(404).send('Order not found');
+    if (!order) return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.ERROR.ORDER_NOT_FOUND);
 
     const validTransitions = {
       'Placed': ['Confirmed', 'Cancelled'],
@@ -143,19 +144,19 @@ exports.updateOrderStatus = async (req, res) => {
     };
 
     if (!validTransitions[order.status] || !validTransitions[order.status].includes(status)) {
-      return res.status(400).send(`Invalid status transition from ${order.status} to ${status}`);
+      return res.status(STATUS_CODES.BAD_REQUEST).send(`Invalid status transition from ${order.status} to ${status}`);
     }
 
     order.status = status;
 
     if (status === 'Delivered') {
       order.paymentStatus = 'Paid';
-      // mark all items delivered that are not cancelled
+     
       order.items.forEach(item => {
         if (item.status !== 'Cancelled') item.status = 'Delivered';
       });
     } else if (status === 'Cancelled') {
-      order.paymentStatus = 'Pending'; // keep pending until refunds, as requested
+      order.paymentStatus = 'Pending'; 
       order.items.forEach(item => { item.status = 'Cancelled'; });
     }
 
@@ -163,7 +164,7 @@ exports.updateOrderStatus = async (req, res) => {
     res.redirect(`/admin/orders/${order._id}`);
   } catch (err) {
     console.error('Error updating status', err);
-    res.status(500).send('Server Error');
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
   }
 };
 exports.verifyReturnAndRefund = async (req, res) => {
@@ -171,21 +172,20 @@ exports.verifyReturnAndRefund = async (req, res) => {
         const { orderId, productId } = req.params;
 
         const order = await Order.findById(orderId);
-        if (!order) return res.status(404).send('Order not found');
+        if (!order) return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.ERROR.ORDER_NOT_FOUND);
 
-        // Find the specific item
         const item = order.items.find(i => i.product.toString() === productId);
         if (!item || item.status !== 'Return Requested') {
-            return res.status(400).send('Invalid return request');
+            return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.INVALID_RETURN_REQUEST);
         }
 
-        // Mark as Returned and approved
+        
         item.status = 'Returned';
         item.returnApproved = true;
         item.returnRequested = false;
         item.isReturned = true;
 
-        // Restore stock for this item
+        
         try {
           const product = await Product.findById(productId);
           if (product) {
@@ -196,7 +196,7 @@ exports.verifyReturnAndRefund = async (req, res) => {
           console.error('Stock restore failed:', stockErr);
         }
 
-        // Refund just this product to wallet
+      
         const refundAmount = (item.price || 0) * (item.quantity || 1);
         if (refundAmount > 0) {
             try {
@@ -206,22 +206,22 @@ exports.verifyReturnAndRefund = async (req, res) => {
             }
         }
 
-        // If all items are returned, update overall order status
+        
         if (order.items.every(i => i.status === 'Returned')) {
             order.status = 'Returned';
-            // Keep paymentStatus within enum; refund handled via wallet
+            
         }
 
         await order.save();
 
-        // Respond JSON for fetch() callers; redirect otherwise
+        
         if (req.is('application/json') || req.xhr || (req.headers.accept || '').includes('application/json')) {
           return res.status(200).json({ success: true, message: 'Return approved and amount refunded to wallet.' });
         }
         res.redirect(`/admin/orders/${order._id}`);
     } catch (err) {
         console.error('Error verifying return', err);
-        res.status(500).send('Server Error');
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
     }
 };
 
@@ -229,17 +229,17 @@ exports.cancelOrder = async (req, res) => {
     try {
         const order = await Order.findById(req.params.id);
 
-        if (!order) return res.status(404).send('Order not found');
+        if (!order) return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.ERROR.ORDER_NOT_FOUND);
 
-        // Only allow cancel if not shipped or delivered
+        
         if (['Shipped', 'Out for Delivery', 'Delivered'].includes(order.status)) {
-            return res.status(400).send('Cannot cancel after shipping');
+            return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.CANCEL_AFTER_SHIPPING);
         }
 
         order.status = 'Cancelled';
         order.paymentStatus = 'Cancelled';
 
-        // Restore product stock
+        
         for (const item of order.items) {
             if (item.status !== 'Cancelled') {
                 const product = await Product.findById(item.product);
@@ -255,6 +255,6 @@ exports.cancelOrder = async (req, res) => {
         res.redirect(`/admin/orders/${order._id}`);
     } catch (err) {
         console.error('Error cancelling order', err);
-        res.status(500).send('Server Error');
+        res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send(MESSAGES.ERROR.SERVER_ERROR);
     }
 };

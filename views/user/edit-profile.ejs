@@ -13,6 +13,7 @@
 
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/js/inline-validator.js"></script>
 
   <style>
     body {
@@ -63,15 +64,15 @@
       <div>
         <label for="name" class="block mb-1 text-gray-700 font-semibold select-none">Name</label>
         <input type="text" id="name" name="name" value="<%= user?.name || '' %>"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
+          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" data-required />
         <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
       <!-- Phone -->
       <div>
         <label for="phone" class="block mb-1 text-gray-700 font-semibold select-none">Phone</label>
-        <input type="text" id="phone" name="phone" value="<%= (user?.mobile || user?.phone) || '' %>"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
+        <input type="tel" id="phone" name="phone" value="<%= (user?.mobile || user?.phone) || '' %>"
+          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" data-required />
         <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
@@ -275,6 +276,15 @@
             customClass: { popup: 'font-inter' }
           });
         }
+      }
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const editProfileForm = document.getElementById('editProfileForm');
+      if (editProfileForm) {
+        window.attachInlineValidation(editProfileForm);
       }
     });
   </script>

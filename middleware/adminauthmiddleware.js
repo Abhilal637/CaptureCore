@@ -1,7 +1,8 @@
 
 const User = require('../models/user');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants');
 
-// Ensure admin is authenticated
+
 const adminAuth = (req, res, next) => {
   if (req.session?.isAdmin && req.session?.admin) {
     return next();
@@ -9,7 +10,7 @@ const adminAuth = (req, res, next) => {
   return res.redirect('/admin/login');
 };
 
-// Prevent already logged-in admins from accessing login page
+
 const preventAdminLoginIfLoggedIn = (req, res, next) => {
   if (req.session?.isAdmin && req.session?.admin) {
     return res.redirect('/admin/dashboard');
@@ -17,7 +18,7 @@ const preventAdminLoginIfLoggedIn = (req, res, next) => {
   next();
 };
 
-// Disable caching for sensitive routes
+
 const noCache = (req, res, next) => {
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, private',
@@ -27,7 +28,7 @@ const noCache = (req, res, next) => {
   next();
 };
 
-// Check if user is blocked
+
 const checkBlocked = async (req, res, next) => {
   if (!req.user) return next();
 
@@ -35,7 +36,7 @@ const checkBlocked = async (req, res, next) => {
     if (req.user.isBlocked) {
       req.session.destroy(() => {
         if (req.is('application/json')) {
-          return res.status(401).json({ message: 'User account is blocked' });
+          return res.status(STATUS_CODES.UNAUTHORIZED).json({ message: 'User account is blocked' });
         }
         res.redirect('/login?isBlocked=true');
       });
@@ -45,7 +46,7 @@ const checkBlocked = async (req, res, next) => {
   } catch (err) {
     console.error('Blocked check failed:', err);
     if (req.is('application/json')) {
-      return res.status(500).json({ message: 'Server error' });
+      return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
     }
     res.redirect('/login');
   }

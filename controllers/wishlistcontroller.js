@@ -2,6 +2,7 @@ const Wishlist= require('../models/wishlist')
 const User= require('../models/user');
 const Product = require('../models/product');
 const Cart = require('../models/cart');
+const { STATUS_CODES, MESSAGES } = require('../utils/constants');
 
 exports.getWishlist = async (req, res) => {
   try {
@@ -31,16 +32,16 @@ exports.addToWishlist = async (req, res) => {
 
   try {
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not logged in' });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
     const product = await Product.findById(productId);
     if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      return res.status(404).json({ success: false, message: 'Product is no longer available' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Product is no longer available' });
     }
 
     if (!user.wishlist.includes(productId)) {
@@ -48,11 +49,11 @@ exports.addToWishlist = async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({ success: true, message: 'Added to wishlist' });
+    res.status(STATUS_CODES.OK).json({ success: true, message: 'Added to wishlist' });
 
   } catch (err) {
     console.error('Wishlist add error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -62,12 +63,12 @@ exports.removeFromWishlist = async (req, res) => {
     const productId = req.params.id;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not logged in' });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
 
     const initialLength = user.wishlist.length;
@@ -83,7 +84,7 @@ exports.removeFromWishlist = async (req, res) => {
     });
   } catch (err) {
     console.error('Wishlist remove error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -94,18 +95,18 @@ exports.toggleWishlist = async (req, res) => {
     const productId = req.params.productId;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not logged in' });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
 
  
     const product = await Product.findById(productId);
     if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
-      return res.status(404).json({ success: false, message: 'Product is no longer available' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Product is no longer available' });
     }
 
     const isInWishlist = user.wishlist.includes(productId);
@@ -131,7 +132,7 @@ exports.toggleWishlist = async (req, res) => {
     }
   } catch (err) {
     console.error('Wishlist toggle error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -141,12 +142,12 @@ exports.clearWishlist = async (req, res) => {
     const userId = req.session.userId;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Not logged in' });
+      return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not logged in' });
     }
 
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'User not found' });
     }
 
     const itemCount = user.wishlist.length;
@@ -160,6 +161,6 @@ exports.clearWishlist = async (req, res) => {
     });
   } catch (err) {
     console.error('Clear wishlist error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };

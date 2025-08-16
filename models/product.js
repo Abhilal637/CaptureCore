@@ -5,7 +5,6 @@ const productSchema = new mongoose.Schema({
   description: String,
   price: { type: Number, required: true },
   brand: { type: String, trim: true, index: true },
-  // Specs for filtering
   megapixelBucket: {
     type: String,
     enum: ['12-16', '16-24', '24+'],
@@ -22,7 +21,7 @@ const productSchema = new mongoose.Schema({
     type: String,
     enum: ['canon-ef', 'canon-rf', 'nikon-f', 'nikon-z', 'sony-e', 'fujifilm-x'],
   },
-  // Lens-specific fields
+  
   focalLength: {
     type: String,
     enum: ['14mm', '24mm', '35mm', '50mm', '85mm', '100mm', '200mm', '300mm', '400mm', '600mm'],

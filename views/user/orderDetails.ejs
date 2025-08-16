@@ -26,6 +26,8 @@
             <!-- Status Badge -->
             <% if (item.isCancelled || item.status === 'Cancelled') { %>
               <span class="text-red-600 text-sm font-semibold">Cancelled</span>
+            <% } else if (item.status === 'Return Requested') { %>
+              <span class="text-orange-600 text-sm font-semibold">Return Requested</span>
             <% } else if (item.isReturned || item.status === 'Returned') { %>
               <span class="text-yellow-600 text-sm font-semibold">Returned</span>
             <% } else { %>
@@ -41,7 +43,7 @@
                 <% } %>
               </div>
 
-              <% if (order.status === 'Delivered') { %>
+              <% if (order.status === 'Delivered' && item.status !== 'Return Requested' && item.status !== 'Returned') { %>
                 <!-- Return Product -->
                 <div class="mt-2 space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-3">
                   <input type="hidden" name="orderId" value="<%= order.orderId %>">
@@ -95,7 +97,7 @@
          </div>
        <% } %>
 
-             <% if (order.status === 'Delivered') { %>
+             <% if (order.status === 'Delivered' && !order.items.some(item => item.status === 'Return Requested' || item.status === 'Returned')) { %>
         <!-- Return Full Order -->
         <div class="flex flex-col sm:flex-row gap-3">
           <input type="hidden" name="orderId" value="<%= order.orderId %>">
@@ -103,9 +105,10 @@
           <button type="button" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded return-full-order-btn" 
                   data-order-id="<%= order.orderId %>">Return Entire Order</button>
         </div>
+      <% } %>
 
-        <!-- Invoice -->
-        <!-- Invoice -->
+      <!-- Invoice - Show for delivered orders -->
+      <% if (order.status === 'Delivered') { %>
         <a href="/order/<%= order.orderId %>/invoice" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2 text-center">Download Invoice</a>
       <% } %>
     </div>
