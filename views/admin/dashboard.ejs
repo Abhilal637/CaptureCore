@@ -8,16 +8,22 @@
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
 
-<%- include('../partial/admin/sidebar') %>
+  <!-- Layout wrapper -->
+  <div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-lg">
+      <%- include('../partial/admin/sidebar') %>
+    </aside>
+
     <!-- Main Content -->
     <main class="flex-1 p-8">
 
       <!-- Header -->
       <div class="flex justify-between items-center mb-6">
-        <!-- <h1 class="text-2xl font-semibold">Hello, <%= admin?.name || 'John' %> 👋</h1> -->
         <div class="flex items-center gap-4">
           <input type="text" placeholder="Search..." class="border border-gray-300 rounded px-3 py-1 text-sm" />
-          <img src="https://i.pravatar.cc/40" alt="Admin" class="w-10 h-10 rounded-full" />
+          <img src="" alt="Admin" class="w-10 h-10 rounded-full" />
         </div>
       </div>
 

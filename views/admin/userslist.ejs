@@ -89,24 +89,40 @@
       const toggles = document.querySelectorAll('.toggle-user-status');
 
       toggles.forEach(toggle => {
-        toggle.addEventListener('change', async function () {
+        toggle.addEventListener('change', async function (e) {
           const userId = this.getAttribute('data-id');
-          const isBlocked = !this.checked;
+          const willBlock = !this.checked;
+
+          // Confirm action
+          const resultSwal = await Swal.fire({
+            title: willBlock ? 'Block this user?' : 'Unblock this user?',
+            text: willBlock ? 'The user will not be able to login.' : 'The user will be able to login.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: willBlock ? 'Yes, block' : 'Yes, unblock',
+            cancelButtonText: 'Cancel'
+          });
+
+          if (!resultSwal.isConfirmed) {
+            // revert toggle
+            this.checked = !this.checked;
+            return;
+          }
 
           const result = await fetch(`/admin/users/toggle-block/${userId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isBlocked })
+            body: JSON.stringify({ isBlocked: willBlock })
           });
 
           if (result.ok) {
             Swal.fire({
               title: 'Updated!',
               icon: 'success',
-              timer: 1000,
+              timer: 900,
               showConfirmButton: false
             });
-            setTimeout(() => location.reload(), 900);
+            setTimeout(() => location.reload(), 850);
           } else {
             Swal.fire({
               title: 'Error!',
@@ -115,6 +131,7 @@
               timer: 1500,
               showConfirmButton: false
             });
+            this.checked = !willBlock; // revert
           }
         });
       });

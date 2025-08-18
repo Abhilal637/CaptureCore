@@ -58,8 +58,10 @@ const MAX_PER_PRODUCT = 5; // maximum quantity per product per user
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.session.userId;
-    const productId = req.params.product || req.params.productId; 
+    const productId = req.params.productId; 
     const quantity = req.body && req.body.quantity ? parseInt(req.body.quantity) : 1;
+    
+    console.log('Add to cart request:', { userId, productId, quantity, body: req.body });
 
 
     if (!userId) {
@@ -93,10 +95,11 @@ exports.addToCart = async (req, res) => {
     }
 
     const user = await User.findById(userId);
-    const wishlistIndex = user.wishlist.indexOf(productId);
+    const wishlistIndex = user.wishlist.findIndex(id => id.toString() === productId);
     if (wishlistIndex !== -1) {
       user.wishlist.splice(wishlistIndex, 1);
       await user.save();
+      console.log(`Removed product ${productId} from wishlist`);
     }
 
    

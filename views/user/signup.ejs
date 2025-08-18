@@ -29,7 +29,7 @@
       <% if (error) { %>
         <p class="text-red-500 text-center mb-4"><%= error %></p>
       <% } %>
-      <form action="/signup" method="POST" class="space-y-5" id="signupForm">
+      <form action="/signup" method="POST" class="space-y-5" id="signupForm" data-required="true">
         <div>
           <input type="text" name="name" placeholder="name" 
             value="<%= locals.body && body.name ? body.name : '' %>"
@@ -137,7 +137,8 @@
     document.addEventListener('DOMContentLoaded', function() {
       // Attach inline validation to signup form
       const signupForm = document.getElementById('signupForm');
-      if (signupForm) {
+      
+      if (signupForm && !signupForm.hasAttribute('data-skip-inline')) {
         window.attachInlineValidation(signupForm);
       }
       

@@ -60,7 +60,9 @@ exports.addToWishlist = async (req, res) => {
 exports.removeFromWishlist = async (req, res) => {
   try {
     const userId = req.session.userId;
-    const productId = req.params.id;
+    const productId = req.params.productId;
+    
+    console.log('Remove from wishlist request:', { userId, productId });
 
     if (!userId) {
       return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not logged in' });

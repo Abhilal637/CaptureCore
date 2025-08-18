@@ -227,14 +227,16 @@ exports.getAddresses = async (req, res) => {
     res.render('user/addresses', {
       addresses,
       currentPage: 'addresses',
-      error: null
+      error: null,
+      success: req.query.success
     });
   } catch (error) {
     console.error('Error fetching addresses:', error);
     res.render('user/addresses', {
       addresses: [],
       currentPage: 'addresses',
-      error: 'Failed to load addresses'
+      error: 'Failed to load addresses',
+      success: req.query.success
     });
   }
 };
@@ -271,35 +273,90 @@ exports.postAddaddress = async (req, res) => {
     const userId = req.session.userId;
     const { isDefault, ...addressData } = req.body || {};
 
+    // Normalize inputs (trim and collapse spaces) to prevent near-duplicate entries
+    const normalize = (v) => (v || '').toString().trim().replace(/\s+/g, ' ');
+    const normalized = {
+      fullName: normalize(addressData.fullName),
+      phone: normalize(addressData.phone),
+      addressLine: normalize(addressData.addressLine),
+      city: normalize(addressData.city),
+      state: normalize(addressData.state),
+      pincode: normalize(addressData.pincode),
+      country: normalize(addressData.country || 'India')
+    };
+
+ 
+    const existingAddress = await Address.findOne({
+      user: userId,
+      fullName: normalized.fullName,
+      phone: normalized.phone,
+      addressLine: normalized.addressLine,
+      city: normalized.city,
+      state: normalized.state,
+      pincode: normalized.pincode
+    });
+
+    if (existingAddress) {
+      if (isAjax) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({ 
+          success: false, 
+          error: 'This address already exists in your address book.' 
+        });
+      }
+      return res.render('user/add-address', {
+        currentPage: 'add-address',
+        error: 'This address already exists in your address book.',
+        formData: req.body
+      });
+    }
+
     
-    if (isDefault === 'true') {
+    const isDefaultFlag = isDefault === 'true' || isDefault === 'on' || isDefault === true;
+    if (isDefaultFlag) {
       await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
     }
 
     await Address.create({
-      ...addressData,
+      ...normalized,
       user: userId,
-      isDefault: isDefault === 'true'
+      isDefault: isDefaultFlag
     });
 
     if (isAjax) {
+    
+      res.set('X-Redirect-To', '/addresses?success=address_added');
       return res.status(STATUS_CODES.OK).json({ 
         success: true, 
         message: MESSAGES.SUCCESS.ADDRESS_ADDED 
       });
     }
 
-    res.redirect('/addresses');
+    res.redirect('/addresses?success=address_added');
   } catch (error) {
     console.error('Error adding address:', error);
+
     
+    if (error && error.code === 11000) {
+      if (isAjax) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          error: 'This address already exists in your address book.'
+        });
+      }
+      return res.render('user/add-address', {
+        currentPage: 'add-address',
+        error: 'This address already exists in your address book.',
+        formData: req.body
+      });
+    }
+
     if (isAjax) {
       return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ 
         success: false, 
         error: MESSAGES.ERROR.SERVER_ERROR 
       });
     }
-    
+
     res.render('user/add-address', {
       currentPage: 'add-address',
       error: 'Failed to add address. Please try again.',
@@ -325,8 +382,12 @@ exports.getEditAddresses = async (req, res) => {
 };
 
 exports.postEditAddress = async (req, res) => {
+  const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
  
   if (req.validationErrors) {
+    if (isAjax) {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, errors: req.validationErrors });
+    }
     const address = await Address.findOne({ _id: req.params.id, user: req.session.userId });
     return res.render('user/edit-address', {
       address,
@@ -342,22 +403,64 @@ exports.postEditAddress = async (req, res) => {
     const addressId = req.params.id;
     const { isDefault, ...addressData } = req.body;
 
-   
-    if (isDefault === 'true') {
+    const normalize = (v) => (v || '').toString().trim().replace(/\s+/g, ' ');
+    const normalized = {
+      fullName: normalize(addressData.fullName),
+      phone: normalize(addressData.phone),
+      addressLine: normalize(addressData.addressLine),
+      city: normalize(addressData.city),
+      state: normalize(addressData.state),
+      pincode: normalize(addressData.pincode),
+      country: normalize(addressData.country || 'India')
+    };
+
+    const existingAddress = await Address.findOne({
+      user: userId,
+      _id: { $ne: addressId }, // Exclude current address
+      fullName: normalized.fullName,
+      phone: normalized.phone,
+      addressLine: normalized.addressLine,
+      city: normalized.city,
+      state: normalized.state,
+      pincode: normalized.pincode
+    });
+
+    if (existingAddress) {
+      const address = await Address.findOne({ _id: addressId, user: req.session.userId });
+      return res.render('user/edit-address', {
+        address,
+        currentPage: 'edit-address',
+        error: 'This address already exists in your address book.',
+        body: req.body
+      });
+    }
+
+    const isDefaultFlag = isDefault === 'true' || isDefault === 'on' || isDefault === true;
+    if (isDefaultFlag) {
       await Address.updateMany({ user: userId }, { $set: { isDefault: false } });
     }
 
     await Address.updateOne(
       { _id: addressId, user: userId },
       {
-        ...addressData,
-        isDefault: isDefault === 'true'
+        ...normalized,
+        isDefault: isDefaultFlag
       }
     );
+
+    if (isAjax) {
+      return res.status(STATUS_CODES.OK).json({
+        success: true,
+        address: { _id: addressId, ...normalized, isDefault: isDefaultFlag }
+      });
+    }
 
     res.redirect('/addresses');
   } catch (error) {
     console.error('Error updating address:', error);
+    if (isAjax) {
+      return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, error: 'Failed to update address' });
+    }
     res.redirect('/addresses');
   }
 };

@@ -10,8 +10,9 @@
 <body class="bg-gray-100 text-gray-800">
   <%- include('../partial/user/navbar') %>
   <div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">
+    <h1 class="text-3xl font-bold mb-6 flex items-center gap-3">
       Checkout
+      <span id="savingAddressBadge" class="hidden text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Saving address...</span>
       <% if (isBuyNow) { %>
         <span class="text-sm text-green-600 font-normal">(Buy Now)</span>
       <% } %>
@@ -240,6 +241,7 @@
   const modal = document.getElementById('editAddressModal');
   const form = document.getElementById('editAddressForm');
   const loadingOverlay = document.getElementById('loadingOverlay');
+  const savingBadge = document.getElementById('savingAddressBadge');
 
   // Debug: Check if addresses data loaded
   console.log('Loaded addresses:', addresses);
@@ -349,6 +351,50 @@
       }
     }
   }
+  // Save address via AJAX to stay on checkout
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!validateAllFields(form)) return;
+    loadingOverlay.classList.remove('hidden');
+    savingBadge?.classList.remove('hidden');
+
+    const formData = new URLSearchParams(new FormData(form));
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData.toString()
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const idx = addresses.findIndex(a => a._id === data.address._id);
+        if (idx >= 0) {
+          addresses[idx] = data.address;
+        }
+        updateAddressCard(data.address._id);
+        closeModal();
+        showNotification('Address updated.', 'success');
+      } else {
+        let data = null;
+        try { data = await res.json(); } catch (_) {}
+        if (data && data.errors) {
+          showErrors(form, data.errors);
+        } else {
+          showNotification('Failed to update address', 'error');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('Network error', 'error');
+    } finally {
+      loadingOverlay.classList.add('hidden');
+      savingBadge?.classList.add('hidden');
+    }
+  });
 
   // Show notification
   function showNotification(message, type = 'info') {

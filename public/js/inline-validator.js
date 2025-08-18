@@ -1,26 +1,31 @@
 window.attachInlineValidation = function attachInlineValidation(form) {
   if (!form) return;
+  if (form.dataset.ivBound === 'true') return;
+  if (form.hasAttribute('data-skip-inline')) return;
+  form.dataset.ivBound = 'true';
 
   form.querySelectorAll('input, textarea, select').forEach(input => {
     input.removeAttribute('required');
   });
 
   form.addEventListener('submit', async function (e) {
-    e.preventDefault();
     clearErrors(form);
 
     const isValid = validateAllFields(form);
-    if (!isValid) return false;
+    if (!isValid) {
+      e.preventDefault();
+      return false;
+    }
 
     const isAjax =
       form.hasAttribute('data-ajax') ||
       form.querySelector('input[name="ajax"]')?.value === 'true';
 
     if (isAjax) {
+      e.preventDefault();
       await handleAjaxSubmission(form);
-    } else {
-      await handleTraditionalSubmission(form);
     }
+    // If not AJAX, allow native submission (no preventDefault)
   });
 
   form.querySelectorAll('input, textarea, select').forEach(input => {
@@ -202,13 +207,14 @@ function validateField(input) {
           }
           break;
         case 'password':
-          if (
-            input.minLength &&
-            parseInt(input.minLength) > 0 &&
-            value.length < parseInt(input.minLength)
-          ) {
-            isValid = false;
-            errorMessage = `Password must be at least ${input.minLength} characters long.`;
+          {
+            const minLen = (input.minLength && parseInt(input.minLength) > 0)
+              ? parseInt(input.minLength)
+              : 8;
+            if (value.length < minLen) {
+              isValid = false;
+              errorMessage = `Password must be at least ${minLen} characters long.`;
+            }
           }
           break;
         default:
@@ -228,6 +234,20 @@ function validateField(input) {
             isValid = false;
             errorMessage = `${getFieldLabel(input)} must not exceed ${input.maxLength} characters.`;
           }
+      }
+    }
+
+    // Cross-field validation for confirm password fields
+    if (isValid && (fieldName === 'confirm_password' || fieldName === 'confirmPassword')) {
+      const formEl = input.form || input.closest('form');
+      if (formEl) {
+        const sourceInput = fieldName === 'confirmPassword'
+          ? formEl.querySelector('input[name="newPassword"]')
+          : formEl.querySelector('input[name="password"]');
+        if (sourceInput && sourceInput.value.trim() !== value) {
+          isValid = false;
+          errorMessage = 'Passwords do not match.';
+        }
       }
     }
 

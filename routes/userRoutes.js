@@ -36,7 +36,7 @@ router.get('/product/:id', userController.getProductDetails);
 router.route('/signup')
   .get(preventLoginIfLoggedIn, userController.getSignup)
   .post(
-    validator(validationRules.userSignupRules),
+    validator('userSignupRules'),
     preventLoginIfLoggedIn,
     userController.postSignup
   );
@@ -44,7 +44,7 @@ router.route('/signup')
 router.route('/login')
   .get(preventLoginIfLoggedIn, userController.getLogin)
   .post(
-    validator(validationRules.userLoginRules),
+    validator('userLoginRules'),
     preventLoginIfLoggedIn,
     userController.postlogin
   );
@@ -53,7 +53,7 @@ router.route('/otp')
   .get(preventLoginIfLoggedIn, userController.getotpVerify)
   .post(
     preventLoginIfLoggedIn,
-    validator(validationRules.otpRules),
+    validator('otpRules'),
     userController.postOtpVerify
   );
 
@@ -66,7 +66,7 @@ router.route('/forgot-password')
 router.route('/reset-password/:token')
   .get(preventLoginIfLoggedIn, userController.getResetPassword)
   .post(
-    validator(validationRules.resetPasswordRules),
+    validator('resetPasswordRules'),
     preventLoginIfLoggedIn,
     userController.postResetPassword
   );
@@ -127,7 +127,7 @@ router.route('/verify-email')
 router.route('/change-password')
   .get(userAccess, profileController.getChangePassword)
   .post(
-    validator(validationRules.changePasswordRules),
+    validator('changePasswordRules'),
     userAccess,
     profileController.postChangePassword
   );
@@ -138,7 +138,7 @@ router.get('/account/address', userAccess, (req, res) => res.redirect('/addresse
 router.route('/addresses')
   .get(userAccess, profileController.getAddresses)
   .post(
-    validator(validationRules.addressRules),
+    validator('addressRules'),
     userAccess,
     profileController.postAddaddress
   );  
@@ -167,7 +167,7 @@ router.post('/cart/clear', isUserLoggedIn, cartController.clearCart);
 // Wishlist
 router.get('/wishlist', isUserLoggedIn, wishlistController.getWishlist);
 router.post('/wishlist/add/:productId', isUserLoggedIn, wishlistController.addToWishlist);
-router.delete('/wishlist/remove/:id', isUserLoggedIn, wishlistController.removeFromWishlist);
+router.delete('/wishlist/remove/:productId', isUserLoggedIn, wishlistController.removeFromWishlist);
 router.post('/wishlist/toggle/:productId', isUserLoggedIn, wishlistController.toggleWishlist);
 router.delete('/wishlist/clear', isUserLoggedIn, wishlistController.clearWishlist);
 

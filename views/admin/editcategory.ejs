@@ -23,19 +23,21 @@
         <!-- Edit Form -->
         <div class="bg-white rounded-lg shadow-lg p-6">
           <h2 class="text-xl font-semibold mb-4">Edit Category Details</h2>
-          <form method="post" action="/admin/category/edit/<%= category._id %>" class="flex flex-col gap-4">
+          <form method="post" action="/admin/category/edit/<%= category._id %>" class="flex flex-col gap-4" id="editCategoryForm">
             
             <!-- Category Name -->
             <div>
               <label class="block text-sm font-medium mb-1">Category Name</label>
               <input type="text" name="categoryName" value="<%= category.name %>" 
-                     class="border rounded px-4 py-2 text-lg w-full" required />
+                     class="border rounded px-4 py-2 text-lg w-full" required data-required />
+              <p class="field-error mt-1 text-sm text-red-600"></p>
             </div>
 
             <!-- Description -->
             <div>
               <label class="block text-sm font-medium mb-1">Description</label>
               <textarea name="description" class="border rounded px-4 py-2 text-lg w-full" rows="3"><%= category.description %></textarea>
+              <p class="field-error mt-1 text-sm text-red-600"></p>
             </div>
 
             <!-- Parent Category removed per requirements -->
@@ -121,6 +123,16 @@
         }
       });
     }
+  </script>
+
+  <script src="/js/inline-validator.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const editCategoryForm = document.getElementById('editCategoryForm');
+      if (editCategoryForm) {
+        window.attachInlineValidation(editCategoryForm);
+      }
+    });
   </script>
 </body>
 </html>

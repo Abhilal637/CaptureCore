@@ -18,10 +18,22 @@
         <h1 class="text-2xl font-semibold mb-6">Add New Product</h1>
 
         <form id="productForm" action="/admin/products/add" method="POST" enctype="multipart/form-data" class="space-y-4">
-          <input type="text" name="name" placeholder="Product Name" required class="w-full border p-2 rounded" />
-          <textarea name="description" placeholder="Description" required class="w-full border p-2 rounded"></textarea>
-          <input type="number" name="price" placeholder="Price" required class="w-full border p-2 rounded" />
-          <input type="text" name="brand" placeholder="Brand" class="w-full border p-2 rounded" />
+          <div>
+            <input type="text" name="name" placeholder="Product Name" required class="w-full border p-2 rounded" data-required />
+            <p class="field-error mt-1 text-sm text-red-600"></p>
+          </div>
+          <div>
+            <textarea name="description" placeholder="Description" required class="w-full border p-2 rounded" data-required></textarea>
+            <p class="field-error mt-1 text-sm text-red-600"></p>
+          </div>
+          <div>
+            <input type="number" name="price" placeholder="Price" required class="w-full border p-2 rounded" data-required />
+            <p class="field-error mt-1 text-sm text-red-600"></p>
+          </div>
+          <div>
+            <input type="text" name="brand" placeholder="Brand" class="w-full border p-2 rounded" />
+            <p class="field-error mt-1 text-sm text-red-600"></p>
+          </div>
 
           <!-- Specs -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -149,8 +161,11 @@
 
           <!-- Image Upload & Cropping -->
           <div>
-            <label class="block text-sm mb-1">Upload Images (min 3)</label>
-            <input type="file" id="imageInput" accept="image/*" multiple class="w-full border p-2 rounded" />
+            <label class="block text-sm mb-2">Upload Images (min 3)</label>
+            <input type="file" id="imageInput" accept="image/*" multiple class="sr-only" />
+            <button type="button" id="chooseImagesBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 text-sm">
+              <span>Choose Images</span>
+            </button>
             <div id="croppedImagesPreview" class="flex flex-wrap gap-4 mt-4"></div>
           </div>
 
@@ -211,6 +226,7 @@
     categorySelect?.addEventListener('change', updateSpecGroups);
     updateSpecGroups();
 
+    document.getElementById('chooseImagesBtn').addEventListener('click', function(){ imageInput.click(); });
     imageInput.addEventListener('change', function () {
       if (!this.files.length) return;
       imageQueue = Array.from(this.files);
@@ -318,6 +334,16 @@
 
 
     updateSubmitState();
+  </script>
+
+  <script src="/js/inline-validator.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const productForm = document.getElementById('productForm');
+      if (productForm) {
+        window.attachInlineValidation(productForm);
+      }
+    });
   </script>
 </body>
 </html>

@@ -17,9 +17,10 @@ const validator = (schemaName) => {
 
      
       const errors = validationResult(req);
-      req.validationErrors = {};
+      req.validationErrors = null;
 
       if (!errors.isEmpty()) {
+        req.validationErrors = {};
         errors.array().forEach(err => {
           if (!req.validationErrors[err.path]) {
             req.validationErrors[err.path] = [];
@@ -28,7 +29,14 @@ const validator = (schemaName) => {
         });
 
         
-        if (req.xhr || req.accepts('json')) {
+        const wantsJson = (
+          req.xhr === true ||
+          req.get('X-Requested-With') === 'XMLHttpRequest' ||
+          (req.get('Accept') && req.get('Accept').split(',')[0].trim() === 'application/json') ||
+          (typeof req.is === 'function' && req.is('application/json'))
+        );
+
+        if (wantsJson) {
           return res.status(STATUS_CODES.BAD_REQUEST).json({
             success: false,
             errors: req.validationErrors

@@ -199,6 +199,11 @@
         button.addEventListener('click', async () => {
           const productId = button.dataset.productId;
           const card = button.closest('.wishlist-card');
+          
+          // Show loading state
+          const originalText = button.textContent;
+          button.textContent = 'Adding...';
+          button.disabled = true;
 
           try {
             const cartRes = await fetch(`/add-to-cart/${productId}`, {
@@ -210,9 +215,9 @@
             });
 
             if (!cartRes.ok) {
-              const errorText = await cartRes.text();
-              console.error('Cart Error:', errorText);
-              throw new Error('Cart add failed');
+              const errorData = await cartRes.json().catch(() => ({ message: 'Unknown error' }));
+              console.error('Cart Error:', errorData);
+              throw new Error(errorData.message || 'Cart add failed');
             }
 
             const cartData = await cartRes.json();
@@ -239,12 +244,19 @@
              } else {
                Swal.fire('Warning', 'Added to cart, but failed to remove from wishlist.', 'warning');
              }
+             
+             // Update clear all button count
+             updateClearAllButton();
             } else {
               Swal.fire('Error', cartData.message || 'Failed to add to cart.', 'error');
             }
           } catch (err) {
             console.error('Add to cart error:', err);
-            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+            Swal.fire('Error', err.message || 'Something went wrong. Please try again.', 'error');
+          } finally {
+            // Restore button state
+            button.textContent = originalText;
+            button.disabled = false;
           }
         });
       });

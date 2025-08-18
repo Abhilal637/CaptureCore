@@ -21,14 +21,16 @@
       <div>
         <label for="name" class="block text-sm font-medium">Product Name</label>
         <input type="text" name="name" id="name" value="<%= product.name %>"
-               class="mt-1 w-full border rounded px-3 py-2" required />
+               class="mt-1 w-full border rounded px-3 py-2" required data-required />
+        <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
       <!-- Price -->
       <div>
         <label for="price" class="block text-sm font-medium">Price</label>
         <input type="number" name="price" id="price" value="<%= product.price %>"
-               class="mt-1 w-full border rounded px-3 py-2" required />
+               class="mt-1 w-full border rounded px-3 py-2" required data-required />
+        <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
       <!-- Brand -->
@@ -36,6 +38,7 @@
         <label for="brand" class="block text-sm font-medium">Brand</label>
         <input type="text" name="brand" id="brand" value="<%= product.brand || '' %>"
                class="mt-1 w-full border rounded px-3 py-2" />
+        <p class="field-error mt-1 text-sm text-red-600"></p>
       </div>
 
       <!-- Specs -->
@@ -166,8 +169,8 @@
 
             <input type="file" accept="image/*" class="imageInput hidden" id="imageInput<%= i %>"/>
             <button type="button" onclick="document.getElementById('imageInput<%= i %>').click()"
-                    class="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-sm rounded">
-              Choose Image
+                    class="inline-flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 text-sm">
+              <span>Choose Image</span>
             </button>
 
             <div class="border rounded overflow-hidden w-full h-40 bg-gray-100 flex items-center justify-center">
@@ -278,6 +281,16 @@
         closeCropper();
       }
     }
+  </script>
+
+  <script src="/js/inline-validator.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const editProductForm = document.querySelector('form');
+      if (editProductForm) {
+        window.attachInlineValidation(editProductForm);
+      }
+    });
   </script>
 
 </body>

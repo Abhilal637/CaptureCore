@@ -31,7 +31,7 @@ exports.placeOrder = async (req, res) => {
         product: product._id,
         quantity: parseInt(quantity),
         price: product.price,
-        total: itemTotal,
+        totalAmount: itemTotal,
         productName: product.name
       });
 
@@ -65,7 +65,7 @@ exports.placeOrder = async (req, res) => {
           product: product._id,
           quantity: item.quantity,
           price: product.price,
-          total: itemTotal,
+          totalAmount: itemTotal,
           productName: product.name
         });
 
@@ -256,6 +256,20 @@ exports.cancelOrderItem = async (req, res) => {
       await product.save();
     }
 
+    
+    const activeItems = order.items.filter(i => !(i.isCancelled || i.status === 'Cancelled' || i.isReturned || i.status === 'Returned'));
+    const newSubtotal = activeItems.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 0)), 0);
+    const newTax = newSubtotal * 0.05;
+    const newDiscount = newSubtotal > 1000 ? newSubtotal * 0.1 : 0;
+    const newShipping = newSubtotal > 500 ? 0 : (newSubtotal > 0 ? 50 : 0);
+    const newTotal = newSubtotal + newTax - newDiscount + newShipping;
+
+    order.subtotal = +newSubtotal.toFixed(2);
+    order.tax = +newTax.toFixed(2);
+    order.discount = +newDiscount.toFixed(2);
+    order.shipping = +newShipping.toFixed(2);
+    order.total = +newTotal.toFixed(2);
+
     const allItemsCancelled = order.items.every(i => i.isCancelled || i.status === 'Cancelled');
     if (allItemsCancelled) {
       order.status = 'Cancelled';
@@ -266,7 +280,14 @@ exports.cancelOrderItem = async (req, res) => {
 
     res.json({
       success: true,
-      message: allItemsCancelled ? 'Item cancelled, order fully cancelled' : 'Item cancelled successfully'
+      message: allItemsCancelled ? 'Item cancelled, order fully cancelled' : 'Item cancelled successfully',
+      totals: {
+        subtotal: order.subtotal,
+        tax: order.tax,
+        discount: order.discount,
+        shipping: order.shipping,
+        total: order.total
+      }
     });
 
   } catch (err) {

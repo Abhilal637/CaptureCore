@@ -9,114 +9,193 @@
 <body class="bg-gray-100 font-sans text-gray-800">
   <%- include('../partial/user/navbar') %>
 
-  <div class="max-w-5xl mx-auto py-10">
-    <div class="flex justify-between items-center mb-8">
-            <form action="/search-orders" method="get" class="mb-6 flex items-center gap-2">
-  <input 
-    type="text" 
-    name="query" 
-    value="<%= typeof query !== 'undefined' ? query : '' %>" 
-    placeholder="Search by Order ID or Product Name" 
-    class="px-4 py-2 rounded border border-gray-300 w-64 focus:outline-none focus:ring focus:border-blue-400"
-  />
-  <button 
-    type="submit"
-    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-  >
-    Search
-  </button>
-  <a 
-    href="/orders"
-    class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
-  >
-    Clear
-  </a>
-</form>
+  <%- include('../partial/user/profilesidebar') %>
 
-      <h1 class="text-3xl font-bold">My Orders</h1>
-      <% if (orders && orders.length > 0) { %>
-       <span class="text-gray-600">(<%= pagination?.totalOrders || orders.length %> orders)</span>
-
-      <% } %>
-    </div>
+  <!-- Profile Content -->
+  <main class="flex-1">
+    <div class="bg-gray-50 shadow rounded p-10">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">My Orders</h1>
+          <% if (orders && orders.length > 0) { %>
+            <span class="text-gray-600">(<%= pagination?.totalOrders || orders.length %> orders)</span>
+          <% } %>
+        </div>
+        
+        <form action="/search-orders" method="get" class="flex items-center gap-2">
+          <input 
+            type="text" 
+            name="query" 
+            value="<%= typeof query !== 'undefined' ? query : '' %>" 
+            placeholder="Search by Order ID or Product Name" 
+            class="px-4 py-2 rounded border border-gray-300 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button 
+            type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Search
+          </button>
+          <a 
+            href="/orders"
+            class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors"
+          >
+            Clear
+          </a>
+        </form>
+      </div>
 
     <% if (orders && orders.length > 0) { %>
-      <div class="space-y-4">
+      <div class="space-y-6">
         <% orders.forEach(order => { %>
-          <div class="bg-white p-4 rounded-lg shadow flex items-center justify-between hover:shadow-md transition">
-            <!-- Left: Product Image -->
-            <div class="flex items-center space-x-4">
-              <% if (order.items && order.items[0] && order.items[0].product) { %>
-                <img src="<%= order.items[0].product.images?.[0] || '/images/placeholder.png' %>"
-                     alt="<%= order.items[0].product.name %>"
-                     class="w-24 h-24 object-cover rounded border">
-              <% } else { %>
-                <img src="/images/placeholder.png" alt="No product" class="w-24 h-24 object-cover rounded border">
-              <% } %>
-            </div>
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div class="p-6">
+              <div class="flex items-center justify-between">
+                <!-- Left: Product Image and Basic Info -->
+                <div class="flex items-center space-x-4">
+                  <% if (order.items && order.items[0] && order.items[0].product) { %>
+                    <img src="<%= order.items[0].product.images?.[0] || '/images/placeholder.png' %>"
+                         alt="<%= order.items[0].product.name %>"
+                         class="w-20 h-20 object-cover rounded-lg border border-gray-200">
+                  <% } else { %>
+                    <img src="/images/placeholder.png" alt="No product" class="w-20 h-20 object-cover rounded-lg border border-gray-200">
+                  <% } %>
+                  
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Order #<%= order._id.toString().slice(-8) %></h3>
+                    <p class="text-sm text-gray-600">Placed on <%= new Date(order.createdAt).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    }) %></p>
+                    <p class="text-sm text-gray-600"><%= order.items.length %> item<%= order.items.length > 1 ? 's' : '' %></p>
+                  </div>
+                </div>
 
-            <!-- Center: Details -->
-            <div class="flex-1 px-4">
-              <h2 class="text-lg font-semibold mb-1">Order #<%= order._id.toString().slice(-8) %></h2>
-              <p class="text-sm text-gray-700">₹<%= order.total.toFixed(2) %></p>
-              <p class="text-sm text-gray-600">Placed on <%= new Date(order.createdAt).toLocaleDateString() %></p>
-              <p class="text-sm text-gray-600">Items: <%= order.items.length %></p>
-              <p class="text-sm text-blue-600 font-medium">Status: <%= order.status %></p>
-            </div>
+                <!-- Center: Price and Status -->
+                <div class="text-center">
+                  <p class="text-xl font-bold text-gray-900">₹<%= order.total.toFixed(2) %></p>
+                  <div class="mt-2">
+                    <% 
+                      let statusColor = 'bg-gray-100 text-gray-800';
+                      let statusText = order.status;
+                      
+                      switch(order.status) {
+                        case 'Placed':
+                          statusColor = 'bg-blue-100 text-blue-800';
+                          break;
+                        case 'Confirmed':
+                          statusColor = 'bg-yellow-100 text-yellow-800';
+                          break;
+                        case 'Shipped':
+                          statusColor = 'bg-purple-100 text-purple-800';
+                          break;
+                        case 'Out for Delivery':
+                          statusColor = 'bg-orange-100 text-orange-800';
+                          break;
+                        case 'Delivered':
+                          statusColor = 'bg-green-100 text-green-800';
+                          break;
+                        case 'Cancelled':
+                          statusColor = 'bg-red-100 text-red-800';
+                          break;
+                        case 'Return Requested':
+                          statusColor = 'bg-pink-100 text-pink-800';
+                          break;
+                        case 'Returned':
+                          statusColor = 'bg-indigo-100 text-indigo-800';
+                          break;
+                      }
+                    %>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium <%= statusColor %>">
+                      <%= statusText %>
+                    </span>
+                  </div>
+                </div>
 
-            <!-- Right: Actions -->
-            <div class="text-right space-y-2">
-              <a href="/order/<%= order._id %>">View Details</a>
-
-                             <% if (order.status === 'Placed') { %>
-                 <button class="text-red-600 hover:underline cancel-order-btn" data-order-id="<%= order.orderId %>">
-                   Cancel Order
-                 </button>
-               <% } %>
+                <!-- Right: Actions -->
+                <div class="flex flex-col items-end space-y-2">
+                  <a href="/order/<%= order._id %>" 
+                     class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    View Details
+                  </a>
+                  
+                  <% if (order.status === 'Placed') { %>
+                    <button class="inline-flex items-center px-3 py-1 text-red-600 hover:text-red-800 text-sm font-medium cancel-order-btn" 
+                            data-order-id="<%= order.orderId %>">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                      Cancel Order
+                    </button>
+                  <% } %>
+                </div>
+              </div>
             </div>
           </div>
         <% }); %>
       </div>
 
-      <!--  Dynamic Pagination -->
+      <!-- Pagination -->
       <% if (pagination && pagination.totalPages > 1) { %>
-        <div class="mt-10 flex justify-center items-center gap-2 text-sm">
-          
+        <div class="mt-10 flex justify-center items-center gap-2">
           <!-- Previous Button -->
           <% if (pagination.currentPage > 1) { %>
             <a href="/orders?page=<%= pagination.currentPage - 1 %>"
-               class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
-              ‹ Previous
+               class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Previous
             </a>
           <% } else { %>
-            <span class="px-4 py-2 bg-gray-100 rounded-lg text-gray-400 cursor-not-allowed">
-              ‹ Previous
+            <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Previous
             </span>
           <% } %>
 
           <!-- Page Numbers -->
-          <% for (let i = 1; i <= pagination.totalPages; i++) { %>
-            <a href="/orders?page=<%= i %>"
-               class="px-3 py-2 rounded-lg 
-                     <%= i === pagination.currentPage 
-                          ? 'bg-blue-600 text-white font-semibold' 
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800' %>">
-              <%= i %>
-            </a>
-          <% } %>
+          <div class="flex items-center gap-1">
+            <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+              <% if (i === 1 || i === pagination.totalPages || (i >= pagination.currentPage - 1 && i <= pagination.currentPage + 1)) { %>
+                <a href="/orders?page=<%= i %>"
+                   class="px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                         <%= i === pagination.currentPage 
+                              ? 'bg-blue-600 text-white' 
+                              : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700' %>">
+                  <%= i %>
+                </a>
+              <% } else if (i === pagination.currentPage - 2 || i === pagination.currentPage + 2) { %>
+                <span class="px-2 py-2 text-gray-400">...</span>
+              <% } %>
+            <% } %>
+          </div>
 
           <!-- Next Button -->
           <% if (pagination.currentPage < pagination.totalPages) { %>
             <a href="/orders?page=<%= pagination.currentPage + 1 %>"
-               class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">
-              Next ›
+               class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+              Next
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
             </a>
           <% } else { %>
-            <span class="px-4 py-2 bg-gray-100 rounded-lg text-gray-400 cursor-not-allowed">
-              Next ›
+            <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+              Next
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
             </span>
           <% } %>
-
         </div>
       <% } %>
 
@@ -130,7 +209,8 @@
         </a>
       </div>
     <% } %> 
-  </div>
+    </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>

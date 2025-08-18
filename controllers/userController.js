@@ -31,10 +31,10 @@ exports.getSignup=(req,res)=>{
     res.render('user/signup', { error: null });
 }
 exports.postSignup = async (req, res) => {
-  const { name = req.body.username, email, password, phone, confirm_password } = req.body;
+  const { name = req.body.username, email, password, phone, confirm_password } = req.body || {};
 
 
-  if (req.validationErrors) {
+  if (req.validationErrors && Object.keys(req.validationErrors).length > 0) {
     return res.render('user/signup', {
       errors: req.validationErrors,
       body: req.body,
@@ -53,7 +53,29 @@ exports.postSignup = async (req, res) => {
       });
     }
 
-    
+    if (!name || !email || !password || !confirm_password || !phone) {
+      return res.render('user/signup', {
+        error: 'All fields are required.',
+        errors: null,
+        body: req.body
+      });
+    }
+
+    if (!passwordRegex.test(password)) {
+      return res.render('user/signup', {
+        error: 'Password must be at least 8 characters, include a letter and a number.',
+        errors: null,
+        body: req.body
+      });
+    }
+    if (confirm_password !== password) {
+      return res.render('user/signup', {
+        error: 'Passwords do not match.',
+        errors: null,
+        body: req.body
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const otp = otpService.generateOtp();
     const otpExpiry = Date.now() + 2 * 60 * 1000;
@@ -68,6 +90,9 @@ exports.postSignup = async (req, res) => {
     });
 
     await newUser.save();
+
+    // Save email for OTP flows if query param is lost
+    req.session.signupEmail = email;
 
     try {
       await transporter.sendMail({
@@ -97,7 +122,8 @@ exports.postSignup = async (req, res) => {
 
 
 exports.getotpVerify= (req,res)=>{
-    res.render('user/otp', { email: req.query.email, error: null, message: null });
+    const email = req.query.email || req.body?.email || req.session.signupEmail || '';
+    res.render('user/otp', { email, error: null, message: null });
 }
 exports.postOtpVerify = async (req, res) => {
     const otp = (req.body.otp1 || '') +
@@ -134,18 +160,17 @@ exports.postOtpVerify = async (req, res) => {
   };
   
  exports.resendOtp = async (req, res) => {
-  const { email } = req.body;
+  const email = (req.body && req.body.email) || req.query?.email || req.session.signupEmail || '';
 
   try {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.render('user/otp', {
-        email,
-        error: 'User not found',
-        success: null,
-        message: null
-      });
+      return res.render('user/otp', { email, error: 'No account found for this email.', success: null, message: null });
+    }
+
+    if (user.isVerified) {
+      return res.render('user/otp', { email, error: null, message: 'Email is already verified. Please login.' });
     }
 
     const otp = otpService.generateOtp();
@@ -195,11 +220,11 @@ exports.getLogin = (req, res) => {
 exports.postlogin = async (req, res) => {
     const { email, password } = req.body;
 
-    if (req.validationErrors) {
+    if (req.validationErrors && Object.keys(req.validationErrors).length > 0) {
         return res.render('user/login', {
             errors: req.validationErrors,
             body: req.body,
-            error: null
+            error: 'Please fix the highlighted errors.'
         });
     }
 
@@ -393,14 +418,28 @@ exports.getResetPassword = async (req, res) => {
 
 
 exports.postResetPassword = async (req, res) => {
-    const {password} = req.body
+    if (req.validationErrors && Object.keys(req.validationErrors).length > 0) {
+        const token = req.params.token;
+        return res.status(400).render('user/reset-password', {
+            token,
+            errors: req.validationErrors,
+            error: null
+        });
+    }
+
+    const {password, confirm_password} = req.body
     const token = req.params.token;
    
     if (!password || !passwordRegex.test(password)) {
         return res.render('user/reset-password', { 
-            userId: req.body.userId, 
             token, 
             error: 'Password must be at least 8 characters, include a letter and a number.' 
+        });
+    }
+    if (confirm_password !== password) {
+        return res.render('user/reset-password', { 
+            token, 
+            error: 'Passwords do not match.' 
         });
     }
     
@@ -409,7 +448,10 @@ exports.postResetPassword = async (req, res) => {
         resetTokenExpiry: {$gt: Date.now()}
     })
     if(!user){
-        return res.send('Token is invalid or expired')
+        return res.render('user/reset-password', {
+            token,
+            error: 'Token is invalid or expired'
+        })
     }
 
     const hashed = await bcrypt.hash(password, 10);

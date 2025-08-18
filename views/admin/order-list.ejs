@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
   <div class="flex min-h-screen">
@@ -14,7 +17,12 @@
     <div class="flex-1 flex flex-col">
      
       <div class="p-8 flex-1">
-        <h1 class="text-3xl font-bold mb-6">Orders</h1>
+        <div class="flex justify-between items-center mb-6">
+          <h1 class="text-3xl font-bold">Orders</h1>
+          <button onclick="location.reload()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Refresh Page
+          </button>
+        </div>
 
         <!-- Search Form -->
         <form method="GET" action="/admin/orders" class="mb-6 flex gap-2">
@@ -80,7 +88,7 @@
                   <tr>
                     <td class="px-6 py-4 text-sm text-blue-600 font-mono">#<%= order.orderId %></td>
                     <td class="px-6 py-4 text-sm"><%= order.user?.name || 'N/A' %></td>
-                    <td class="px-6 py-4 text-sm">₹<%= order.totalAmount?.toFixed(2) || '0.00' %></td>
+                    <td class="px-6 py-4 text-sm">₹<%= (order.total || order.totalAmount || 0).toFixed(2) %></td>
                     
                     <!-- Product Statuses -->
                     <td class="px-6 py-4 text-sm">
@@ -139,7 +147,7 @@
                     <td class="px-6 py-4">
                       <% const allowed = nextStatusMap[order.status] || []; %>
                       <% if (allowed.length > 0) { %>
-                        <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center">
+                        <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center status-update-form">
                           <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm" required>
                             <option disabled selected value> -- Select Status -- </option>
                             <% allowed.forEach(status => { %>
@@ -221,6 +229,37 @@
   </div>
 
   <script>
+    // Handle status update form submissions
+    document.querySelectorAll('.status-update-form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        
+        // Show loading state
+        submitBtn.textContent = 'Updating...';
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50');
+        
+       
+        console.log('Submitting status update form:', this.action);
+        
+        // Show success message after a short delay to simulate processing
+        setTimeout(() => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Status Updated',
+            text: 'Order status has been updated successfully!',
+            confirmButtonColor: '#3085d6',
+            timer: 1500,
+            showConfirmButton: false
+          }).then(() => {
+            // The page will reload due to form submission
+          });
+        }, 500);
+      });
+    });
+
+    // Handle return approval buttons
     document.querySelectorAll('.approve-btn').forEach(button => {
       button.addEventListener('click', async () => {
         const orderId = button.dataset.orderId;
@@ -269,11 +308,26 @@
         }
       });
     });
+
+    // Handle clear search button
     document.addEventListener('DOMContentLoaded', () => {
       const clearBtn = document.getElementById('clearSearchBtn');
       if (clearBtn) {
         clearBtn.addEventListener('click', () => {
           window.location.href = '/admin/orders';
+        });
+      }
+
+      // Add success message if redirected from status update
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('statusUpdated') === 'true') {
+        Swal.fire({
+          icon: 'success',
+          title: 'Status Updated',
+          text: 'Order status has been updated successfully!',
+          confirmButtonColor: '#3085d6',
+          timer: 2000,
+          showConfirmButton: false
         });
       }
     });

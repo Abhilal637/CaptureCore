@@ -26,6 +26,13 @@
         </a>
       </div>
 
+      <!-- Success Messages -->
+      <% if (typeof success !== 'undefined' && success === 'address_added') { %>
+        <div class="mb-4 bg-green-100 text-green-700 px-4 py-2 rounded">
+          Address added successfully!
+        </div>
+      <% } %>
+
       <!-- Error Messages -->
       <% if (typeof error !== 'undefined' && error) { %>
         <div class="mb-4 bg-red-100 text-red-700 px-4 py-2 rounded">

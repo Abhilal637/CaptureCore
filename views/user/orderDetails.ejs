@@ -6,113 +6,262 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="bg-gray-50 font-sans text-gray-800">
   <%- include('../partial/user/navbar') %>
 
-  <div class="max-w-4xl mx-auto py-10 px-4">
-    <h1 class="text-2xl font-bold mb-6">Order #<%= order.orderId %></h1>
+  <%- include('../partial/user/profilesidebar') %>
 
-    <!-- Order Items -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold mb-4">Order Items</h2>
-      <% order.items.forEach(item => { %>
-        <div class="flex items-center gap-4 border-b py-4">
-          <img src="<%= item.product.images?.[0] || '/images/placeholder.png' %>" class="w-16 h-16 object-cover rounded" alt="">
-          <div class="flex-1">
-            <div class="font-medium"><%= item.product.name %></div>
-            <div class="text-sm text-gray-600">Qty: <%= item.quantity %></div>
-            <div class="text-sm text-gray-600">Price: ₹<%= item.product.price.toFixed(2) %></div>
+  <!-- Profile Content -->
+  <main class="flex-1">
+    <div class="bg-gray-50 shadow rounded p-10">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Order Details</h1>
+          <p class="text-gray-600 mt-1">Order #<%= order.orderId %></p>
+        </div>
+        <div class="text-right">
+          <div class="text-sm text-gray-500">Order Date</div>
+          <div class="font-medium"><%= new Date(order.createdAt).toLocaleDateString() %></div>
+        </div>
+      </div>
 
-            <!-- Status Badge -->
-            <% if (item.isCancelled || item.status === 'Cancelled') { %>
-              <span class="text-red-600 text-sm font-semibold">Cancelled</span>
-            <% } else if (item.status === 'Return Requested') { %>
-              <span class="text-orange-600 text-sm font-semibold">Return Requested</span>
-            <% } else if (item.isReturned || item.status === 'Returned') { %>
-              <span class="text-yellow-600 text-sm font-semibold">Returned</span>
-            <% } else { %>
-              <!-- Cancel Product -->
-              <div class="mt-2 space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-3">
-                <input type="hidden" name="orderId" value="<%= order.orderId %>">
-                <input type="hidden" name="productId" value="<%= item.product._id %>">
-                <!-- <textarea name="reason" placeholder="Cancel reason (optional)" class="w-full sm:w-64 px-3 py-1 border rounded cancel-reason"></textarea> -->
-                <% if (item.status !== 'Delivered') { %>
-                  <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded cancel-item-btn" 
-                          data-order-id="<%= order.orderId %>" 
-                          data-product-id="<%= item.product._id %>">Cancel Product</button>
-                <% } %>
-              </div>
-
-              <% if (order.status === 'Delivered' && item.status !== 'Return Requested' && item.status !== 'Returned') { %>
-                <!-- Return Product -->
-                <div class="mt-2 space-y-2 sm:flex sm:items-center sm:space-y-0 sm:space-x-3">
-                  <input type="hidden" name="orderId" value="<%= order.orderId %>">
-                  <input type="hidden" name="productId" value="<%= item.product._id %>">
-                  <textarea name="reason" placeholder="Return reason" required class="w-full sm:w-64 px-3 py-1 border rounded return-reason"></textarea>
-                  <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded return-item-btn" 
-                          data-order-id="<%= order.orderId %>" 
-                          data-product-id="<%= item.product._id %>">Return Product</button>
-                </div>
-
-              <% } %>
-            <% } %>
+      <!-- Order Status Card -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">Order Status</h2>
+            <div class="flex items-center gap-3">
+              <span class="px-3 py-1 rounded-full text-sm font-medium 
+                <%= order.status === 'Delivered' ? 'bg-green-100 text-green-800' : 
+                    order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                    order.status === 'Returned' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-blue-100 text-blue-800' %>">
+                <%= order.status %>
+              </span>
+              <span class="text-sm text-gray-500">•</span>
+              <span class="text-sm text-gray-600">
+                Payment: <span class="font-medium 
+                  <%= order.paymentStatus === 'Paid' ? 'text-green-600' : 
+                      order.paymentStatus === 'Refunded' ? 'text-yellow-600' :
+                      order.paymentStatus === 'Cancelled' ? 'text-red-600' : 'text-gray-600' %>">
+                  <%= order.paymentStatus %>
+                </span>
+              </span>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold text-gray-900">₹<%= order.total.toFixed(2) %></div>
+            <div class="text-sm text-gray-500">Total Amount</div>
           </div>
         </div>
-      <% }) %>
-    </div>
-
-    <!-- Shipping Address -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold mb-2">Shipping Address</h2>
-      <div class="text-gray-700">
-        <%= order.address.fullName %><br>
-        <%= order.address.addressLine %>, <%= order.address.city %>, <%= order.address.state %> - <%= order.address.pincode %><br>
-        <%= order.address.country %><br>
-        Phone: <%= order.address.phone %>
       </div>
-    </div>
 
-    <!-- Summary -->
-    <div class="bg-white rounded-lg shadow p-6 mb-6">
-      <h2 class="text-lg font-semibold mb-2">Order Summary</h2>
-      <div class="flex justify-between"><span>Subtotal:</span><span>₹<%= order.subtotal.toFixed(2) %></span></div>
-      <div class="flex justify-between"><span>Tax:</span><span>₹<%= order.tax.toFixed(2) %></span></div>
-      <div class="flex justify-between"><span>Shipping:</span><span>₹<%= order.shipping.toFixed(2) %></span></div>
-      <div class="flex justify-between"><span>Discount:</span><span>-₹<%= order.discount.toFixed(2) %></span></div>
-      <div class="flex justify-between font-bold border-t pt-2 mt-2"><span>Total:</span><span>₹<%= order.total.toFixed(2) %></span></div>
-      <div class="mt-4 text-sm text-gray-600">
-        Status: <span class="font-medium text-blue-600 order-status-text"><%= order.status %></span>
-      </div>
-    </div>
+      <!-- Order Items -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-6">Order Items</h2>
+        <div class="space-y-6">
+          <% order.items.forEach(item => { %>
+            <div class="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <img src="<%= item.product.images?.[0] || '/images/placeholder.png' %>" 
+                   class="w-20 h-20 object-cover rounded-lg border border-gray-200" 
+                   alt="<%= item.product.name %>">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 mb-1"><%= item.product.name %></h3>
+                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                      <span>Qty: <%= item.quantity %></span>
+                      <span>Price: ₹<%= item.product.price.toFixed(2) %></span>
+                      <span class="font-medium text-gray-900">Total: ₹<%= (item.product.price * item.quantity).toFixed(2) %></span>
+                    </div>
 
-    <!-- Full Order Actions -->
-    <div class="space-y-4">
-             <% if (order.status === 'Placed') { %>
-         <!-- Cancel Full Order -->
-         <div class="flex flex-col sm:flex-row gap-3">
-           <input type="hidden" name="orderId" value="<%= order.orderId %>">
-           <textarea name="reason" placeholder="Cancel full order reason (optional)" class="w-full sm:w-auto px-3 py-2 border rounded cancel-full-reason"></textarea>
-           <button type="button" class="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded cancel-full-order-btn" 
-                   data-order-id="<%= order.orderId %>">Cancel Entire Order</button>
-         </div>
-       <% } %>
+                  </div>
+                  <div class="text-right">
+                    <!-- Status Badge -->
+                    <% if (item.isCancelled || item.status === 'Cancelled') { %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        Cancelled
+                      </span>
+                    <% } else if (item.status === 'Return Requested') { %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        Return Requested
+                      </span>
+                    <% } else if (item.isReturned || item.status === 'Returned') { %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                        Returned
+                      </span>
+                    <% } else { %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        <%= item.status %>
+                      </span>
+                    <% } %>
+                  </div>
+                </div>
 
-             <% if (order.status === 'Delivered' && !order.items.some(item => item.status === 'Return Requested' || item.status === 'Returned')) { %>
-        <!-- Return Full Order -->
-        <div class="flex flex-col sm:flex-row gap-3">
-          <input type="hidden" name="orderId" value="<%= order.orderId %>">
-          <textarea name="reason" placeholder="Reason for returning full order" class="w-full sm:w-auto px-3 py-2 border rounded return-full-reason" required></textarea>
-          <button type="button" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded return-full-order-btn" 
-                  data-order-id="<%= order.orderId %>">Return Entire Order</button>
+                <!-- Action Buttons -->
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <% if (!item.isCancelled && item.status !== 'Cancelled' && item.status !== 'Delivered') { %>
+                    <button type="button" 
+                            class="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors cancel-item-btn" 
+                            data-order-id="<%= order.orderId %>" 
+                            data-product-id="<%= item.product._id %>">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                      </svg>
+                      Cancel Item
+                    </button>
+                  <% } %>
+
+                  <% if (order.status === 'Delivered' && item.status !== 'Return Requested' && item.status !== 'Returned' && !item.isReturned) { %>
+                    <div class="flex-1 min-w-0">
+                      <textarea name="reason" 
+                                placeholder="Return reason (required)" 
+                                required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 return-reason"></textarea>
+                    </div>
+                    <button type="button" 
+                            class="inline-flex items-center px-3 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors return-item-btn" 
+                            data-order-id="<%= order.orderId %>" 
+                            data-product-id="<%= item.product._id %>">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                      </svg>
+                      Return Item
+                    </button>
+                  <% } %>
+                </div>
+              </div>
+            </div>
+          <% }) %>
         </div>
-      <% } %>
+      </div>
 
-      <!-- Invoice - Show for delivered orders -->
-      <% if (order.status === 'Delivered') { %>
-        <a href="/order/<%= order.orderId %>/invoice" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded mt-2 text-center">Download Invoice</a>
-      <% } %>
+      <!-- Shipping Address -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Shipping Address</h2>
+        <div class="bg-gray-50 rounded-lg p-4">
+          <div class="flex items-start">
+            <svg class="w-5 h-5 text-gray-400 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <div class="text-gray-700">
+              <div class="font-medium text-gray-900"><%= order.address.fullName %></div>
+              <div class="text-sm mt-1">
+                <%= order.address.addressLine %><br>
+                <%= order.address.city %>, <%= order.address.state %> - <%= order.address.pincode %><br>
+                <%= order.address.country %><br>
+                <span class="text-gray-600">Phone: <%= order.address.phone %></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Subtotal</span>
+            <span class="font-medium">₹<%= order.subtotal.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Tax</span>
+            <span class="font-medium">₹<%= order.tax.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Shipping</span>
+            <span class="font-medium">₹<%= order.shipping.toFixed(2) %></span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Discount</span>
+            <span class="font-medium text-green-600">-₹<%= order.discount.toFixed(2) %></span>
+          </div>
+          <div class="border-t border-gray-200 pt-3 mt-3">
+            <div class="flex justify-between">
+              <span class="text-lg font-semibold text-gray-900">Total</span>
+              <span class="text-lg font-bold text-gray-900">₹<%= order.total.toFixed(2) %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full Order Actions -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Actions</h2>
+        <div class="space-y-4">
+          <% if (order.status === 'Placed') { %>
+            <!-- Cancel Full Order -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <h3 class="text-sm font-medium text-red-800 mb-3">Cancel Entire Order</h3>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <textarea name="reason" 
+                          placeholder="Cancel reason (optional)" 
+                          class="flex-1 px-3 py-2 border border-red-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 cancel-full-reason"></textarea>
+                <button type="button" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors cancel-full-order-btn" 
+                        data-order-id="<%= order.orderId %>">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                  Cancel Entire Order
+                </button>
+              </div>
+            </div>
+          <% } %>
+
+          <% if (order.status === 'Delivered' && !order.items.some(item => item.status === 'Return Requested' || item.status === 'Returned')) { %>
+            <!-- Return Full Order -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 class="text-sm font-medium text-yellow-800 mb-3">Return Entire Order</h3>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <textarea name="reason" 
+                          placeholder="Return reason (required)" 
+                          required 
+                          class="flex-1 px-3 py-2 border border-yellow-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 return-full-reason"></textarea>
+                <button type="button" 
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors return-full-order-btn" 
+                        data-order-id="<%= order.orderId %>">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                  </svg>
+                  Return Entire Order
+                </button>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Invoice - Show for delivered orders -->
+          <% if (order.status === 'Delivered') { %>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h3 class="text-sm font-medium text-green-800 mb-3">Download Invoice</h3>
+              <a href="/order/<%= order.orderId %>/invoice" 
+                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Download Invoice
+              </a>
+            </div>
+          <% } %>
+        </div>
+      </div>
     </div>
-  </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -163,14 +312,20 @@
          });
        });
 
-       // Handle cancel item buttons
+   
        document.querySelectorAll('.cancel-item-btn').forEach(button => {
         button.addEventListener('click', async (e) => {
           e.preventDefault();
           const orderId = button.dataset.orderId;
           const productId = button.dataset.productId;
-          const reasonTextarea = button.parentElement.querySelector('.cancel-reason');
-          const reason = reasonTextarea.value;
+          let reason = '';
+          const container = button.closest('.flex') || button.parentElement;
+          if (container) {
+            const reasonTextarea = container.querySelector('.cancel-reason');
+            if (reasonTextarea) {
+              reason = reasonTextarea.value;
+            }
+          }
 
           const confirm = await Swal.fire({
             title: 'Cancel Product?',

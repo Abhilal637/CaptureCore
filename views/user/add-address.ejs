@@ -11,13 +11,15 @@
     document.addEventListener('DOMContentLoaded', function() {
       const phoneInput = document.querySelector('input[name="phone"]');
       const pincodeInput = document.querySelector('input[name="pincode"]');
+      const form = document.getElementById('addAddressFormServer');
+      let isSubmitting = false;
       
       if (phoneInput) {
         phoneInput.addEventListener('input', function(e) {
-          // Remove any non-digit characters
+          
           let value = e.target.value.replace(/\D/g, '');
           
-          // Limit to 10 digits
+        
           if (value.length > 10) {
             value = value.slice(0, 10);
           }
@@ -37,6 +39,22 @@
           }
           
           e.target.value = value;
+        });
+      }
+
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          if (isSubmitting) {
+            e.preventDefault();
+            return false;
+          }
+          
+          isSubmitting = true;
+          const submitBtn = form.querySelector('button[type="submit"]');
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Adding Address...';
+          }
         });
       }
     });
@@ -61,7 +79,7 @@
       </div>
 
       <!-- Form -->
-      <form method="POST" action="/addresses" class="bg-white rounded-lg p-6 shadow-sm border border-gray-200" id="addAddressFormServer">
+      <form method="POST" action="/addresses" data-ajax class="bg-white rounded-lg p-6 shadow-sm border border-gray-200" id="addAddressFormServer">
         <% if (typeof error !== 'undefined' && error) { %>
           <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             <%= error %>
