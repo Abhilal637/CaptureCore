@@ -120,14 +120,18 @@ exports.sendOtpForEmail = async (req, res) => {
       }
     })
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: newEmail,
-      subject: 'Verify Your Email',
-      text: `Your OTP for updating email is ${otp}`,
-      html: `<p>Your OTP for updating email is <b>${otp}</b></p>`
-    })
-
+    try {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: newEmail,
+        subject: 'Verify Your Email',
+        text: `Your OTP for updating email is ${otp}`,
+        html: `<p>Your OTP for updating email is <b>${otp}</b></p>`
+      })
+    } catch (emailErr) {
+      console.error('Failed to send OTP email:', emailErr);
+      return res.render('user/edit-email', { error: 'Failed to send OTP email. Please try again later.', currentPage: 'edit-email' });
+    }
 
     res.redirect('/verify-email')
   } catch (error) {
@@ -516,21 +520,26 @@ exports.sendEmailOTP = async (req, res) => {
       return res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, message: 'Not authenticated' });
     }
 
-    
     const existingUser = await User.findOne({ email, _id: { $ne: userId } });
     if (existingUser) {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Email is already in use' });
     }
 
     const otp = otpService.generateOtp();
-    const otpExpiry = Date.now() + 2 * 60 * 1000; 
-
+    const otpExpiry = Date.now() + 2 * 60 * 1000;
 
     await User.findByIdAndUpdate(userId, { otp, otpExpiry });
 
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
 
     await transporter.sendMail({
-      from: 'capturecore792@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'Email Change OTP',
       text: `Your OTP for changing email is: ${otp}`,

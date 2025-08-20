@@ -37,7 +37,7 @@
           <% } %>
           <input type="text" name="email" id="email" placeholder="EMAIL"
             value="<%= locals.body && body.email ? body.email : '' %>"
-            class="w-full border border-gray-400 px-4 py-2 text-sm <%= locals.errors && errors.email ? 'border-red-500' : '' %>">
+            class="w-full border border-gray-400 px-4 py-2 text-sm <%= locals.errors && errors.email ? 'border-red-500' : '' %>" data-required>
         </div>
 
         <div>

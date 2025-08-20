@@ -22,6 +22,10 @@
       </div>
       <button type="submit" class="w-full bg-black text-white py-2 rounded hover:bg-gray-800 transition">Verify</button>
     </form>
+    <form action="/email/send-otp" method="POST" class="mt-4 text-center">
+      <input type="hidden" name="newEmail" value="<%= typeof newEmail !== 'undefined' ? newEmail : '' %>" />
+      <button type="submit" class="text-blue-600 hover:underline">Resend OTP</button>
+    </form>
   </div>
 
 </body>

@@ -6,9 +6,70 @@
   <title>Wishlist | CaptureCore</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    .wishlist-card {
+      transition: all 0.3s ease;
+    }
+    
+    .wishlist-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in forwards;
+    }
+    
+    .add-to-cart-btn, .remove-wishlist-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .add-to-cart-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .remove-wishlist-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    /* Loading animation for buttons */
+    .loading {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: loading 1.5s infinite;
+    }
+    
+    @keyframes loading {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+  </style>
 </head>
 <body class="bg-gray-100 font-sans">
   <%- include('../partial/user/navbar') %>
+
+  <!-- Global Loading Overlay -->
+  <div id="globalLoading" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+      <span class="text-gray-700">Processing...</span>
+    </div>
+  </div>
 
   <div class="max-w-4xl mx-auto py-10"> 
     <div class="flex justify-between items-center mb-10">
@@ -45,11 +106,11 @@
 
             <!-- Actions -->
             <div class="text-right space-y-2">
-              <button class="text-red-600 hover:underline remove-wishlist-btn" data-product-id="<%= item._id %>">
-                Remove
+              <button class="text-red-600 hover:underline remove-wishlist-btn transition-all duration-200" data-product-id="<%= item._id %>">
+                <span class="btn-text">Remove</span>
               </button>
-              <button class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 add-to-cart-btn" data-product-id="<%= item._id %>">
-                Add to Cart
+              <button class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700 add-to-cart-btn transition-all duration-200" data-product-id="<%= item._id %>">
+                <span class="btn-text">Add to Cart</span>
               </button>
             </div>
           </div>
@@ -60,6 +121,14 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // Global loading functions
+      function showGlobalLoading() {
+        document.getElementById('globalLoading').classList.remove('hidden');
+      }
+      
+      function hideGlobalLoading() {
+        document.getElementById('globalLoading').classList.add('hidden');
+      }
       // Clear all wishlist items
       const clearAllBtn = document.getElementById('clear-all-btn');
       if (clearAllBtn) {
@@ -74,9 +143,11 @@
             confirmButtonColor: '#dc2626'
           });
 
-          if (!confirm.isConfirmed) return;
+                     if (!confirm.isConfirmed) return;
 
-          try {
+           showGlobalLoading();
+
+           try {
             const res = await fetch('/wishlist/clear', {
               method: 'DELETE',
               headers: { 'Content-Type': 'application/json' }
@@ -84,126 +155,210 @@
 
             const data = await res.json();
 
-            if (data.success) {
-              // Remove all wishlist cards
-              document.querySelectorAll('.wishlist-card').forEach(card => card.remove());
-              
-              // Update the page to show empty state
-              const container = document.querySelector('.space-y-6');
-              if (container) {
-                container.innerHTML = `
-                  <div class="text-center text-gray-500 py-20">
-                    <div class="text-6xl mb-4">💔</div>
-                    <div class="text-xl mb-2">Your wishlist is empty</div>
-                    <div class="text-gray-400">Start adding products to your wishlist!</div>
-                    <a href="/shop" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
-                      Browse Products
-                    </a>
-                  </div>
-                `;
-              }
-              
-              // Hide the clear all button
-              clearAllBtn.style.display = 'none';
-              
-              // Update cart count in navbar
-              updateCartCount();
-              
-              Swal.fire('Cleared!', data.message, 'success');
+                         if (data.success) {
+               // Animate all cards out smoothly
+               const cards = document.querySelectorAll('.wishlist-card');
+               cards.forEach((card, index) => {
+                 setTimeout(() => {
+                   card.style.transition = 'all 0.3s ease-out';
+                   card.style.transform = 'translateY(-20px)';
+                   card.style.opacity = '0';
+                 }, index * 100);
+               });
+               
+               setTimeout(() => {
+                 // Remove all wishlist cards
+                 cards.forEach(card => card.remove());
+                 
+                 // Update the page to show empty state with fade in animation
+                 const container = document.querySelector('.space-y-6');
+                 if (container) {
+                   container.innerHTML = `
+                     <div class="text-center text-gray-500 py-20 animate-fade-in" style="opacity: 0; animation: fadeIn 0.5s ease-in forwards;">
+                       <div class="text-6xl mb-4">💔</div>
+                       <div class="text-xl mb-2">Your wishlist is empty</div>
+                       <div class="text-gray-400">Start adding products to your wishlist!</div>
+                       <a href="/shop" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors">
+                         Browse Products
+                       </a>
+                     </div>
+                   `;
+                 }
+                 
+                 // Hide the clear all button
+                 clearAllBtn.style.display = 'none';
+                 
+                 // Update cart count in navbar
+                 updateCartCount();
+                 
+                 // Show success toast
+                 Swal.fire({
+                   icon: 'success',
+                   title: 'Wishlist Cleared!',
+                   text: data.message,
+                   toast: true,
+                   position: 'top-end',
+                   timer: 3000,
+                   showConfirmButton: false,
+                   timerProgressBar: true
+                 });
+               }, cards.length * 100 + 300);
             } else {
               Swal.fire('Error', data.message || 'Failed to clear wishlist.', 'error');
             }
-          } catch (err) {
-            console.error('Clear wishlist error:', err);
-            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
-          }
+                     } catch (err) {
+             console.error('Clear wishlist error:', err);
+             Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+           } finally {
+             hideGlobalLoading();
+           }
         });
       }
 
-      // Update cart count in navbar
+      // Update cart count in navbar with animation
       async function updateCartCount() {
         try {
           const response = await fetch('/cart/count');
           const data = await response.json();
           const cartCountElement = document.getElementById('cartCount');
           if (cartCountElement) {
-            cartCountElement.textContent = data.count;
-            cartCountElement.classList.toggle('hidden', data.count === 0);
+            const oldCount = parseInt(cartCountElement.textContent) || 0;
+            const newCount = data.count;
+            
+            // Animate the count change
+            if (newCount > oldCount) {
+              cartCountElement.style.transform = 'scale(1.2)';
+              cartCountElement.style.backgroundColor = '#10b981';
+              setTimeout(() => {
+                cartCountElement.style.transform = 'scale(1)';
+                cartCountElement.style.backgroundColor = '';
+              }, 300);
+            }
+            
+            cartCountElement.textContent = newCount;
+            cartCountElement.classList.toggle('hidden', newCount === 0);
           }
         } catch (error) {
           console.error('Error updating cart count:', error);
         }
       }
 
-      // Update clear all button count
+      // Update clear all button count with animation
       function updateClearAllButton() {
         const remainingItems = document.querySelectorAll('.wishlist-card').length;
         const clearAllBtn = document.getElementById('clear-all-btn');
         if (clearAllBtn) {
           if (remainingItems === 0) {
-            clearAllBtn.style.display = 'none';
+            clearAllBtn.style.transition = 'all 0.3s ease-out';
+            clearAllBtn.style.opacity = '0';
+            clearAllBtn.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+              clearAllBtn.style.display = 'none';
+            }, 300);
           } else {
+            clearAllBtn.style.display = 'block';
+            clearAllBtn.style.opacity = '1';
+            clearAllBtn.style.transform = 'scale(1)';
             clearAllBtn.textContent = `Clear All (${remainingItems})`;
+            
+            // Add a subtle animation when count changes
+            clearAllBtn.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+              clearAllBtn.style.transform = 'scale(1)';
+            }, 150);
           }
+        }
+        
+        // Also update any wishlist count in navbar if it exists
+        const wishlistCountElement = document.getElementById('wishlistCount');
+        if (wishlistCountElement) {
+          wishlistCountElement.textContent = remainingItems;
+          wishlistCountElement.classList.toggle('hidden', remainingItems === 0);
         }
       }
 
-      // Remove from wishlist
-      document.querySelectorAll('.remove-wishlist-btn').forEach(button => {
-        button.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const productId = button.dataset.productId;
-          const card = button.closest('.wishlist-card');
+             // Remove from wishlist with smooth animations
+       document.querySelectorAll('.remove-wishlist-btn').forEach(button => {
+         button.addEventListener('click', async (e) => {
+           e.preventDefault();
+           const productId = button.dataset.productId;
+           const card = button.closest('.wishlist-card');
 
-          const confirm = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'Do you want to remove this item from your wishlist?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, remove it!',
-            cancelButtonText: 'Cancel'
-          });
+           const confirm = await Swal.fire({
+             title: 'Remove from Wishlist?',
+             text: 'This item will be removed from your wishlist',
+             icon: 'question',
+             showCancelButton: true,
+             confirmButtonText: 'Yes, remove it!',
+             cancelButtonText: 'Cancel',
+             confirmButtonColor: '#dc2626'
+           });
 
-          if (!confirm.isConfirmed) return;
+           if (!confirm.isConfirmed) return;
 
-          try {
-            const res = await fetch(`/wishlist/remove/${productId}`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' }
-            });
+           // Show loading state
+           button.disabled = true;
+           const btnText = button.querySelector('.btn-text');
+           btnText.textContent = 'Removing...';
+           button.classList.add('opacity-50', 'loading');
 
-            const data = await res.json();
+           try {
+             const res = await fetch(`/wishlist/remove/${productId}`, {
+               method: 'DELETE',
+               headers: { 'Content-Type': 'application/json' }
+             });
 
-                         if (data.success) {
-               card.remove();
-               // Show appropriate message based on whether item was actually removed
-               const message = data.message === 'Item was not in wishlist' 
-                 ? 'Item was not in your wishlist' 
-                 : data.message;
-               Swal.fire('Removed!', message, 'success');
+             const data = await res.json();
+
+             if (data.success) {
+               // Smooth fade out animation
+               card.style.transition = 'all 0.3s ease-out';
+               card.style.transform = 'translateX(-100%)';
+               card.style.opacity = '0';
                
-               // Update clear all button count
-               updateClearAllButton();
+               setTimeout(() => {
+                 card.remove();
+                 updateClearAllButton();
+                 
+                 // Show success toast
+                 Swal.fire({
+                   icon: 'success',
+                   title: 'Removed!',
+                   text: 'Item removed from wishlist',
+                   toast: true,
+                   position: 'top-end',
+                   timer: 2000,
+                   showConfirmButton: false,
+                   timerProgressBar: true
+                 });
+               }, 300);
              } else {
                Swal.fire('Error', data.message || 'Failed to remove item.', 'error');
              }
-          } catch (err) {
-            console.error('Remove wishlist error:', err);
-            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
-          }
-        });
-      });
+           } catch (err) {
+             console.error('Remove wishlist error:', err);
+             Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+           } finally {
+             // Restore button state
+             button.disabled = false;
+             const btnText = button.querySelector('.btn-text');
+             btnText.textContent = 'Remove';
+             button.classList.remove('opacity-50', 'loading');
+           }
+         });
+       });
 
-      // Add to cart and remove from wishlist
       document.querySelectorAll('.add-to-cart-btn').forEach(button => {
         button.addEventListener('click', async () => {
           const productId = button.dataset.productId;
           const card = button.closest('.wishlist-card');
           
-          // Show loading state
-          const originalText = button.textContent;
-          button.textContent = 'Adding...';
+          
+          const btnText = button.querySelector('.btn-text');
+          const originalText = btnText.textContent;
+          btnText.textContent = 'Adding...';
           button.disabled = true;
+          button.classList.add('opacity-50', 'loading');
 
           try {
             const cartRes = await fetch(`/add-to-cart/${productId}`, {
@@ -211,7 +366,7 @@
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ quantity: 1 })
+              body: JSON.stringify({ quantity: 1, fromWishlist: true })
             });
 
             if (!cartRes.ok) {
@@ -223,41 +378,40 @@
             const cartData = await cartRes.json();
 
             if (cartData.success) {
+              // Smooth fade out animation
+              card.style.transition = 'all 0.3s ease-out';
+              card.style.transform = 'translateX(100%)';
+              card.style.opacity = '0';
               
-              const wishlistRes = await fetch(`/wishlist/remove/${productId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
-              });
-
-              const wishlistData = await wishlistRes.json();
-
-                           if (wishlistData.success) {
-               card.remove();
-               // Show appropriate message based on whether item was actually removed
-               const message = wishlistData.message === 'Item was not in wishlist'
-                 ? 'Product added to cart. Item was not in wishlist.'
-                 : 'Product added to cart and removed from wishlist.';
-               Swal.fire('Added to Cart', message, 'success');
-               
-               // Update cart count in navbar
-               updateCartCount();
-             } else {
-               Swal.fire('Warning', 'Added to cart, but failed to remove from wishlist.', 'warning');
-             }
-             
-             // Update clear all button count
-             updateClearAllButton();
+              setTimeout(() => {
+                card.remove();
+                updateCartCount();
+                updateClearAllButton();
+                
+                // Show success toast instead of modal for better UX
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Added to Cart!',
+                  text: 'Product moved to cart successfully',
+                  toast: true,
+                  position: 'top-end',
+                  timer: 2000,
+                  showConfirmButton: false,
+                  timerProgressBar: true
+                });
+              }, 300);
             } else {
               Swal.fire('Error', cartData.message || 'Failed to add to cart.', 'error');
             }
           } catch (err) {
             console.error('Add to cart error:', err);
             Swal.fire('Error', err.message || 'Something went wrong. Please try again.', 'error');
-          } finally {
-            // Restore button state
-            button.textContent = originalText;
-            button.disabled = false;
-          }
+                     } finally {
+             // Restore button state
+             btnText.textContent = originalText;
+             button.disabled = false;
+             button.classList.remove('opacity-50', 'loading');
+           }
         });
       });
 

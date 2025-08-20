@@ -134,7 +134,7 @@ exports.postAddProduct = async (req, res) => {
 exports.toggleUserBlockStatus = async (req, res) => {
   try {
     console.log('toggleUserBlockStatus called with:', req.params, req.body);
-    
+
     const { id } = req.params;
     const { isBlocked } = req.body;
 
@@ -143,7 +143,9 @@ exports.toggleUserBlockStatus = async (req, res) => {
     const user = await User.findById(id);
     if (!user) {
       console.log('User not found with ID:', id);
-      return res.status(STATUS_CODES.NOT_FOUND).json({ error: MESSAGES.ERROR.USER_NOT_FOUND });
+      return res
+        .status(STATUS_CODES.NOT_FOUND)
+        .json({ error: MESSAGES.ERROR.USER_NOT_FOUND });
     }
 
     console.log('Found user:', user.name, 'Current isBlocked:', user.isBlocked);
@@ -158,12 +160,10 @@ exports.toggleUserBlockStatus = async (req, res) => {
         const io = req.app.get('io');
         const userSockets = req.app.get('userSockets');
         const userSocketId = userSockets.get(id);
-        
-        
-        
+
         if (userSocketId) {
           io.to(userSocketId).emit('force_logout', {
-            message: 'Your account has been blocked by admin'
+            message: 'Your account has been blocked by admin',
           });
           console.log(`Force logout sent to user ${id}`);
         } else {
@@ -171,14 +171,18 @@ exports.toggleUserBlockStatus = async (req, res) => {
         }
       } catch (socketError) {
         console.error('Socket.io error:', socketError);
-        
       }
     }
 
-    res.json({ success: true, message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully` });
+    res.json({
+      success: true,
+      message: `User ${isBlocked ? 'blocked' : 'unblocked'} successfully`,
+    });
   } catch (err) {
     console.error('Error toggling user block status:', err);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ error: MESSAGES.ERROR.SERVER_ERROR });
+    res
+      .status(STATUS_CODES.INTERNAL_SERVER_ERROR)
+      .json({ error: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 

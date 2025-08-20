@@ -1,4 +1,4 @@
-// controllers/categoryController.js
+
 const Category = require('../models/category');
 const { validationResult } = require('express-validator');
 const { getDescendantIds, normalizeBool } = require('../utils/categoryHelpers');
@@ -45,7 +45,7 @@ exports.listCategories = async (req, res) => {
   }
 };
 
-/** ADD */
+
 exports.addCategory = async (req, res) => {
   try {
     // express-validator result check
@@ -81,7 +81,7 @@ exports.addCategory = async (req, res) => {
   }
 };
 
-/** DELETE (soft delete) */
+
 exports.deleteCategory = async (req, res) => {
   try {
     const id = req.params.id;

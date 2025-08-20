@@ -108,14 +108,14 @@ router.route('/edit-profile')
     profileController.postEditProfile
   );
 
-// // Email OTP routes
-// router.post('/send-email-otp', userAccess, profileController.sendEmailOTP);
-// router.post('/verify-email-otp', userAccess, profileController.verifyEmailOTP);
-
-router.get('/edit-email', userAccess, profileController.getEditEmail);
-router.post('/email/send-otp', userAccess, profileController.sendOtpForEmail);
-
-router.route('/verify-email')
+	// Email OTP routes
+	router.post('/send-email-otp', userAccess, profileController.sendEmailOTP);
+	router.post('/verify-email-otp', userAccess, profileController.verifyEmailOTP);
+	
+	router.get('/edit-email', userAccess, profileController.getEditEmail);
+	router.post('/email/send-otp', userAccess, profileController.sendOtpForEmail);
+	
+	router.route('/verify-email')
   .get(userAccess, (req, res) => {
     res.render('user/verify-email', {
       currentPage: 'verify-email',

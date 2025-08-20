@@ -8,7 +8,7 @@ module.exports=async(req,res,next)=>{
             const user= await User.findById(req.session.userId)
             res.locals.user= user||null
         }catch(err){
-            console.log('Error oin fetching user for locals:',err)
+            console.log('Error in fetching user for locals:',err)
         }
     }
     next()

@@ -18,6 +18,7 @@ exports.placeOrder = async (req, res) => {
 
 
     if (productId) {
+      // const buyNowQuantity = Math.min(5, parseInt(quantity) || 1);
       const product = await Product.findById(productId);
 
       if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < quantity) {
@@ -29,14 +30,17 @@ exports.placeOrder = async (req, res) => {
 
       orderItems.push({
         product: product._id,
-        quantity: parseInt(quantity),
+        quantity: quantity,
         price: product.price,
         totalAmount: itemTotal,
         productName: product.name
       });
 
 
-      product.stock -= parseInt(quantity);
+      if (product.stock < quantity) {
+        return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.STOCK_UNAVAILABLE);
+      }
+      product.stock -= quantity;
       await product.save();
     } else {
 
@@ -192,10 +196,12 @@ exports.cancelOrder = async (req, res) => {
 
     order.status = 'Cancelled';
     order.cancelReason = reason || '';
+    order.paymentStatus = 'Cancelled';
 
     for (const item of order.items) {
-      if (!item.isCancelled) {
+      if (!item.isCancelled || item.status !== 'Cancelled') {
         item.isCancelled = true;
+        item.status = 'Cancelled';
 
         const product = await Product.findById(item.product);
         if (product) {
