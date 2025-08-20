@@ -8,8 +8,8 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Fonts - neutral, modern -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Google Fonts - modern and clean -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -18,11 +18,127 @@
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #fafafa;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      min-height: 100vh;
     }
-    h1 {
-      font-weight: 600;
-      color: #333333;
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-card {
+      background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .input-field {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .input-field:focus {
+      border-color: #64748b;
+      box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1);
+      transform: translateY(-1px);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(55, 65, 81, 0.3);
+    }
+    
+    .profile-image-container {
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .profile-image-container:hover {
+      transform: scale(1.05);
+    }
+    
+    .upload-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 50%;
+    }
+    
+    .profile-image-container:hover .upload-overlay {
+      opacity: 1;
+    }
+    
+    .section-card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .section-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .animate-fade-in-up {
+      animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .floating-label {
+      position: absolute;
+      top: 50%;
+      left: 16px;
+      transform: translateY(-50%);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      color: #9ca3af;
+    }
+    
+    .input-field:focus + .floating-label,
+    .input-field:not(:placeholder-shown) + .floating-label {
+      top: 0;
+      left: 12px;
+      font-size: 12px;
+      color: #64748b;
+      background: white;
+      padding: 0 4px;
+    }
+    
+    .status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #6b7280;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
   </style>
 </head>
@@ -33,90 +149,146 @@
   <%- include('../partial/user/profilesidebar') %>
 
   <!-- Profile Content -->
-  <main class="flex-1">
-    <div class="bg-gray-50 shadow rounded p-10">
-      <!-- Header -->
-      <div class="flex items-center mb-6">
-        <h1 class="text-2xl font-semibold text-gray-900">Edit Profile</h1>
-      </div>
+  <main class="flex-1 p-6">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header Section -->
+      <div class="mb-8"></div>
 
-      <!-- Form -->
-      <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-    <h1 class="text-3xl mb-10 tracking-tight">Edit Profile</h1>
+      <!-- Main Form Card -->
+      <div class="profile-card rounded-2xl p-8 animate-fade-in-up" style="animation-delay: 0.1s;">
+        
+        <% if (error) { %>
+          <div class="mb-6 p-4 bg-gray-50 border border-gray-300 rounded-xl flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <p class="text-gray-700 font-medium">
+              <%= error === 'invalid_file_type' ? 'Please select a valid image file (JPEG, PNG, GIF)' : 'Failed to update profile. Please try again.' %>
+            </p>
+          </div>
+        <% } %>
 
-    <% if (error) { %>
-      <div class="mb-8 p-4 bg-gray-100 border border-gray-300 text-gray-700 rounded-md flex items-center space-x-3">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
-        </svg>
-        <p class="text-sm">
-          ❌ Error: <%= error === 'invalid_file_type' ? 'Please select a valid image file (JPEG, PNG, GIF)' : 'Failed to update profile. Please try again.' %>
-        </p>
-      </div>
-    <% } %>
+        <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="space-y-8" id="editProfileForm">
+          
+          <!-- Profile Picture Section -->
+          <div class="section-card p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-semibold text-gray-900">Profile Picture</h3>
+                <p class="text-gray-600 mt-1">Upload a new profile picture to personalize your account</p>
+              </div>
+              <div class="status-indicator"></div>
+            </div>
+            
+            <div class="flex items-center space-x-8">
+              <div class="profile-image-container">
+                <div class="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 border-4 border-white shadow-lg">
+                  <img id="profilePreview" 
+                       src="<%= user?.profilePicture ? '/uploads/' + user.profilePicture : user?.googleProfilePic || 'https://via.placeholder.com/128x128/e2e8f0/64748b?text=Profile' %>" 
+                       alt="Profile Image" 
+                       class="w-full h-full object-cover" />
+                </div>
+                <div class="upload-overlay">
+                  <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              
+              <div class="flex-1">
+                <label for="profileImage" class="block text-sm font-medium text-gray-700 mb-3">
+                  Choose Image
+                </label>
+                <div class="flex items-center space-x-4">
+                  <input type="file" name="profileImage" id="profileImage" accept="image/*" 
+                         class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 transition-all duration-200" />
+                  <div class="text-xs text-gray-500">
+                    <p>JPEG, PNG, GIF</p>
+                    <p>Max 5MB</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <form action="/edit-profile" method="POST" enctype="multipart/form-data" class="space-y-8" id="editProfileForm">
-      <!-- Profile Picture -->
-      <div class="flex items-center gap-8">
-        <div class="w-28 h-28 rounded-full overflow-hidden bg-gray-50 border border-gray-300 shadow-sm">
-          <img id="profilePreview" 
-               src="<%= user?.profilePicture ? '/uploads/' + user.profilePicture : user?.googleProfilePic || 'https://via.placeholder.com/112x112/eeeeee/bbbbbb?text=Profile' %>" 
-               alt="Profile Image" 
-               class="w-full h-full object-cover" />
-        </div>
-        <div class="flex flex-col">
-          <label for="profileImage" class="text-gray-600 text-sm mb-1 select-none">Change Profile Picture</label>
-          <input type="file" name="profileImage" id="profileImage" accept="image/*" class="text-gray-500 text-sm">
-          <p class="mt-1 text-xs text-gray-400">JPEG, PNG, GIF formats</p>
-        </div>
-      </div>
+          <!-- Personal Information Section -->
+          <div class="section-card p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-semibold text-gray-900">Personal Information</h3>
+                <p class="text-gray-600 mt-1">Update your basic profile details</p>
+              </div>
+              <div class="status-indicator"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Name Field -->
+              <div class="relative">
+                <input type="text" id="name" name="name" value="<%= user?.name || '' %>"
+                       placeholder=" "
+                       class="input-field w-full px-4 py-4 rounded-xl text-gray-900 placeholder-transparent" 
+                       data-required />
+                <label for="name" class="floating-label">Full Name</label>
+                <p class="field-error mt-2 text-sm text-red-600"></p>
+              </div>
 
-      <!-- Name -->
-      <div>
-        <label for="name" class="block mb-1 text-gray-700 font-semibold select-none">Name</label>
-        <input type="text" id="name" name="name" value="<%= user?.name || '' %>"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" data-required />
-        <p class="field-error mt-1 text-sm text-red-600"></p>
-      </div>
+              <!-- Phone Field -->
+              <div class="relative">
+                <input type="tel" id="phone" name="phone" value="<%= (user?.mobile || user?.phone) || '' %>"
+                       placeholder=" "
+                       class="input-field w-full px-4 py-4 rounded-xl text-gray-900 placeholder-transparent" 
+                       data-required />
+                <label for="phone" class="floating-label">Phone Number</label>
+                <p class="field-error mt-2 text-sm text-red-600"></p>
+              </div>
+            </div>
+          </div>
 
-      <!-- Phone -->
-      <div>
-        <label for="phone" class="block mb-1 text-gray-700 font-semibold select-none">Phone</label>
-        <input type="tel" id="phone" name="phone" value="<%= (user?.mobile || user?.phone) || '' %>"
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" data-required />
-        <p class="field-error mt-1 text-sm text-red-600"></p>
-      </div>
+          <!-- Email Section -->
+          <div class="section-card p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-semibold text-gray-900">Email Address</h3>
+                <p class="text-gray-600 mt-1">Manage your email preferences and security</p>
+              </div>
+              <div class="status-indicator"></div>
+            </div>
+            
+            <div class="relative">
+              <div class="flex items-center space-x-3">
+                <input type="email" name="email" id="emailField" value="<%= user?.email || '' %>" 
+                       readonly
+                       class="input-field flex-1 px-4 py-4 rounded-xl text-gray-600 bg-gray-50 cursor-not-allowed" />
+                <button type="button" id="editEmailBtn" 
+                        class="btn-primary px-6 py-4 rounded-xl text-white font-medium hover:shadow-lg transition-all duration-200 flex items-center space-x-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit</span>
+                </button>
+              </div>
+              <p class="text-sm text-gray-500 mt-2">Email changes require verification for security</p>
+            </div>
+          </div>
 
-      <!-- Email -->
-      <div>
-        <label class="flex items-center gap-2 mb-1 text-gray-700 font-semibold select-none">
-          Email
-          <button type="button" id="editEmailBtn" aria-label="Edit email"
-                  class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-400 rounded">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M16.732 3.732a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z" />
-            </svg>
-          </button>
-        </label>
-        <input 
-          type="email" 
-          name="email" 
-          id="emailField"
-          value="<%= user?.email || '' %>" 
-          readonly
-          class="w-full rounded-md border border-gray-300 bg-gray-50 px-4 py-3 text-gray-600 cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 transition" />
+          <!-- Submit Section -->
+          <div class="flex justify-end pt-6">
+            <button type="submit" id="submitBtn" 
+                    class="btn-primary px-8 py-4 rounded-xl text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-3">
+              <span id="submitText">Update Profile</span>
+              <span id="loadingText" class="hidden flex items-center space-x-2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Updating...</span>
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
-
-      <!-- Submit Button -->
-      <div class="text-right">
-        <button type="submit" id="submitBtn" 
-          class="bg-gray-700 hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 transition">
-          <span id="submitText">Update Profile</span>
-          <span id="loadingText" class="hidden">Updating...</span>
-        </button>
-      </div>
-    </form>
-  </div>
     </div>
   </main>
 
@@ -139,45 +311,79 @@
     const editBtn = document.getElementById('editEmailBtn');
     const emailField = document.getElementById('emailField');
 
-    // Profile Image Preview
+    // Profile Image Preview with enhanced UX
     fileInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (file) {
-        previewImg.src = URL.createObjectURL(file);
+        // Show loading state
+        previewImg.style.opacity = '0.5';
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewImg.style.opacity = '1';
+          
+          // Show success feedback
+          Swal.fire({
+            icon: 'success',
+            title: 'Image Selected!',
+            text: 'Your new profile picture is ready to upload',
+            toast: true,
+            position: 'top-end',
+            timer: 2000,
+            showConfirmButton: false,
+            timerProgressBar: true
+          });
+        };
+        reader.readAsDataURL(file);
       }
     });
 
-    // Form Submit Loading State
+    // Enhanced Form Submit Loading State
     document.querySelector('form').addEventListener('submit', () => {
       submitBtn.disabled = true;
       submitText.classList.add('hidden');
       loadingText.classList.remove('hidden');
+      
+      // Add loading animation to the button
+      submitBtn.classList.add('animate-pulse');
     });
 
-    // Email Change + OTP Popup Logic
+    // Enhanced Email Change + OTP Popup Logic
     editBtn.addEventListener('click', async () => {
       const { value: newEmail } = await Swal.fire({
-        title: 'Change Email',
+        title: 'Change Email Address',
         input: 'email',
-        inputLabel: 'Enter new email address',
+        inputLabel: 'Enter your new email address',
         inputPlaceholder: 'you@example.com',
-        confirmButtonText: 'Send OTP',
+        confirmButtonText: 'Send Verification Code',
         showCancelButton: true,
         customClass: {
-          popup: 'font-inter',
-          title: 'text-xl font-semibold text-gray-700',
-          confirmButton: 'bg-gray-700 hover:bg-gray-800 text-white',
-          cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+          popup: 'font-inter rounded-2xl',
+          title: 'text-2xl font-bold text-gray-800',
+          confirmButton: 'bg-gray-700 hover:bg-gray-800 text-white rounded-xl px-6 py-3',
+          cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl px-6 py-3'
         },
         buttonsStyling: false,
         inputValidator: (value) => {
-          if (!value) return 'Please enter an email';
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email';
+          if (!value) return 'Please enter an email address';
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address';
         }
       });
 
       if (newEmail) {
         try {
+          // Show loading state
+          editBtn.disabled = true;
+          editBtn.innerHTML = `
+            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Sending...</span>
+          `;
+
           await fetch('/send-email-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -188,71 +394,96 @@
           let resendEnabled = false;
 
           const otpPopup = Swal.fire({
-            title: `Verify Email`,
+            title: `Verify Your Email`,
             html: `
-              <p class="mb-4 text-gray-700">We sent an OTP to <b>${newEmail}</b></p>
-              <input id="otpInput" class="swal2-input" placeholder="Enter OTP" style="font-size:1rem;padding:0.6rem;" />
-              <p id="timerText" class="text-sm text-gray-500 mt-2 mb-1">Resend in ${timer}s</p>
-              <button id="resendBtn" class="swal2-confirm swal2-styled" style="display:none; margin-top:10px; background:#6b7280;">Resend OTP</button>
+              <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <p class="mb-4 text-gray-700">We sent a verification code to</p>
+                <p class="font-semibold text-gray-900 mb-6">${newEmail}</p>
+                <input id="otpInput" class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-center text-lg font-mono focus:border-gray-500 focus:outline-none" 
+                       placeholder="Enter 6-digit code" maxlength="6" style="letter-spacing: 0.5em;" />
+                <p id="timerText" class="text-sm text-gray-500 mt-3 mb-2">Resend code in ${timer}s</p>
+                <button id="resendBtn" class="text-gray-600 hover:text-gray-700 font-medium" style="display:none;">Resend Code</button>
+              </div>
             `,
             showCancelButton: true,
-            confirmButtonText: 'Verify OTP',
+            confirmButtonText: 'Verify & Update',
             customClass: {
-              popup: 'font-inter p-6 rounded-md',
-              title: 'text-xl font-semibold text-gray-700',
-              confirmButton: 'bg-gray-700 hover:bg-gray-800 text-white',
-              cancelButton: 'bg-gray-300 hover:bg-gray-400 text-gray-700'
+              popup: 'font-inter rounded-2xl p-8',
+              title: 'text-2xl font-bold text-gray-800',
+              confirmButton: 'bg-gray-700 hover:bg-gray-800 text-white rounded-xl px-6 py-3',
+              cancelButton: 'bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl px-6 py-3'
             },
             buttonsStyling: false,
             didOpen: () => {
-              const timerInterval = setInterval(() => {
-                timer--;
-                const timerText = document.getElementById('timerText');
-                if (!resendEnabled) {
-                  timerText.textContent = `Resend in ${timer}s`;
-                }
+              const timerTextEl = document.getElementById('timerText');
+              const resendBtnEl = document.getElementById('resendBtn');
+              let secondsRemaining = 60;
+              let countdownId = null;
 
-                if (timer <= 0 && !resendEnabled) {
-                  resendEnabled = true;
-                  document.getElementById('resendBtn').style.display = 'inline-block';
-                  timerText.textContent = '';
-                  clearInterval(timerInterval);
-                }
-              }, 1000);
+              function formatTime(totalSeconds) {
+                const m = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+                const s = String(totalSeconds % 60).padStart(2, '0');
+                return `${m}:${s}`;
+              }
 
-              document.getElementById('resendBtn').addEventListener('click', async () => {
-                resendEnabled = false;
-                timer = 60;
-                document.getElementById('resendBtn').style.display = 'none';
-                document.getElementById('timerText').textContent = `Resend in ${timer}s`;
-
-                await fetch('/send-email-otp', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email: newEmail })
-                });
-
-                // Restart timer
-                const newInterval = setInterval(() => {
-                  timer--;
-                  const timerText = document.getElementById('timerText');
-                  if (!resendEnabled) {
-                    timerText.textContent = `Resend in ${timer}s`;
-                  }
-
-                  if (timer <= 0 && !resendEnabled) {
-                    resendEnabled = true;
-                    document.getElementById('resendBtn').style.display = 'inline-block';
-                    timerText.textContent = '';
-                    clearInterval(newInterval);
+              function startCountdown() {
+                resendBtnEl.style.display = 'none';
+                secondsRemaining = 60;
+                timerTextEl.textContent = `Resend code in ${formatTime(secondsRemaining)}`;
+                if (countdownId) clearInterval(countdownId);
+                countdownId = setInterval(() => {
+                  secondsRemaining -= 1;
+                  if (secondsRemaining > 0) {
+                    timerTextEl.textContent = `Resend code in ${formatTime(secondsRemaining)}`;
+                  } else {
+                    clearInterval(countdownId);
+                    countdownId = null;
+                    timerTextEl.textContent = '';
+                    resendBtnEl.style.display = 'inline-block';
                   }
                 }, 1000);
+              }
+
+              startCountdown();
+
+              resendBtnEl.addEventListener('click', async () => {
+                resendBtnEl.disabled = true;
+                const prevText = resendBtnEl.textContent;
+                resendBtnEl.textContent = 'Sending...';
+
+                try {
+                  await fetch('/send-email-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: newEmail })
+                  });
+                  startCountdown();
+                } catch (e) {
+                  // Optional: show a toast or keep silent
+                } finally {
+                  resendBtnEl.disabled = false;
+                  resendBtnEl.textContent = prevText;
+                }
               });
+
+              // Store countdown id globally for cleanup on close
+              window.__otpCountdownId = countdownId;
+            },
+            willClose: () => {
+              if (window.__otpCountdownId) {
+                clearInterval(window.__otpCountdownId);
+                window.__otpCountdownId = null;
+              }
             },
             preConfirm: () => {
               const otpValue = document.getElementById('otpInput').value;
               if (!otpValue) {
-                Swal.showValidationMessage('Please enter the OTP');
+                Swal.showValidationMessage('Please enter the verification code');
               }
               return otpValue;
             }
@@ -271,18 +502,18 @@
               emailField.value = newEmail;
               Swal.fire({
                 icon: 'success',
-                title: 'Success',
-                text: 'Email updated successfully!',
+                title: 'Email Updated!',
+                text: 'Your email address has been successfully updated.',
                 confirmButtonColor: '#374151',
-                customClass: { popup: 'font-inter' }
+                customClass: { popup: 'font-inter rounded-2xl' }
               });
             } else {
               Swal.fire({
                 icon: 'error',
-                title: 'Invalid OTP',
-                text: 'Please try again.',
-                confirmButtonColor: '#dc2626',
-                customClass: { popup: 'font-inter' }
+                title: 'Invalid Code',
+                text: 'The verification code is incorrect. Please try again.',
+                confirmButtonColor: '#ef4444',
+                customClass: { popup: 'font-inter rounded-2xl' }
               });
             }
           }
@@ -290,10 +521,19 @@
           Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Could not send OTP. Try again.',
-            confirmButtonColor: '#dc2626',
-            customClass: { popup: 'font-inter' }
+            text: 'Could not send verification code. Please try again.',
+            confirmButtonColor: '#ef4444',
+            customClass: { popup: 'font-inter rounded-2xl' }
           });
+        } finally {
+          // Reset button state
+          editBtn.disabled = false;
+          editBtn.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>Edit</span>
+          `;
         }
       }
     });

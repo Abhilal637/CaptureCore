@@ -4,156 +4,428 @@
   <meta charset="UTF-8" />
   <title>Admin – Product Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans text-gray-800">
+<body class="bg-slate-50 font-sans text-slate-900">
   <div class="flex min-h-screen">
     <!-- Sidebar -->
     <%- include('../partial/admin/sidebar') %>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-8">
       <!-- Header -->
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-2xl font-semibold">PRODUCTS</h1>
-        <a href="/admin/products/add" class="px-6 py-3 text-lg font-bold bg-green-600 text-white rounded shadow hover:bg-green-700 transition-all">+ Add Product</a>
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-4xl font-black text-slate-900 tracking-tight">PRODUCTS</h1>
+          <p class="text-slate-600 font-medium mt-2">Manage your product inventory</p>
+        </div>
+        <a href="/admin/products/add" class="px-8 py-4 text-lg font-bold bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+          <span class="text-xl mr-2">+</span>Add Product
+        </a>
       </div>
 
       <!-- Search and Filter Bar -->
-        <form method="GET" action="/admin/products" class="mb-4 flex items-center gap-2 flex-wrap">
-        <input
-          type="text"
-          name="search"
-          placeholder="Search products..."
-          value="<%= typeof search === 'string' ? search : '' %>"
-          class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-        />
-          <input
-            type="text"
-            name="brand"
-            placeholder="Brand"
-            value="<%= typeof brandFilter === 'string' ? brandFilter : '' %>"
-            class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          />
+      <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-200">
+        <form method="GET" action="/admin/products" class="flex items-center gap-4 flex-wrap">
+          <div class="flex-1 min-w-64">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Search Products</label>
+            <input
+              type="text"
+              name="search"
+              placeholder="Search by name, description..."
+              value="<%= typeof search === 'string' ? search : '' %>"
+              class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all"
+            />
+          </div>
+          
+          <div class="min-w-48">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Brand</label>
+            <input
+              type="text"
+              name="brand"
+              placeholder="Filter by brand"
+              value="<%= typeof brandFilter === 'string' ? brandFilter : '' %>"
+              class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all"
+            />
+          </div>
         
-        <select name="category" class="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-          <option value="">All Categories</option>
-          <% (categories || []).forEach(cat => { %>
-            <option value="<%= cat._id %>" <%= categoryFilter === cat._id.toString() ? 'selected' : '' %>>
-              <% if (cat.parentCategory) { %>
-                <%= cat.parentCategory.name %> > <%= cat.name %>
-              <% } else { %>
-                <%= cat.name %>
-              <% } %>
-            </option>
-          <% }) %>
-        </select>
-        
-        <button
-          type="submit"
-          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-        >
-          Filter
-        </button>
-          <% if ((search && search.length > 0) || categoryFilter || brandFilter) { %>
-          <a href="/admin/products" class="bg-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-400 transition">Clear</a>
-        <% } %>
-      </form>
+          <div class="min-w-56">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Category</label>
+            <select name="category" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all bg-white">
+              <option value="">All Categories</option>
+              <% (categories || []).forEach(cat => { %>
+                <option value="<%= cat._id %>" <%= categoryFilter === cat._id.toString() ? 'selected' : '' %>>
+                  <% if (cat.parentCategory) { %>
+                    <%= cat.parentCategory.name %> > <%= cat.name %>
+                  <% } else { %>
+                    <%= cat.name %>
+                  <% } %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          
+          <div class="flex gap-3 items-end">
+            <button
+              type="submit"
+              class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              Apply Filters
+            </button>
+            <% if ((search && search.length > 0) || categoryFilter || brandFilter) { %>
+              <a href="/admin/products" class="bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-300 transition-all">Clear All</a>
+            <% } %>
+          </div>
+        </form>
+      </div>
 
       <!-- Product Table -->
-      <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead>
-            <tr class="text-left text-xs uppercase text-gray-500 border-b bg-gray-50">
-              <th class="p-3">Name</th>
-              <th class="p-3">Brand</th>
-              <th class="p-3">Category</th>
-              <th class="p-3">Price</th>
-              <th class="p-3">Stock</th>
-              <th class="p-3">Images</th>
-              <th class="p-3">Status</th>
-              <th class="p-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (products && products.length) { %>
-              <% products.forEach(product => { %>
-                <tr class="border-b hover:bg-gray-50">
-                  <td class="p-3"><%= product.name %></td>
-                  <td class="p-3"><%= product.brand || '-' %></td>
-                  <td class="p-3"><%= product.category ? product.category.name : 'N/A' %></td>
-                  <td class="p-3">₹<%= product.price %></td>
-                  <td class="p-3"><%= product.stock %></td>
-                  <td class="p-3 flex gap-2">
-                    <% if (product.images && product.images.length) { %>
-                      <% product.images.slice(0, 2).forEach(img => { %>
-                        <img src="<%= img %>" alt="Product Image" class="w-12 h-12 object-cover rounded border" onerror="this.src='/images/placeholder.jpg'" />
-                      <% }) %>
-                    <% } else { %>
-                      <span class="text-gray-400 text-xs">No images</span>
-                    <% } %>
-                  </td>
+      <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="bg-slate-900 text-white">
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Product Name</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Brand</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Category</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Price</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Stock</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Images</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Status</th>
+                <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y-2 divide-slate-100">
+              <% if (products && products.length) { %>
+                <% products.forEach((product, index) => { %>
+                  <tr class="<%= index % 2 === 0 ? 'bg-white' : 'bg-slate-50' %> hover:bg-emerald-50 transition-colors duration-200">
+                    <td class="p-6">
+                      <div class="font-bold text-slate-900 text-lg"><%= product.name %></div>
+                    </td>
+                    <td class="p-6">
+                      <span class="font-semibold text-slate-700"><%= product.brand || '-' %></span>
+                    </td>
+                    <td class="p-6">
+                      <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold">
+                        <%= product.category ? product.category.name : 'N/A' %>
+                      </span>
+                    </td>
+                    <td class="p-6">
+                      <span class="text-xl font-black text-emerald-600">₹<%= product.price %></span>
+                    </td>
+                    <td class="p-6">
+                      <span class="<%= product.stock > 10 ? 'text-emerald-600 bg-emerald-100' : product.stock > 0 ? 'text-amber-600 bg-amber-100' : 'text-red-600 bg-red-100' %> px-3 py-1 rounded-full font-bold text-sm">
+                        <%= product.stock %> units
+                      </span>
+                    </td>
+                    <td class="p-6">
+                      <div class="flex gap-2">
+                        <% if (product.images && product.images.length) { %>
+                          <% product.images.slice(0, 2).forEach(img => { %>
+                            <img src="<%= img %>" alt="Product" class="w-16 h-16 object-cover rounded-lg border-2 border-slate-200 shadow-sm" onerror="this.src='/images/placeholder.jpg'" />
+                          <% }) %>
+                          <% if (product.images.length > 2) { %>
+                            <div class="w-16 h-16 bg-slate-200 rounded-lg flex items-center justify-center border-2 border-slate-300">
+                              <span class="text-xs font-bold text-slate-600">+<%= product.images.length - 2 %></span>
+                            </div>
+                          <% } %>
+                        <% } else { %>
+                          <div class="w-16 h-16 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-slate-200">
+                            <span class="text-xs font-semibold text-slate-400">No Image</span>
+                          </div>
+                        <% } %>
+                      </div>
+                    </td>
 
-                  <td class="p-3">
-                    <form action="/admin/products/toggle-status/<%= product._id %>" method="POST">
-                      <label class="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" name="isActive" onchange="this.form.submit()" <%= product.isActive ? 'checked' : '' %> />
-                        <div class="w-11 h-6 bg-gray-300 peer-checked:bg-green-500 rounded-full relative transition-all">
-                          <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-full"></div>
-                        </div>
-                        <span class="ml-2 text-xs text-gray-600"><%= product.isActive ? 'Active' : 'Inactive' %></span>
-                      </label>
-                    </form>
-                  </td>
+                    <td class="p-6">
+                      <div class="status-toggle-container">
+                        <form action="/admin/products/toggle-status/<%= product._id %>" method="POST" class="status-form" style="display: none;">
+                          <input type="hidden" name="isActive" class="status-input" value="<%= !product.isActive %>">
+                        </form>
+                        <label class="inline-flex items-center cursor-pointer group">
+                          <input 
+                            type="checkbox" 
+                            class="sr-only peer status-checkbox" 
+                            <%= product.isActive ? 'checked' : '' %>
+                            data-product-id="<%= product._id %>"
+                            data-product-name="<%= product.name %>"
+                            data-current-status="<%= product.isActive %>"
+                          />
+                          <div class="w-14 h-8 bg-slate-300 peer-checked:bg-emerald-500 rounded-full relative transition-all duration-300 shadow-inner">
+                            <div class="absolute left-1 top-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 peer-checked:translate-x-6 shadow-lg"></div>
+                          </div>
+                          <span class="ml-3 font-bold text-sm <%= product.isActive ? 'text-emerald-600' : 'text-slate-500' %>">
+                            <%= product.isActive ? 'ACTIVE' : 'INACTIVE' %>
+                          </span>
+                        </label>
+                      </div>
+                    </td>
 
-                  <td class="p-3 flex gap-2">
-                    <a href="/admin/products/edit/<%= product._id %>" class="text-blue-500 hover:text-blue-700" title="Edit">
-                      ✏️
-                    </a>
+                    <td class="p-6">
+                      <div class="flex gap-3">
+                        <a href="/admin/products/edit/<%= product._id %>" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl" title="Edit Product">
+                          <span class="mr-2">✏️</span>Edit
+                        </a>
+                        
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="8" class="text-center p-12">
+                    <div class="text-slate-400">
+                      <div class="text-6xl mb-4">📦</div>
+                      <div class="text-xl font-bold text-slate-600">No products found</div>
+                      <p class="text-slate-500 mt-2">Try adjusting your filters or add a new product</p>
+                    </div>
                   </td>
                 </tr>
-              <% }) %>
-            <% } else { %>
-              <tr><td colspan="7" class="text-center p-4">No products found.</td></tr>
-            <% } %>
-          </tbody>
-        </table>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- Pagination -->
       <% if (totalPages && totalPages > 1) { %>
-        <nav class="mt-4 flex justify-center items-center space-x-2 text-sm">
+        <nav class="mt-8 flex justify-center items-center space-x-2">
           <% if (currentPage > 1) { %>
             <a
               href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= currentPage - 1 %>"
-              class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
-            >&laquo; Prev</a>
+              class="px-4 py-3 rounded-xl border-2 border-slate-300 hover:bg-slate-100 font-bold text-slate-700 transition-all hover:border-slate-400"
+            >← Previous</a>
           <% } else { %>
-            <span class="px-3 py-1 rounded border border-gray-300 text-gray-400 cursor-not-allowed">&laquo; Prev</span>
+            <span class="px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-400 cursor-not-allowed font-bold">← Previous</span>
           <% } %>
 
-          <% for(let p = 1; p <= totalPages; p++) { %>
-            <% if (p === currentPage) { %>
-              <span class="px-3 py-1 rounded bg-green-600 text-white font-semibold"><%= p %></span>
-            <% } else { %>
-              <a
-                href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= p %>"
-                class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
-              ><%= p %></a>
+          <div class="flex space-x-1">
+            <% for(let p = 1; p <= totalPages; p++) { %>
+              <% if (p === currentPage) { %>
+                <span class="px-4 py-3 rounded-xl bg-emerald-600 text-white font-black shadow-lg"><%= p %></span>
+              <% } else { %>
+                <a
+                  href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= p %>"
+                  class="px-4 py-3 rounded-xl border-2 border-slate-300 hover:bg-slate-100 font-bold text-slate-700 transition-all hover:border-slate-400"
+                ><%= p %></a>
+              <% } %>
             <% } %>
-          <% } %>
+          </div>
 
           <% if (currentPage < totalPages) { %>
             <a
               href="?search=<%= encodeURIComponent(search || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>&brand=<%= encodeURIComponent(brandFilter || '') %>&page=<%= currentPage + 1 %>"
-              class="px-3 py-1 rounded border border-gray-300 hover:bg-gray-200"
-            >Next &raquo;</a>
+              class="px-4 py-3 rounded-xl border-2 border-slate-300 hover:bg-slate-100 font-bold text-slate-700 transition-all hover:border-slate-400"
+            >Next →</a>
           <% } else { %>
-            <span class="px-3 py-1 rounded border border-gray-300 text-gray-400 cursor-not-allowed">Next &raquo;</span>
+            <span class="px-4 py-3 rounded-xl border-2 border-slate-200 text-slate-400 cursor-not-allowed font-bold">Next →</span>
           <% } %>
         </nav>
       <% } %>
 
     </main>
   </div>
+
+  <script>
+    // Status Toggle Functionality with SweetAlert
+    document.addEventListener('DOMContentLoaded', function() {
+      const statusCheckboxes = document.querySelectorAll('.status-checkbox');
+      
+      statusCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          const productId = this.dataset.productId;
+          const productName = this.dataset.productName;
+          const currentStatus = this.dataset.currentStatus === 'true';
+          const newStatus = !currentStatus;
+          const statusText = newStatus ? 'activate' : 'deactivate';
+          const statusColor = newStatus ? 'success' : 'warning';
+          
+          swal({
+            title: `${statusText.charAt(0).toUpperCase() + statusText.slice(1)} Product?`,
+            text: `Are you sure you want to ${statusText} "${productName}"?`,
+            icon: statusColor,
+            buttons: {
+              cancel: {
+                text: "Cancel",
+                value: null,
+                visible: true,
+                className: "swal-button--cancel",
+                closeModal: true,
+              },
+              confirm: {
+                text: `Yes, ${statusText}!`,
+                value: true,
+                visible: true,
+                className: `swal-button--confirm swal-button--${statusColor}`,
+                closeModal: true
+              }
+            },
+            dangerMode: !newStatus,
+          }).then((willChange) => {
+            if (willChange) {
+              // Submit the form
+              const form = this.closest('.status-toggle-container').querySelector('.status-form');
+              form.submit();
+              
+              swal(`${statusText.charAt(0).toUpperCase() + statusText.slice(1)}d!`, `${productName} has been ${statusText}d.`, statusColor);
+            } else {
+              // Revert the checkbox state
+              this.checked = currentStatus;
+            }
+          });
+        });
+      });
+    });
+
+    // Delete Product Functionality
+    function deleteProduct(productId, productName) {
+      swal({
+        title: "Delete Product?",
+        text: `Are you sure you want to permanently delete "${productName}"? This action cannot be undone!`,
+        icon: "warning",
+        buttons: {
+          cancel: {
+            text: "Cancel",
+            value: null,
+            visible: true,
+            className: "swal-button--cancel",
+            closeModal: true,
+          },
+          confirm: {
+            text: "Yes, delete it!",
+            value: true,
+            visible: true,
+            className: "swal-button--confirm swal-button--danger",
+            closeModal: true
+          }
+        },
+        dangerMode: true,
+      }).then((willDelete) => {
+        if (willDelete) {
+          // Create and submit delete form
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = `/admin/products/delete/${productId}`;
+          
+          // Add CSRF token if needed
+          const csrfToken = document.querySelector('meta[name="csrf-token"]');
+          if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken.getAttribute('content');
+            form.appendChild(csrfInput);
+          }
+          
+          // Add method override for DELETE
+          const methodInput = document.createElement('input');
+          methodInput.type = 'hidden';
+          methodInput.name = '_method';
+          methodInput.value = 'DELETE';
+          form.appendChild(methodInput);
+          
+          document.body.appendChild(form);
+          form.submit();
+          
+          swal("Deleted!", `${productName} has been deleted.`, "success");
+        }
+      });
+    }
+
+    // Image Error Handling
+    document.addEventListener('DOMContentLoaded', function() {
+      const images = document.querySelectorAll('img[onerror]');
+      images.forEach(img => {
+        img.addEventListener('error', function() {
+          this.src = '/images/placeholder.jpg';
+          this.alt = 'Image not found';
+          this.classList.add('opacity-50');
+        });
+      });
+    });
+
+    // Search Form Enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchForm = document.querySelector('form[action="/admin/products"]');
+      const searchInput = searchForm.querySelector('input[name="search"]');
+      
+      // Add real-time search suggestions (optional)
+      let searchTimeout;
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          // You can add live search functionality here
+          console.log('Searching for:', this.value);
+        }, 500);
+      });
+      
+      // Form validation
+      searchForm.addEventListener('submit', function(e) {
+        const formData = new FormData(this);
+        const hasFilters = Array.from(formData.values()).some(value => value.trim() !== '');
+        
+        if (!hasFilters) {
+          e.preventDefault();
+          swal({
+            title: "No filters applied",
+            text: "Please enter search terms or select filters to search products.",
+            icon: "info",
+            button: "OK"
+          });
+        }
+      });
+    });
+
+    // Table Enhancement - Row Selection
+    document.addEventListener('DOMContentLoaded', function() {
+      const tableRows = document.querySelectorAll('tbody tr');
+      
+      tableRows.forEach(row => {
+        if (row.children.length > 1) { // Skip empty state row
+          row.addEventListener('click', function(e) {
+            // Don't trigger on button/link clicks
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('button') || e.target.closest('a')) {
+              return;
+            }
+            
+            // Toggle row selection
+            this.classList.toggle('ring-2');
+            this.classList.toggle('ring-blue-500');
+            this.classList.toggle('bg-blue-50');
+          });
+        }
+      });
+    });
+
+    // Add loading states for buttons
+    function addLoadingState(button) {
+      const originalText = button.innerHTML;
+      button.innerHTML = '<span class="animate-spin mr-2">⏳</span>Loading...';
+      button.disabled = true;
+      
+      return function() {
+        button.innerHTML = originalText;
+        button.disabled = false;
+      };
+    }
+
+    // Success/Error message handling
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check for URL parameters to show success/error messages
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      if (urlParams.get('success')) {
+        swal("Success!", urlParams.get('success'), "success");
+      }
+      
+      if (urlParams.get('error')) {
+        swal("Error!", urlParams.get('error'), "error");
+      }
+    });
+  </script>
 </body>
 </html>

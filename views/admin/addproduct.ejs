@@ -4,188 +4,290 @@
   <meta charset="UTF-8">
   <title>Add Product</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
   <!-- CropperJS CDN -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .cropper-container { max-height: 400px !important; }
+  </style>
 </head>
-<body class="bg-gray-100">
-  <div class="flex h-screen">
-    <% include('../partial/admin/sidebar') %>
+<body class="bg-slate-50 font-sans text-slate-900">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <%- include('../partial/admin/sidebar') %>
 
     <!-- Main Content -->
     <main class="flex-1 p-8 overflow-y-auto">
-      <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-        <h1 class="text-2xl font-semibold mb-6">Add New Product</h1>
+      <!-- Header -->
+      <div class="mb-8">
+        <div class="flex items-center gap-4 mb-4">
+          <a href="/admin/products" class="inline-flex items-center px-4 py-2 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">
+            ← Back to Products
+          </a>
+        </div>
+        <h1 class="text-4xl font-black text-slate-900 tracking-tight">ADD NEW PRODUCT</h1>
+        <p class="text-slate-600 font-medium mt-2">Create a new product listing for your inventory</p>
+      </div>
 
-        <form id="productForm" action="/admin/products/add" method="POST" enctype="multipart/form-data" class="space-y-4">
-          <div>
-            <input type="text" name="name" placeholder="Product Name" required class="w-full border p-2 rounded" data-required />
-            <p class="field-error mt-1 text-sm text-red-600"></p>
-          </div>
-          <div>
-            <textarea name="description" placeholder="Description" required class="w-full border p-2 rounded" data-required></textarea>
-            <p class="field-error mt-1 text-sm text-red-600"></p>
-          </div>
-          <div>
-            <input type="number" name="price" placeholder="Price" required class="w-full border p-2 rounded" data-required />
-            <p class="field-error mt-1 text-sm text-red-600"></p>
-          </div>
-          <div>
-            <input type="text" name="brand" placeholder="Brand" class="w-full border p-2 rounded" />
-            <p class="field-error mt-1 text-sm text-red-600"></p>
-          </div>
+      <div class="max-w-5xl mx-auto">
+        <form id="productForm" action="/admin/products/add" method="POST" enctype="multipart/form-data" class="space-y-8" novalidate>
+          
+          <!-- Basic Information Card -->
+          <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+            <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center">
+              <span class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black mr-3">1</span>
+              Basic Information
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="md:col-span-2">
+                <label class="block text-sm font-bold text-slate-700 mb-3">Product Name *</label>
+                <input type="text" name="name" placeholder="Enter product name..." required 
+                  class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium text-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" 
+                  data-required />
+                <p class="field-error mt-2 text-sm text-red-600 font-medium"></p>
+              </div>
 
-          <!-- Specs -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Camera Specs -->
-            <div id="cameraSpecs" class="spec-group hidden">
-              <div>
-                <label class="block text-sm mb-1">Megapixel</label>
-                <select name="megapixelBucket" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="12-16">12-16 MP</option>
-                  <option value="16-24">16-24 MP</option>
-                  <option value="24+">24+ MP</option>
-                </select>
+              <div class="md:col-span-2">
+                <label class="block text-sm font-bold text-slate-700 mb-3">Description *</label>
+                <textarea name="description" placeholder="Describe your product features, benefits, and specifications..." required 
+                  rows="4" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all resize-none" 
+                  data-required></textarea>
+                <p class="field-error mt-2 text-sm text-red-600 font-medium"></p>
               </div>
+
               <div>
-                <label class="block text-sm mb-1">Battery Type</label>
-                <select name="batteryType" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="lithium-ion">Lithium Ion</option>
-                  <option value="rechargeable">Rechargeable</option>
-                </select>
+                <label class="block text-sm font-bold text-slate-700 mb-3">Price (₹) *</label>
+                <div class="relative">
+                  <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-emerald-600 font-black text-lg">₹</span>
+                  <input type="number" name="price" placeholder="0.00" required min="0" step="0.01"
+                    class="w-full border-2 border-slate-300 rounded-xl pl-8 pr-4 py-3 font-medium text-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" 
+                    data-required />
+                </div>
+                <p class="field-error mt-2 text-sm text-red-600 font-medium"></p>
               </div>
+
               <div>
-                <label class="block text-sm mb-1">Camera Type</label>
-                <select name="cameraType" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="dslr">DSLR</option>
-                  <option value="mirrorless">Mirrorless</option>
-                  <option value="point-shoot">Point & Shoot</option>
-                  <option value="action">Action Camera</option>
-                  <option value="drone">Drone Camera</option>
+                <label class="block text-sm font-bold text-slate-700 mb-3">Brand</label>
+                <input type="text" name="brand" placeholder="Brand name..." 
+                  class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" />
+                <p class="field-error mt-2 text-sm text-red-600 font-medium"></p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-3">Stock Quantity</label>
+                <input type="number" name="stock" placeholder="Available quantity..." min="0"
+                  class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" />
+              </div>
+
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-3">Availability Status</label>
+                <select name="availability" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all bg-white">
+                  <option value="">Auto (by stock)</option>
+                  <option value="in-stock">In Stock</option>
+                  <option value="pre-order">Pre-order</option>
+                  <option value="backorder">Back Order</option>
                 </select>
               </div>
             </div>
+          </div>
 
-            <!-- Lens Specs -->
-            <div id="lensSpecs" class="spec-group hidden">
-              <div>
-                <label class="block text-sm mb-1">Lens Mount</label>
-                <select name="lensMount" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="canon-ef">Canon EF</option>
-                  <option value="canon-rf">Canon RF</option>
-                  <option value="nikon-f">Nikon F</option>
-                  <option value="nikon-z">Nikon Z</option>
-                  <option value="sony-e">Sony E</option>
-                  <option value="fujifilm-x">Fujifilm X</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm mb-1">Focal Length</label>
-                <select name="focalLength" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="14mm">14mm</option>
-                  <option value="24mm">24mm</option>
-                  <option value="35mm">35mm</option>
-                  <option value="50mm">50mm</option>
-                  <option value="85mm">85mm</option>
-                  <option value="100mm">100mm</option>
-                  <option value="200mm">200mm</option>
-                  <option value="300mm">300mm</option>
-                  <option value="400mm">400mm</option>
-                  <option value="600mm">600mm</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm mb-1">F-Aperture</label>
-                <select name="fAperture" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="f/1.2">f/1.2</option>
-                  <option value="f/1.4">f/1.4</option>
-                  <option value="f/1.8">f/1.8</option>
-                  <option value="f/2">f/2</option>
-                  <option value="f/2.8">f/2.8</option>
-                  <option value="f/3.5">f/3.5</option>
-                  <option value="f/4">f/4</option>
-                  <option value="f/5.6">f/5.6</option>
-                  <option value="f/8">f/8</option>
-                  <option value="f/11">f/11</option>
-                  <option value="f/16">f/16</option>
-                  <option value="f/22">f/22</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm mb-1">Lens Type</label>
-                <select name="lensType" class="w-full border p-2 rounded" disabled>
-                  <option value="">Select</option>
-                  <option value="prime">Prime</option>
-                  <option value="zoom">Zoom</option>
-                  <option value="macro">Macro</option>
-                  <option value="telephoto">Telephoto</option>
-                  <option value="wide-angle">Wide Angle</option>
-                  <option value="standard">Standard</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Availability (common) -->
-            <div>
-              <label class="block text-sm mb-1">Availability</label>
-              <select name="availability" class="w-full border p-2 rounded">
-                <option value="">Auto (by stock)</option>
-                <option value="in-stock">In Stock</option>
-                <option value="pre-order">Pre-order</option>
-                <option value="backorder">Back Order</option>
+          <!-- Category Selection Card -->
+          <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+            <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center">
+              <span class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black mr-3">2</span>
+              Category & Specifications
+            </h2>
+            
+            <div class="mb-6">
+              <label class="block text-sm font-bold text-slate-700 mb-3">Product Category *</label>
+              <select name="category" required id="categorySelect" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all bg-white">
+                <option value="">Choose a category...</option>
+                <% (categories || []).forEach(cat => { %>
+                  <option value="<%= cat._id %>" data-label="<%= (cat.parentCategory ? (cat.parentCategory.name + ' > ' + cat.name) : cat.name) %>">
+                    <%= (cat.parentCategory ? (cat.parentCategory.name + ' > ' + cat.name) : cat.name) %>
+                  </option>
+                <% }) %>
               </select>
+              <p class="text-sm text-slate-500 mt-2 font-medium">Select the most appropriate category for your product</p>
+            </div>
+
+            <!-- Camera Specifications -->
+            <div id="cameraSpecs" class="spec-group hidden">
+              <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                📷 Camera Specifications
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Megapixel Range</label>
+                  <select name="megapixelBucket" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white" disabled>
+                    <option value="">Select range...</option>
+                    <option value="12-16">12-16 MP</option>
+                    <option value="16-24">16-24 MP</option>
+                    <option value="24+">24+ MP</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Battery Type</label>
+                  <select name="batteryType" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white" disabled>
+                    <option value="">Select type...</option>
+                    <option value="lithium-ion">Lithium Ion</option>
+                    <option value="rechargeable">Rechargeable</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Camera Type</label>
+                  <select name="cameraType" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white" disabled>
+                    <option value="">Select type...</option>
+                    <option value="dslr">DSLR</option>
+                    <option value="mirrorless">Mirrorless</option>
+                    <option value="point-shoot">Point & Shoot</option>
+                    <option value="action">Action Camera</option>
+                    <option value="drone">Drone Camera</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lens Specifications -->
+            <div id="lensSpecs" class="spec-group hidden">
+              <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                🔍 Lens Specifications
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Lens Mount</label>
+                  <select name="lensMount" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
+                    <option value="">Select mount...</option>
+                    <option value="canon-ef">Canon EF</option>
+                    <option value="canon-rf">Canon RF</option>
+                    <option value="nikon-f">Nikon F</option>
+                    <option value="nikon-z">Nikon Z</option>
+                    <option value="sony-e">Sony E</option>
+                    <option value="fujifilm-x">Fujifilm X</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Focal Length</label>
+                  <select name="focalLength" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
+                    <option value="">Select length...</option>
+                    <option value="14mm">14mm</option>
+                    <option value="24mm">24mm</option>
+                    <option value="35mm">35mm</option>
+                    <option value="50mm">50mm</option>
+                    <option value="85mm">85mm</option>
+                    <option value="100mm">100mm</option>
+                    <option value="200mm">200mm</option>
+                    <option value="300mm">300mm</option>
+                    <option value="400mm">400mm</option>
+                    <option value="600mm">600mm</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">F-Aperture</label>
+                  <select name="fAperture" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
+                    <option value="">Select aperture...</option>
+                    <option value="f/1.2">f/1.2</option>
+                    <option value="f/1.4">f/1.4</option>
+                    <option value="f/1.8">f/1.8</option>
+                    <option value="f/2">f/2</option>
+                    <option value="f/2.8">f/2.8</option>
+                    <option value="f/3.5">f/3.5</option>
+                    <option value="f/4">f/4</option>
+                    <option value="f/5.6">f/5.6</option>
+                    <option value="f/8">f/8</option>
+                    <option value="f/11">f/11</option>
+                    <option value="f/16">f/16</option>
+                    <option value="f/22">f/22</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Lens Type</label>
+                  <select name="lensType" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
+                    <option value="">Select type...</option>
+                    <option value="prime">Prime</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="macro">Macro</option>
+                    <option value="telephoto">Telephoto</option>
+                    <option value="wide-angle">Wide Angle</option>
+                    <option value="standard">Standard</option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Category Selection -->
-          <div>
-            <label class="block text-sm mb-1">Category</label>
-            <select name="category" required class="w-full border p-2 rounded" id="categorySelect">
-              <option value="">Select Category</option>
-              <% (categories || []).forEach(cat => { %>
-                <option value="<%= cat._id %>" data-label="<%= (cat.parentCategory ? (cat.parentCategory.name + ' > ' + cat.name) : cat.name) %>">
-                  <%= (cat.parentCategory ? (cat.parentCategory.name + ' > ' + cat.name) : cat.name) %>
-                </option>
-              <% }) %>
-            </select>
-            <p class="text-xs text-gray-500 mt-1">Select a category for this product. Subcategories are shown as "Parent > Child".</p>
+          <!-- Image Upload Card -->
+          <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+            <h2 class="text-2xl font-black text-slate-900 mb-6 flex items-center">
+              <span class="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-black mr-3">3</span>
+              Product Images
+            </h2>
+            
+            <div class="mb-6">
+              <input type="file" id="imageInput" accept="image/*" multiple class="sr-only" />
+              <div class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center hover:border-purple-400 transition-colors">
+                <div class="text-6xl mb-4">📸</div>
+                <button type="button" id="chooseImagesBtn" class="inline-flex items-center gap-3 px-8 py-4 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl text-lg">
+                  <span>Choose Images</span>
+                </button>
+                <p class="text-slate-500 mt-4 font-medium">Upload at least 3 high-quality product images</p>
+                <p class="text-sm text-slate-400 mt-2">Images will be cropped to square format automatically</p>
+              </div>
+            </div>
+
+            <div id="croppedImagesPreview" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
+            
+            <div id="imageCounter" class="mt-4 text-center hidden">
+              <span class="inline-flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-full font-bold text-sm">
+                <span id="imageCount">0</span> / 3 minimum images
+              </span>
+            </div>
           </div>
 
-          <input type="number" name="stock" placeholder="Stock"  class="w-full border p-2 rounded" />
-
-          <!-- Image Upload & Cropping -->
-          <div>
-            <label class="block text-sm mb-2">Upload Images (min 3)</label>
-            <input type="file" id="imageInput" accept="image/*" multiple class="sr-only" />
-            <button type="button" id="chooseImagesBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded shadow-sm hover:bg-gray-50 text-sm">
-              <span>Choose Images</span>
-            </button>
-            <div id="croppedImagesPreview" class="flex flex-wrap gap-4 mt-4"></div>
+          <!-- Submit Button -->
+          <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xl font-bold text-slate-900">Ready to publish?</h3>
+                <p class="text-slate-600 font-medium">Review your product information before submitting</p>
+              </div>
+              <button type="submit" disabled id="submitBtn" class="px-12 py-4 text-lg font-black bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:bg-emerald-600">
+                <span class="flex items-center gap-3">
+                  <span id="submitText">CREATE PRODUCT</span>
+                  <span id="submitLoader" class="hidden animate-spin">⏳</span>
+                </span>
+              </button>
+            </div>
           </div>
 
-          <button type="submit" disabled class="bg-blue-600 text-white px-4 py-2 rounded opacity-50 hover:bg-blue-700 disabled:cursor-not-allowed">
-            Submit
-          </button>
         </form>
       </div>
     </main>
   </div>
 
-  <!-- Cropping Modal -->
-  <div id="cropModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white p-4 rounded shadow max-w-lg w-full">
-      <div>
-        <img id="cropImage" class="max-h-[400px] mx-auto" />
+  <!-- Enhanced Cropping Modal -->
+  <div id="cropModal" class="fixed inset-0 bg-black/80 flex items-center justify-center hidden z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 overflow-hidden">
+      <div class="bg-slate-900 text-white px-6 py-4">
+        <h3 class="text-xl font-bold">Crop Image</h3>
+        <p class="text-slate-300 text-sm">Adjust the crop area to fit your product perfectly</p>
       </div>
-      <div class="flex justify-end gap-2 mt-4">
-        <button id="cancelCrop" class="px-4 py-2 bg-gray-400 text-white rounded">Cancel</button>
-        <button id="confirmCrop" class="px-4 py-2 bg-blue-600 text-white rounded">Crop</button>
+      <div class="p-6">
+        <div class="bg-slate-100 rounded-xl overflow-hidden mb-6">
+          <img id="cropImage" class="max-h-96 w-full object-contain" />
+        </div>
+        <div class="flex justify-end gap-3">
+          <button id="cancelCrop" class="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-300 transition-all">
+            Cancel
+          </button>
+          <button id="confirmCrop" class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg">
+            Crop & Continue
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -201,15 +303,20 @@
     const confirmCrop = document.getElementById('confirmCrop');
     const cancelCrop = document.getElementById('cancelCrop');
     const croppedImagesPreview = document.getElementById('croppedImagesPreview');
-    const submitBtn = document.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('submitBtn');
     const productForm = document.getElementById('productForm');
     const categorySelect = document.getElementById('categorySelect');
+    const imageCounter = document.getElementById('imageCounter');
+    const imageCount = document.getElementById('imageCount');
+    const submitText = document.getElementById('submitText');
+    const submitLoader = document.getElementById('submitLoader');
 
     function setGroupVisible(groupEl, visible){
       if (!groupEl) return;
       groupEl.classList.toggle('hidden', !visible);
-      // enable/disable inputs within
-      groupEl.querySelectorAll('select, input, textarea').forEach(el => { el.disabled = !visible; });
+      groupEl.querySelectorAll('select, input, textarea').forEach(el => { 
+        el.disabled = !visible; 
+      });
     }
 
     function updateSpecGroups(){
@@ -226,10 +333,38 @@
     categorySelect?.addEventListener('change', updateSpecGroups);
     updateSpecGroups();
 
-    document.getElementById('chooseImagesBtn').addEventListener('click', function(){ imageInput.click(); });
+    document.getElementById('chooseImagesBtn').addEventListener('click', function(){ 
+      imageInput.click(); 
+    });
+
     imageInput.addEventListener('change', function () {
       if (!this.files.length) return;
-      imageQueue = Array.from(this.files);
+      const MAX_FILE_MB = 5;
+      const MAX_FILES = 12;
+      const files = Array.from(this.files);
+      const valid = [];
+      for (const f of files) {
+        const isImage = f.type.startsWith('image/');
+        const isSizeOk = f.size <= MAX_FILE_MB * 1024 * 1024;
+        if (!isImage) {
+          swal("Invalid File", `${f.name} is not an image.`, "warning");
+          continue;
+        }
+        if (!isSizeOk) {
+          swal("Too Large", `${f.name} exceeds ${MAX_FILE_MB}MB.`, "warning");
+          continue;
+        }
+        valid.push(f);
+      }
+      if (valid.length === 0) {
+        this.value = '';
+        return;
+      }
+      if (croppedImages.length + valid.length > MAX_FILES) {
+        swal("Too Many Images", `You can upload at most ${MAX_FILES} images.`, "warning");
+      }
+      const allowed = valid.slice(0, Math.max(0, MAX_FILES - croppedImages.length));
+      imageQueue = allowed;
       imageInput.value = '';
       if (imageQueue.length > 0) showCropperForNext();
     });
@@ -241,35 +376,60 @@
       reader.onload = function (e) {
         cropImage.src = e.target.result;
         cropModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // Destroy existing cropper if any
+        if (cropper) {
+          cropper.destroy();
+        }
+        
         cropper = new Cropper(cropImage, {
           aspectRatio: 1,
           viewMode: 1,
+          responsive: true,
+          background: false,
+          autoCropArea: 0.8,
         });
       };
       reader.readAsDataURL(file);
     }
 
     confirmCrop.addEventListener('click', () => {
-      const canvas = cropper.getCroppedCanvas();
+      if (!cropper) return;
+      
+      const canvas = cropper.getCroppedCanvas({
+        width: 400,
+        height: 400,
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+      });
+      
       if (!canvas) return;
 
       canvas.toBlob((blob) => {
         croppedImages.push(blob);
         renderCroppedImages();
         updateSubmitState();
+        updateImageCounter();
 
         cropper.destroy();
         cropModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
 
         if (imageQueue.length > 0) {
-          showCropperForNext();
+          setTimeout(() => showCropperForNext(), 300);
+        } else {
+          swal("Images Added!", `Successfully processed ${croppedImages.length} image${croppedImages.length > 1 ? 's' : ''}.`, "success");
         }
-      });
+      }, 'image/jpeg', 0.9);
     });
 
     cancelCrop.addEventListener('click', () => {
-      cropper.destroy();
+      if (cropper) {
+        cropper.destroy();
+      }
       cropModal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
       imageQueue = [];
       imageInput.value = '';
     });
@@ -279,71 +439,209 @@
       croppedImages.forEach((blob, index) => {
         const url = URL.createObjectURL(blob);
         const div = document.createElement('div');
-        div.className = 'relative';
+        div.className = 'relative group';
+        div.setAttribute('draggable', 'true');
+        div.dataset.index = String(index);
         div.innerHTML = `
-          <img src="${url}" class="w-24 h-24 object-cover rounded border" />
-          <button data-index="${index}" class="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded">✕</button>
+          <img src="${url}" class="w-full aspect-square object-cover rounded-xl border-2 border-slate-200 shadow-sm group-hover:shadow-lg transition-all" />
+          <button data-index="${index}" class="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transform hover:scale-110 transition-all">
+            ×
+          </button>
+          <div class="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full font-bold">
+            ${index + 1}
+          </div>
         `;
         croppedImagesPreview.appendChild(div);
       });
+      attachDragAndDrop();
     }
 
     croppedImagesPreview.addEventListener('click', (e) => {
       if (e.target.tagName === 'BUTTON') {
-        const index = e.target.getAttribute('data-index');
-        croppedImages.splice(index, 1);
-        renderCroppedImages();
-        updateSubmitState();
+        const index = parseInt(e.target.getAttribute('data-index'));
+        
+        swal({
+          title: "Remove Image?",
+          text: `Are you sure you want to remove image ${index + 1}?`,
+          icon: "warning",
+          buttons: ["Cancel", "Remove"],
+          dangerMode: true,
+        }).then((willDelete) => {
+          if (willDelete) {
+            croppedImages.splice(index, 1);
+            renderCroppedImages();
+            updateSubmitState();
+            updateImageCounter();
+            swal("Removed!", "Image has been removed.", "success");
+          }
+        });
       }
     });
+
+    function updateImageCounter() {
+      imageCount.textContent = croppedImages.length;
+      imageCounter.classList.toggle('hidden', croppedImages.length === 0);
+      
+      const counter = imageCounter.querySelector('span');
+      if (croppedImages.length >= 3) {
+        counter.className = 'inline-flex items-center px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full font-bold text-sm';
+      } else {
+        counter.className = 'inline-flex items-center px-4 py-2 bg-amber-100 text-amber-700 rounded-full font-bold text-sm';
+      }
+    }
 
     function updateSubmitState() {
       const valid = croppedImages.length >= 3;
       submitBtn.disabled = !valid;
-      submitBtn.classList.toggle('opacity-50', !valid);
+      
+      if (valid) {
+        submitText.textContent = 'CREATE PRODUCT';
+        submitBtn.className = 'px-12 py-4 text-lg font-black bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200';
+      } else {
+        submitText.textContent = `ADD ${3 - croppedImages.length} MORE IMAGE${3 - croppedImages.length > 1 ? 'S' : ''}`;
+        submitBtn.className = 'px-12 py-4 text-lg font-black bg-slate-400 text-white rounded-xl shadow-lg cursor-not-allowed';
+      }
     }
 
-    productForm.addEventListener('submit', (e) => {
-  e.preventDefault();
+    productForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validateForm()) {
+        swal("Form Incomplete", "Please fill all required fields.", "warning");
+        return;
+      }
+      if (croppedImages.length < 3) {
+        swal("Missing Images", "Please add at least 3 product images before submitting.", "warning");
+        return;
+      }
 
-  if (croppedImages.length < 3) {
-    alert('Please crop at least 3 images before submitting.');
-    return;
-  }
+      // Show loading state
+      submitBtn.disabled = true;
+      submitText.classList.add('hidden');
+      submitLoader.classList.remove('hidden');
+      submitBtn.className = 'px-12 py-4 text-lg font-black bg-slate-400 text-white rounded-xl shadow-lg cursor-not-allowed';
 
-  const formData = new FormData(productForm);
-  croppedImages.forEach((blob, index) => {
-    formData.append('images', blob, `image_${index}.jpg`);
-  });
+      try {
+        const formData = new FormData(productForm);
+        croppedImages.forEach((blob, index) => {
+          formData.append('images', blob, `image_${index}.jpg`);
+        });
 
-  fetch('/admin/products/add', {
-    method: 'POST',
-    body: formData
-  }).then(res => {
-    if (res.ok) {
-      alert('Product added successfully!');
-      window.location.href = '/admin/products'; // ✅ Redirect after success
-    } else {
-      res.text().then(msg => alert('Upload failed: ' + msg));
-    }
-  }).catch(err => {
-    console.error(err);
-    alert('Error uploading product');
-  });
-});
+        const response = await fetch('/admin/products/add', {
+          method: 'POST',
+          body: formData
+        });
 
-
-    updateSubmitState();
-  </script>
-
-  <script src="/js/inline-validator.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const productForm = document.getElementById('productForm');
-      if (productForm) {
-        window.attachInlineValidation(productForm);
+        if (response.ok) {
+          swal("Success!", "Product has been created successfully!", "success").then(() => {
+            window.location.href = '/admin/products';
+          });
+        } else {
+          const errorText = await response.text();
+          throw new Error(errorText || 'Failed to create product');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        swal("Error!", `Failed to create product: ${error.message}`, "error");
+        
+        // Reset loading state
+        submitBtn.disabled = false;
+        submitText.classList.remove('hidden');
+        submitLoader.classList.add('hidden');
+        updateSubmitState();
       }
     });
+
+    // Form validation
+    function validateForm() {
+      const requiredFields = document.querySelectorAll('[data-required]');
+      let isValid = true;
+      
+      requiredFields.forEach(field => {
+        const errorEl = field.parentNode.querySelector('.field-error');
+        if (!field.value.trim()) {
+          field.classList.add('border-red-500', 'focus:border-red-500');
+          if (errorEl) errorEl.textContent = 'This field is required';
+          isValid = false;
+        } else {
+          field.classList.remove('border-red-500', 'focus:border-red-500');
+          if (errorEl) errorEl.textContent = '';
+        }
+      });
+      
+      return isValid;
+    }
+
+    // Real-time validation
+    document.addEventListener('input', (e) => {
+      if (e.target.hasAttribute('data-required')) {
+        const errorEl = e.target.parentNode.querySelector('.field-error');
+        if (e.target.value.trim()) {
+          e.target.classList.remove('border-red-500', 'focus:border-red-500');
+          if (errorEl) errorEl.textContent = '';
+        } else {
+          e.target.classList.add('border-red-500', 'focus:border-red-500');
+          if (errorEl) errorEl.textContent = 'This field is required';
+        }
+      }
+    });
+
+    // Numeric fields guard
+    const priceInput = document.querySelector('input[name="price"]');
+    const stockInput = document.querySelector('input[name="stock"]');
+    if (priceInput) priceInput.addEventListener('input', (e) => {
+      const input = e.target;
+      if (Number(input.value) < 0) input.value = '0';
+    });
+    if (stockInput) stockInput.addEventListener('input', (e) => {
+      const input = e.target;
+      if (Number(input.value) < 0) input.value = '0';
+    });
+
+    // Drag and drop reordering helpers
+    let dragSrcEl = null;
+    function handleDragStart(e){
+      dragSrcEl = this;
+      this.classList.add('opacity-50');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', this.dataset.index);
+    }
+    function handleDragOver(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      this.classList.add('ring-2', 'ring-emerald-400');
+      return false;
+    }
+    function handleDragLeave(){
+      this.classList.remove('ring-2', 'ring-emerald-400');
+    }
+    function handleDrop(e){
+      e.stopPropagation();
+      this.classList.remove('ring-2', 'ring-emerald-400');
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = parseInt(this.dataset.index);
+      if (isNaN(fromIndex) || isNaN(toIndex) || fromIndex === toIndex) return false;
+      const moved = croppedImages.splice(fromIndex, 1)[0];
+      croppedImages.splice(toIndex, 0, moved);
+      renderCroppedImages();
+      updateImageCounter();
+      updateSubmitState();
+      return false;
+    }
+    function handleDragEnd(){
+      this.classList.remove('opacity-50');
+    }
+    function attachDragAndDrop(){
+      const items = croppedImagesPreview.querySelectorAll('.group');
+      items.forEach((el, idx) => {
+        el.dataset.index = String(idx);
+        el.addEventListener('dragstart', handleDragStart);
+        el.addEventListener('dragover', handleDragOver);
+        el.addEventListener('dragleave', handleDragLeave);
+        el.addEventListener('drop', handleDrop);
+        el.addEventListener('dragend', handleDragEnd);
+      });
+    }
+
   </script>
-</body>
-</html>
+ </body>
+ </html>
