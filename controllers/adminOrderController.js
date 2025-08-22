@@ -261,9 +261,13 @@ exports.verifyReturnAndRefund = async (req, res) => {
         }
 
         
-        if (order.items.every(i => i.status === 'Returned')) {
+        const hasPendingReturnRequests = order.items.some(i => i.status === 'Return Requested');
+        const hasAnyReturnedItems = order.items.some(i => i.status === 'Returned');
+        if (!hasPendingReturnRequests && hasAnyReturnedItems) {
             order.status = 'Returned';
             order.paymentStatus = 'Refunded';
+        } else if (hasPendingReturnRequests) {
+            order.status = 'Return Requested';
         }
 
         await order.save();

@@ -533,12 +533,8 @@
                const result = await response.json();
                console.log('Success:', result);
                
-               // Update cart count if element exists
-               const cartCountElement = document.getElementById('cartCount');
-               if (cartCountElement && result.cartItemCount !== undefined) {
-                 cartCountElement.textContent = result.cartItemCount;
-                 cartCountElement.classList.remove('hidden');
-               }
+               // Update cart count
+               updateCartCount();
                
                // Show success message
                Swal.fire({
@@ -699,6 +695,20 @@
       });
     });
 
+  
+    async function updateCartCount() {
+      try {
+        const response = await fetch('/cart/count');
+        const data = await response.json();
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+          cartCountElement.textContent = data.count;
+          cartCountElement.classList.toggle('hidden', data.count === 0);
+        }
+      } catch (error) {
+        console.error('Error updating cart count:', error);
+      }
+    }
 
   </script>
 </body>

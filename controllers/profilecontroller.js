@@ -593,3 +593,4 @@ exports.verifyEmailOTP = async (req, res) => {
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to verify OTP' });
   }
 };
+

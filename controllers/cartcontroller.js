@@ -138,7 +138,7 @@ exports.addToCart = async (req, res) => {
     await cart.save();
 
     if (req.headers['content-type'] === 'application/json') {
-      return res.status(STATUS_CODES.OK).json({ success: true, message: 'Product added to cart successfully', cartItemCount: cart.items.length });
+      return res.status(STATUS_CODES.OK).json({ success: true, message: 'Product added to cart successfully' });
     } else {
       return res.redirect('/cart');
     }
@@ -270,7 +270,10 @@ exports.clearCart = async (req, res) => {
     await cart.save();
 
     if (req.headers['content-type'] === 'application/json') {
-      return res.status(STATUS_CODES.OK).json({ success: true, message: 'Cart cleared successfully' });
+      return res.status(STATUS_CODES.OK).json({ 
+        success: true, 
+        message: 'Cart cleared successfully'
+      });
     } else {
       return res.redirect('/cart');
     }

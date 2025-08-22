@@ -482,9 +482,17 @@ exports.getProducts = async (req, res) => {
     }
 
     if (priceRange && priceRange.includes('_')) {
-      const [min, max] = priceRange.split('_').map(Number);
+      const [minRaw, maxRaw] = priceRange.split('_');
+      const min = Number(minRaw);
+      const max = Number(maxRaw);
       if (!isNaN(min) && !isNaN(max)) {
         query.price = { $gte: min, $lte: max };
+      } else if (!isNaN(min) && (isNaN(max) || maxRaw === '')) {
+        // Only minimum provided: filter from min upwards
+        query.price = { $gte: min };
+      } else if ((isNaN(min) || minRaw === '') && !isNaN(max)) {
+        // Only maximum provided: filter up to max
+        query.price = { $lte: max };
       }
     }
     if (!priceRange) {
@@ -681,18 +689,50 @@ exports.getProductDetails = async (req, res) => {
 
     const userId = req.session.userId;
     let isInWishlist = false;
+    let returnInfo = null;
 
     if (userId) {
       const user = await User.findById(userId);
       if (user && user.wishlist.includes(productId)) {
         isInWishlist = true;
       }
+
+      // Fetch return information for this product and user
+      const Order = require('../models/order');
+      const returnOrder = await Order.findOne({
+        user: userId,
+        'items.product': productId,
+        $or: [
+          { 'items.status': 'Returned' },
+          { 'items.status': 'Return Requested' },
+          { 'items.isReturned': true }
+        ]
+      }).populate('items.product');
+
+      if (returnOrder) {
+        const returnItem = returnOrder.items.find(item => 
+          item.product._id.toString() === productId
+        );
+        
+        if (returnItem) {
+          returnInfo = {
+            orderId: returnOrder.orderId,
+            returnDate: returnItem.returnDate || returnOrder.createdAt,
+            returnReason: returnItem.returnReason,
+            returnStatus: returnItem.status,
+            isReturned: returnItem.isReturned,
+            returnRequested: returnItem.returnRequested,
+            returnApproved: returnItem.returnApproved
+          };
+        }
+      }
     }
 
     res.render('user/product', {
       product,
       related,
-      isInWishlist
+      isInWishlist,
+      returnInfo
     });
   } catch (err) {
     console.error('Error fetching product details:', err);

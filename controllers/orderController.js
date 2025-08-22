@@ -194,6 +194,13 @@ exports.cancelOrder = async (req, res) => {
       });
     }
 
+    if (order.status === 'Return Requested' || order.status === 'Returned') {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({
+        success: false,
+        message: 'Returned orders cannot be cancelled'
+      });
+    }
+
     order.status = 'Cancelled';
     order.cancelReason = reason || '';
     order.paymentStatus = 'Cancelled';
@@ -250,6 +257,10 @@ exports.cancelOrderItem = async (req, res) => {
 
     if (item.isCancelled || item.status === 'Cancelled') {
       return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item is already cancelled' });
+    }
+
+    if (item.isReturned || item.status === 'Returned' || item.status === 'Return Requested') {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Returned items cannot be cancelled' });
     }
 
     item.isCancelled = true;

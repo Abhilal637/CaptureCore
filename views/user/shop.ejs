@@ -236,8 +236,9 @@
 
         <!-- Filters Section -->
         <div class="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-          <div class="p-4 bg-gray-50 border-b">
+          <div class="p-4 bg-gray-50 border-b flex items-center justify-between">
             <h3 class="font-bold text-lg text-gray-800">Filters</h3>
+            <button id="clearAllFiltersBtn" type="button" class="text-sm text-red-600 hover:text-red-700 underline">Clear All</button>
           </div>
           
           <!-- Price Filter -->
@@ -827,11 +828,7 @@
                   });
                   const data = await res.json();
                   if (res.ok) {
-                    const cartCountElement = document.getElementById('cartCount');
-                    if (cartCountElement && data.cartItemCount !== undefined) {
-                      cartCountElement.textContent = data.cartItemCount;
-                      cartCountElement.classList.remove('hidden');
-                    }
+                    updateCartCount();
                     Swal.fire('Added!', 'Product added to cart', 'success');
                   } else {
                     Swal.fire('Error', data.message || 'Failed to add to cart', 'error');
@@ -1072,15 +1069,10 @@
             currentPagination.remove();
           }
           
-          // Update URL without reload
+          // Update URL without reload (replace query entirely with provided params)
           const newUrl = new URL(window.location.href);
-          searchParams.forEach((value, key) => {
-            if (value) {
-              newUrl.searchParams.set(key, value);
-            } else {
-              newUrl.searchParams.delete(key);
-            }
-          });
+          const searchStr = searchParams.toString();
+          newUrl.search = searchStr ? `?${searchStr}` : '';
           window.history.pushState({}, '', newUrl.toString());
           
           // Update active category styling
@@ -1222,6 +1214,37 @@
         updateProductsWithFilters(url.searchParams);
       }
     });
+
+    // Clear All filters
+    document.getElementById('clearAllFiltersBtn')?.addEventListener('click', function(){
+      const url = new URL(window.location.href);
+    
+      const filterParamNames = [
+        'brand', 'megapixel', 'battery', 'camera-type', 'lens-mount', 'focal-length', 'f-aperture', 'lens-type', 'availability', 'priceRange', 'category', 'search', 'sort'
+      ];
+      filterParamNames.forEach(name => url.searchParams.delete(name));
+      url.searchParams.delete('page');
+
+      // Uncheck all checkboxes in the sidebar
+      document.querySelectorAll('aside input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+
+      // Reset price UI
+      const priceDisplay = document.getElementById('priceDisplay');
+      const slider = document.getElementById('priceSlider');
+      const minSel = document.getElementById('minPriceSelect');
+      const maxSel = document.getElementById('maxPriceSelect');
+      const clearBtn = document.getElementById('clearPriceBtn');
+      function fmt(n){ return '₹' + Number(n).toLocaleString('en-IN'); }
+      if (priceDisplay && slider && minSel && maxSel) {
+        priceDisplay.textContent = `${fmt(0)} – ${fmt(500000)}`;
+        slider.value = 500000;
+        minSel.value = '0';
+        maxSel.value = '500000';
+        if (clearBtn) clearBtn.classList.add('hidden');
+      }
+
+      updateProductsWithFilters(url.searchParams);
+    });
     
     // Search brand functionality
     document.addEventListener('input', function(e) {
@@ -1234,6 +1257,23 @@
         });
       }
     });
+  </script>
+
+  <!-- Update cart count in navbar -->
+  <script>
+    async function updateCartCount() {
+      try {
+        const response = await fetch('/cart/count');
+        const data = await response.json();
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement) {
+          cartCountElement.textContent = data.count;
+          cartCountElement.classList.toggle('hidden', data.count === 0);
+        }
+      } catch (error) {
+        console.error('Error updating cart count:', error);
+      }
+    }
   </script>
 
 </body>

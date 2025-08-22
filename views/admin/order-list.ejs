@@ -17,73 +17,80 @@
     <div class="flex-1 flex flex-col">
      
       <div class="p-8 flex-1">
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-3xl font-bold">Orders</h1>
-          <button onclick="location.reload()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-            Refresh Page
+        <div class="flex justify-between items-center mb-8">
+          <h1 class="text-4xl font-black tracking-tight">ORDERS</h1>
+          <button onclick="location.reload()" class="px-6 py-3 text-lg font-bold bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+            Refresh
           </button>
         </div>
 
         <!-- Search Form -->
-        <form method="GET" action="/admin/orders" class="mb-6 flex gap-2">
-          <input 
-            type="text" 
-            name="search" 
-            value="<%= typeof search !== 'undefined' ? search : '' %>" 
-            placeholder="Search by Order ID or User" 
-            class="border border-gray-300 rounded px-3 py-2 w-64 text-sm"
-          />
-          <button type="submit" class="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-            Search
-          </button>
-          <% if (search && search.length > 0) { %>
-            <button type="button" id="clearSearchBtn" class="px-4 py-2 bg-gray-400 text-white text-sm rounded hover:bg-gray-500">
-              Clear
-            </button>
-          <% } %>
-        </form>
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-200">
+          <form method="GET" action="/admin/orders" class="flex items-center gap-4 flex-wrap">
+            <input 
+              type="text" 
+              name="search" 
+              value="<%= typeof search !== 'undefined' ? search : '' %>" 
+              placeholder="Search by Order ID or User" 
+              class="w-full max-w-md border-2 border-slate-300 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all"
+            />
+            <div class="flex gap-3 items-end">
+              <button type="submit" class="bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transform hover:-translate-y-0.5 transition-all duration-200 shadow-lg hover:shadow-xl">
+                Search
+              </button>
+              <% if (search && search.length > 0) { %>
+                <button type="button" id="clearSearchBtn" class="bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-300 transition-all">
+                  Clear
+                </button>
+              <% } %>
+            </div>
+          </form>
+        </div>
 
         <!-- Sorting Options -->
-        <div class="mb-4 flex gap-2 items-center">
-          <span class="text-sm font-medium text-gray-700">Sort by:</span>
-          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=date&order=desc" 
-             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= (!sort || sort === 'date') && (!order || order === 'desc') ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
-            Date (Newest)
-          </a>
-          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=date&order=asc" 
-             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'date' && order === 'asc' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
-            Date (Oldest)
-          </a>
-          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=amount&order=desc" 
-             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'amount' && order === 'desc' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
-            Amount (High to Low)
-          </a>
-          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=amount&order=asc" 
-             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'amount' && order === 'asc' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
-            Amount (Low to High)
-          </a>
-          <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=status" 
-             class="px-3 py-1 text-sm border rounded hover:bg-gray-50 <%= sort === 'status' ? 'bg-blue-100 border-blue-300' : 'border-gray-300' %>">
-            Status
-          </a>
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-slate-200">
+          <div class="flex gap-3 items-center flex-wrap">
+            <span class="text-sm font-bold text-slate-700">Sort by:</span>
+            <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=date&order=desc" 
+               class="px-4 py-2 text-sm font-medium border-2 rounded-xl hover:bg-slate-50 transition-all <%= (!sort || sort === 'date') && (!order || order === 'desc') ? 'bg-emerald-100 border-emerald-500 text-emerald-700' : 'border-slate-300 text-slate-700' %>">
+              Date (Newest)
+            </a>
+            <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=date&order=asc" 
+               class="px-4 py-2 text-sm font-medium border-2 rounded-xl hover:bg-slate-50 transition-all <%= sort === 'date' && order === 'asc' ? 'bg-emerald-100 border-emerald-500 text-emerald-700' : 'border-slate-300 text-slate-700' %>">
+              Date (Oldest)
+            </a>
+            <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=amount&order=desc" 
+               class="px-4 py-2 text-sm font-medium border-2 rounded-xl hover:bg-slate-50 transition-all <%= sort === 'amount' && order === 'desc' ? 'bg-emerald-100 border-emerald-500 text-emerald-700' : 'border-slate-300 text-slate-700' %>">
+              Amount (High to Low)
+            </a>
+            <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=amount&order=asc" 
+               class="px-4 py-2 text-sm font-medium border-2 rounded-xl hover:bg-slate-50 transition-all <%= sort === 'amount' && order === 'asc' ? 'bg-emerald-100 border-emerald-500 text-emerald-700' : 'border-slate-300 text-slate-700' %>">
+              Amount (Low to High)
+            </a>
+            <a href="?<%= search ? 'search=' + encodeURIComponent(search) + '&' : '' %>sort=status" 
+               class="px-4 py-2 text-sm font-medium border-2 rounded-xl hover:bg-slate-50 transition-all <%= sort === 'status' ? 'bg-emerald-100 border-emerald-500 text-emerald-700' : 'border-slate-300 text-slate-700' %>">
+              Status
+            </a>
+          </div>
         </div>
 
         <% if (orders && orders.length > 0) { %>
-          <div class="overflow-x-auto bg-white rounded-lg shadow">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-100">
-                <tr>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Order ID</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">User</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Amount</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Product Status</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Payment Status</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Date</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Update</th>
-                  <th class="px-6 py-3 text-left text-sm font-medium text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-200">
+          <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-slate-900 text-white">
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Order ID</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">User</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Amount</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Product Status</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Payment Status</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Date</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Update</th>
+                    <th class="text-left p-6 font-black text-sm uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
                 <% orders.forEach(order => { %>
                   <tr>
                     <td class="px-6 py-4 text-sm text-blue-600 font-mono">#<%= order.orderId %></td>
@@ -147,7 +154,7 @@
                     <td class="px-6 py-4">
                       <% const allowed = nextStatusMap[order.status] || []; %>
                       <% if (allowed.length > 0) { %>
-                        <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center status-update-form">
+                        <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center status-update-form" novalidate>
                           <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm" required>
                             <option disabled selected value> -- Select Status -- </option>
                             <% allowed.forEach(status => { %>
@@ -229,33 +236,28 @@
   </div>
 
   <script>
-    // Handle status update form submissions
+    // Handle status update form submissions (validate selection and prevent empty submit)
     document.querySelectorAll('.status-update-form').forEach(form => {
       form.addEventListener('submit', function(e) {
+        const selectEl = this.querySelector('select[name="status"]');
         const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        
-        // Show loading state
-        submitBtn.textContent = 'Updating...';
-        submitBtn.disabled = true;
-        submitBtn.classList.add('opacity-50');
-        
-       
-        console.log('Submitting status update form:', this.action);
-        
-        // Show success message after a short delay to simulate processing
-        setTimeout(() => {
+        if (!selectEl || !selectEl.value) {
+          e.preventDefault();
           Swal.fire({
-            icon: 'success',
-            title: 'Status Updated',
-            text: 'Order status has been updated successfully!',
-            confirmButtonColor: '#3085d6',
-            timer: 1500,
-            showConfirmButton: false
-          }).then(() => {
-            // The page will reload due to form submission
+            icon: 'error',
+            title: 'Select a status',
+            text: 'Please choose a valid next status before updating.',
+            confirmButtonColor: '#d33'
           });
-        }, 500);
+          return;
+        }
+
+        // Guard: disable double submit
+        if (submitBtn) {
+          submitBtn.textContent = 'Updating...';
+          submitBtn.disabled = true;
+          submitBtn.classList.add('opacity-50');
+        }
       });
     });
 

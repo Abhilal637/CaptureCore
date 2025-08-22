@@ -75,6 +75,7 @@
                 <th class="px-4 py-2">Price</th>
                 <th class="px-4 py-2">Total</th>
                 <th class="px-4 py-2">Status</th>
+                <th class="px-4 py-2">Return Reason</th>
                 <th class="px-4 py-2">Actions</th>
               </tr>
             </thead>
@@ -88,6 +89,13 @@
                     ₹<%= item.totalAmount ? item.totalAmount.toFixed(2) : (item.price * item.quantity).toFixed(2) %>
                   </td>
                   <td class="px-4 py-2"><%= item.status %></td>
+                  <td class="px-4 py-2 align-top">
+                    <% if (item.returnReason && (item.status === 'Return Requested' || item.status === 'Returned')) { %>
+                      <div class="text-sm text-gray-700 max-w-xs whitespace-pre-line"><%= item.returnReason %></div>
+                    <% } else { %>
+                      <span class="text-gray-400">-</span>
+                    <% } %>
+                  </td>
                   <td class="px-4 py-2">
                     <% if (item.status === 'Return Requested' && !item.returnApproved) { %>
                       <form class="return-form" data-product-id="<%= item.product._id || item.product %>" data-order-id="<%= order._id %>">
