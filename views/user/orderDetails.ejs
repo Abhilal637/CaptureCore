@@ -49,6 +49,42 @@
                 </span>
               </span>
             </div>
+            
+                         <!-- Show cancellation reason if order is cancelled -->
+             <% if (order.status === 'Cancelled' && order.cancelReason) { %>
+               <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                 <div class="flex items-start gap-3">
+                   <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                   </svg>
+                   <div>
+                     <h3 class="text-sm font-semibold text-red-800 mb-1">Order Cancellation Reason</h3>
+                     <p class="text-sm text-red-700 whitespace-pre-line"><%= order.cancelReason %></p>
+                   </div>
+                 </div>
+               </div>
+             <% } %>
+             
+                           <!-- Show partial cancellation notice -->
+              <% 
+                const partialCancelledItems = order.items.filter(item => item.status === 'Cancelled' || item.isCancelled);
+                const activeItems = order.items.filter(item => item.status !== 'Cancelled' && !item.isCancelled);
+              %>
+              <% if (partialCancelledItems.length > 0 && activeItems.length > 0 && order.status !== 'Cancelled') { %>
+               <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                 <div class="flex items-start gap-3">
+                   <svg class="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                     <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                   </svg>
+                   <div>
+                     <h3 class="text-sm font-semibold text-yellow-800 mb-1">Partial Order Update</h3>
+                     <p class="text-sm text-yellow-700">
+                       Some items in your order have been cancelled by admin. The remaining <%= activeItems.length %> item(s) will continue to be processed and delivered.
+                     </p>
+                   </div>
+                 </div>
+               </div>
+             <% } %>
           </div>
           <div class="text-right">
             <div class="text-2xl font-bold text-gray-900">₹<%= order.total.toFixed(2) %></div>
@@ -111,6 +147,21 @@
                   </div>
                 </div>
 
+                <!-- Show cancellation reason for cancelled items -->
+                <% if ((item.isCancelled || item.status === 'Cancelled') && item.cancelReason) { %>
+                  <div class="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex items-start gap-2">
+                      <svg class="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                      </svg>
+                      <div>
+                        <h4 class="text-xs font-semibold text-red-800 mb-1">Item Cancelled by Admin</h4>
+                        <p class="text-xs text-red-700 whitespace-pre-line"><%= item.cancelReason %></p>
+                      </div>
+                    </div>
+                  </div>
+                <% } %>
+
                 <!-- Action Buttons -->
                 <div class="mt-4 flex flex-wrap gap-3">
                   <% if (!item.isCancelled && item.status !== 'Cancelled' && item.status !== 'Delivered' && item.status !== 'Return Requested' && item.status !== 'Returned' && !item.isReturned) { %>
@@ -171,34 +222,59 @@
         </div>
       </div>
 
-      <!-- Order Summary -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-        <div class="space-y-3">
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Subtotal</span>
-            <span class="font-medium">₹<%= order.subtotal.toFixed(2) %></span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Tax</span>
-            <span class="font-medium">₹<%= order.tax.toFixed(2) %></span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Shipping</span>
-            <span class="font-medium">₹<%= order.shipping.toFixed(2) %></span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">Discount</span>
-            <span class="font-medium text-green-600">-₹<%= order.discount.toFixed(2) %></span>
-          </div>
-          <div class="border-t border-gray-200 pt-3 mt-3">
-            <div class="flex justify-between">
-              <span class="text-lg font-semibold text-gray-900">Total</span>
-              <span class="text-lg font-bold text-gray-900">₹<%= order.total.toFixed(2) %></span>
+             <!-- Order Summary -->
+       <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+         <h2 class="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+         <div class="space-y-3">
+                       <% 
+              const cancelledItems = order.items.filter(item => item.status === 'Cancelled' || item.isCancelled);
+              const totalCancelledAmount = cancelledItems.reduce((sum, item) => {
+                const itemPrice = item.product?.price || item.price || 0;
+                const itemQty = item.quantity || 1;
+                return sum + (itemPrice * itemQty);
+              }, 0);
+              
+              // Calculate original subtotal (including all products)
+              const originalSubtotal = order.subtotal + totalCancelledAmount;
+            %>
+            
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Subtotal</span>
+              <span class="font-medium">₹<%= originalSubtotal.toFixed(2) %></span>
             </div>
-          </div>
-        </div>
-      </div>
+           <div class="flex justify-between text-sm">
+             <span class="text-gray-600">Tax</span>
+             <span class="font-medium">₹<%= order.tax.toFixed(2) %></span>
+           </div>
+           <div class="flex justify-between text-sm">
+             <span class="text-gray-600">Shipping</span>
+             <span class="font-medium">₹<%= order.shipping.toFixed(2) %></span>
+           </div>
+           <div class="flex justify-between text-sm">
+             <span class="text-gray-600">Discount</span>
+             <span class="font-medium text-green-600">-₹<%= order.discount.toFixed(2) %></span>
+           </div>
+           
+                       <% if (cancelledItems.length > 0) { %>
+              <div class="flex justify-between text-sm">
+                <span class="text-red-600">Cancelled Items</span>
+                <span class="font-medium text-red-600">-₹<%= totalCancelledAmount.toFixed(2) %></span>
+              </div>
+            <% } %>
+            
+            <div class="border-t border-gray-200 pt-3 mt-3">
+              <div class="flex justify-between">
+                <span class="text-lg font-semibold text-gray-900">Total</span>
+                <span class="text-lg font-bold text-gray-900">₹<%= order.total.toFixed(2) %></span>
+              </div>
+              <% if (cancelledItems.length > 0) { %>
+                <div class="text-xs text-gray-500 mt-1">
+                  <!-- * Total adjusted due to cancelled items -->
+                </div>
+              <% } %>
+            </div>
+         </div>
+       </div>
 
       <!-- Return Summary -->
       <% if (order.items.some(item => item.status === 'Return Requested' || item.status === 'Returned' || item.isReturned)) { %>

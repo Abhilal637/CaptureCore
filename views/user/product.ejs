@@ -187,11 +187,12 @@
             <label class="text-sm font-medium">Quantity:</label>
             <div class="flex items-center border rounded-lg">
               <button onclick="changeQuantity(-1)" class="px-3 py-2 hover:bg-gray-100">-</button>
-              <input type="number" id="quantity" value="1" min="1" max="<%= product.stock %>" 
+              <input type="number" id="quantity" value="1" min="1" max="<%= Math.min(5, product.stock) %>" 
                     class="w-16 text-center border-none focus:outline-none" 
                     data-max-stock="<%= product.stock || 0 %>" />
               <button onclick="changeQuantity(1)" class="px-3 py-2 hover:bg-gray-100">+</button>
             </div>
+            <span class="text-xs text-gray-500">(Max 5 for Buy Now)</span>
           </div>
 
           <div class="flex gap-3">
@@ -387,7 +388,11 @@
       const currentValue = parseInt(quantityInput.value);
       let newValue = currentValue + delta;
       if (newValue < 1) newValue = 1;
-      if (newValue > productStock) newValue = productStock;
+      
+      // Enforce buy now limit of 5 items
+      const maxAllowed = Math.min(5, productStock);
+      if (newValue > maxAllowed) newValue = maxAllowed;
+      
       quantityInput.value = newValue;
       
       // Update hidden form input if it exists
@@ -410,7 +415,10 @@
     document.getElementById('quantity').addEventListener('change', function () {
       const value = parseInt(this.value);
       if (value < 1) this.value = 1;
-      if (value > productStock) this.value = productStock;
+      
+      // Enforce buy now limit of 5 items
+      const maxAllowed = Math.min(5, productStock);
+      if (value > maxAllowed) this.value = maxAllowed;
       
       // Update hidden form input if it exists
       const hiddenQuantityInput = document.querySelector('input[name="quantity"]');
@@ -466,6 +474,16 @@
                    icon: 'error',
                    title: 'Out of Stock',
                    text: 'This product is currently out of stock.'
+                 });
+                 return;
+               }
+               
+               // Check buy now limit (max 5 products)
+               if (quantity > 5) {
+                 Swal.fire({
+                   icon: 'error',
+                   title: 'Quantity Limit Exceeded',
+                   text: 'You can only buy up to 5 items at once using Buy Now. For larger quantities, please add to cart.'
                  });
                  return;
                }

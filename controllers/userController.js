@@ -91,7 +91,7 @@ exports.postSignup = async (req, res) => {
 
     await newUser.save();
 
-    // Save email for OTP flows if query param is lost
+   
     req.session.signupEmail = email;
 
     try {
@@ -488,10 +488,10 @@ exports.getProducts = async (req, res) => {
       if (!isNaN(min) && !isNaN(max)) {
         query.price = { $gte: min, $lte: max };
       } else if (!isNaN(min) && (isNaN(max) || maxRaw === '')) {
-        // Only minimum provided: filter from min upwards
+       
         query.price = { $gte: min };
       } else if ((isNaN(min) || minRaw === '') && !isNaN(max)) {
-        // Only maximum provided: filter up to max
+        
         query.price = { $lte: max };
       }
     }
@@ -697,7 +697,7 @@ exports.getProductDetails = async (req, res) => {
         isInWishlist = true;
       }
 
-      // Fetch return information for this product and user
+      
       const Order = require('../models/order');
       const returnOrder = await Order.findOne({
         user: userId,
@@ -792,13 +792,20 @@ exports.logout = (req, res) => {
 
      
       if (productId) {
+        
+        const buyNowQuantity = Math.min(5, parseInt(quantity) || 1);
         const product = await Product.findById(productId).populate('category');
         
-        if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < quantity) {
+        if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < buyNowQuantity) {
           return res.redirect('/shop?error=product_unavailable');
         }
+        
+       
+        if (parseInt(quantity) > 5) {
+          return res.redirect('/shop?error=buy_now_limit_exceeded');
+        }
 
-        const itemTotal = quantity * product.price;
+        const itemTotal = buyNowQuantity * product.price;
         subtotal = itemTotal;
 
         validItems.push({
@@ -806,7 +813,7 @@ exports.logout = (req, res) => {
           name: product.name,
           image: product.images?.[0],
           price: product.price,
-          quantity: parseInt(quantity),
+          quantity: buyNowQuantity,
           itemTotal
         });
       } else {

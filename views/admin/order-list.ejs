@@ -252,6 +252,51 @@
           return;
         }
 
+        // If status is 'Cancelled', show SweetAlert for cancellation reason
+        if (selectEl.value === 'Cancelled') {
+          e.preventDefault();
+          
+          Swal.fire({
+            title: 'Cancel Order',
+            text: 'Please provide a reason for cancelling this order:',
+            input: 'textarea',
+            inputPlaceholder: 'Enter cancellation reason...',
+            inputAttributes: {
+              'aria-label': 'Cancellation reason',
+              'required': 'required'
+            },
+            showCancelButton: true,
+            confirmButtonText: 'Cancel Order',
+            cancelButtonText: 'Keep Order',
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            inputValidator: (value) => {
+              if (!value || value.trim().length === 0) {
+                return 'Please provide a cancellation reason';
+              }
+              if (value.trim().length < 10) {
+                return 'Cancellation reason must be at least 10 characters long';
+              }
+            }
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // Create a hidden input for the cancellation reason
+              const reasonInput = document.createElement('input');
+              reasonInput.type = 'hidden';
+              reasonInput.name = 'cancelReason';
+              reasonInput.value = result.value.trim();
+              form.appendChild(reasonInput);
+              
+              // Submit the form
+              submitBtn.textContent = 'Cancelling...';
+              submitBtn.disabled = true;
+              submitBtn.classList.add('opacity-50');
+              form.submit();
+            }
+          });
+          return;
+        }
+
         // Guard: disable double submit
         if (submitBtn) {
           submitBtn.textContent = 'Updating...';

@@ -23,16 +23,14 @@ const {
 
 const { checkBlocked } = require('../middleware/adminauthmiddleware');
 
-// Apply global middlewares
+
 router.use(checkSessionTimeout);
 router.use(noCache);
 
-// Public routes
 router.get('/', optionalAuth, userController.getHome);
 router.get('/shop', userController.getProducts);
 router.get('/product/:id', userController.getProductDetails);
 
-// Auth routes
 router.route('/signup')
   .get(preventLoginIfLoggedIn, userController.getSignup)
   .post(
@@ -71,7 +69,7 @@ router.route('/reset-password/:token')
     userController.postResetPassword
   );
 
-// Google auth
+
 router.get('/auth/google',
   preventLoginIfLoggedIn,
   passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -95,7 +93,7 @@ router.get('/auth/google/callback',
   }
 );
 
-// User protected routes
+
 const userAccess = [isUserLoggedIn, sessionSecurity, checkBlocked];
 
 router.get('/profile', userAccess, profileController.getProfile);
@@ -108,7 +106,7 @@ router.route('/edit-profile')
     profileController.postEditProfile
   );
 
-	// Email OTP routes
+
 	router.post('/send-email-otp', userAccess, profileController.sendEmailOTP);
 	router.post('/verify-email-otp', userAccess, profileController.verifyEmailOTP);
 	
@@ -132,7 +130,7 @@ router.route('/change-password')
     profileController.postChangePassword
   );
 
-// Addresses
+
 router.get('/account/address', userAccess, (req, res) => res.redirect('/addresses'));
 
 router.route('/addresses')
@@ -155,7 +153,7 @@ router.route('/addresses/edit/:id')
 router.post('/addresses/delete/:id', userAccess, profileController.postDeleteAddress);
 router.post('/addresses/default/:id', userAccess, profileController.setDefaultAddress);
 
-// Cart
+
 router.get('/cart', userAccess, cartController.getCartPage);
 router.post('/add-to-cart/:productId', isUserLoggedIn, cartController.addToCart);
 router.get('/cart/count', cartController.getCartCount);
@@ -164,14 +162,14 @@ router.post('/cart/update/:productId', cartController.updateCartItemQuantity);
 router.patch('/cart/update-quantity/:productId', cartController.updateCartItemQuantity);
 router.post('/cart/clear', isUserLoggedIn, cartController.clearCart);
 
-// Wishlist
+
 router.get('/wishlist', isUserLoggedIn, wishlistController.getWishlist);
 router.post('/wishlist/add/:productId', isUserLoggedIn, wishlistController.addToWishlist);
 router.delete('/wishlist/remove/:productId', isUserLoggedIn, wishlistController.removeFromWishlist);
 router.post('/wishlist/toggle/:productId', isUserLoggedIn, wishlistController.toggleWishlist);
 router.delete('/wishlist/clear', isUserLoggedIn, wishlistController.clearWishlist);
 
-// Orders
+
 router.get('/checkout', isUserLoggedIn, userController.getCheckoutPage);
 router.post('/place-order', isUserLoggedIn, orderController.placeOrder);
 router.get('/orders', isUserLoggedIn, orderController.getOrders);
@@ -186,10 +184,10 @@ router.get('/order/:orderId/invoice', isUserLoggedIn, orderController.downloadIn
 router.post('/order/return', isUserLoggedIn, orderController.returnEntireOrder);
 router.post('/order/return-item', isUserLoggedIn, orderController.returnOrderItem);
 
-// Wallet
+
 router.get('/wallet', isUserLoggedIn, profileController.getWallet);
 
-// Logout
+
 router.route('/logout')
   .get(isUserLoggedIn, userController.logout)
   .post(isUserLoggedIn, userController.logout);

@@ -102,9 +102,15 @@ exports.sendOtpForEmail = async (req, res) => {
   console.log('sendOtpForEmail called with:', newEmail);
 
   try {
-    const existingUser = await User.findOne({ email: newEmail })
+    const userId = req.session.userId;
+  
+    const existingUser = await User.findOne({ email: newEmail, _id: { $ne: userId } })
     if (existingUser) {
-      return res.render('user/edit-email', { error: "Email already in use", currentPage: 'edit-email' })
+      console.log('Email already exists for user:', existingUser._id);
+      return res.render('user/edit-email', { 
+        error: "This email address is already registered by another user. Please use a different email address.", 
+        currentPage: 'edit-email' 
+      })
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -145,16 +151,27 @@ exports.postverifyEmail = async (req, res) => {
 
   if (otp === req.session.emailOtp) {
     const userId = req.session.userId
+    const newEmail = req.session.pendingEmail
+
+    // Final check to ensure email is still available
+    const existingUser = await User.findOne({ email: newEmail, _id: { $ne: userId } })
+    if (existingUser) {
+      req.session.emailOtp = null
+      req.session.pendingEmail = null
+      return res.render('user/edit-email', { 
+        error: "This email address is already registered by another user. Please use a different email address.", 
+        currentPage: 'edit-email' 
+      })
+    }
 
     await User.findByIdAndUpdate(userId, {
-      email: req.session.pendingEmail
+      email: newEmail
     })
-
 
     req.session.emailOtp = null
     req.session.pendingEmail = null
 
-    res.redirect('/profile')
+    res.redirect('/profile?success=email_updated')
   } else {
     res.render('user/verify-email', {
       newEmail: req.session.pendingEmail,
@@ -277,7 +294,7 @@ exports.postAddaddress = async (req, res) => {
     const userId = req.session.userId;
     const { isDefault, ...addressData } = req.body || {};
 
-    // Normalize inputs (trim and collapse spaces) to prevent near-duplicate entries
+   
     const normalize = (v) => (v || '').toString().trim().replace(/\s+/g, ' ');
     const normalized = {
       fullName: normalize(addressData.fullName),
@@ -420,7 +437,7 @@ exports.postEditAddress = async (req, res) => {
 
     const existingAddress = await Address.findOne({
       user: userId,
-      _id: { $ne: addressId }, // Exclude current address
+      _id: { $ne: addressId },
       fullName: normalized.fullName,
       phone: normalized.phone,
       addressLine: normalized.addressLine,
@@ -496,13 +513,32 @@ exports.getWallet = async (req, res) => {
     const userId = req.session.userId;
     const user = await User.findById(userId);
 
+   
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10; 
+    const skip = (page - 1) * limit;
+
+  
+    const totalTransactions = await WalletTransaction.countDocuments({ userId });
+    const totalPages = Math.ceil(totalTransactions / limit);
+
+
     const walletTransactions = await WalletTransaction.find({ userId })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.render('user/wallet', {
       user,
       walletTransactions,
-      currentPage: 'wallet'
+      currentPage: 'wallet',
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalTransactions,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
     });
   } catch (error) {
     console.error('Error fetching wallet data:', error);

@@ -51,20 +51,20 @@
                 <p class="field-error mt-2 text-sm text-red-600 font-medium"></p>
               </div>
 
-              <div>
+      <div>
                 <label class="block text-sm font-bold text-slate-700 mb-3" for="brand">Brand</label>
                 <input type="text" name="brand" id="brand" value="<%= product.brand || '' %>"
                   class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" />
                 <p class="field-error mt-2 text-sm text-red-600 font-medium"></p>
-              </div>
+      </div>
 
-              <div>
+      <div>
                 <label class="block text-sm font-bold text-slate-700 mb-3" for="stock">Stock Quantity</label>
                 <input type="number" name="stock" id="stock" value="<%= product.stock %>" min="0"
                   class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" />
-              </div>
+      </div>
 
-              <div>
+      <div>
                 <label class="block text-sm font-bold text-slate-700 mb-3">Availability Status</label>
                 <select name="availability" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all bg-white">
                   <option value="">Auto (by stock)</option>
@@ -103,88 +103,88 @@
                   </option>
                 <% }) %>
               </select>
-            </div>
+      </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div id="cameraSpecs" class="spec-group hidden">
+        <div id="cameraSpecs" class="spec-group hidden">
                 <label class="block text-sm font-bold text-slate-700 mb-2">Megapixel</label>
                 <select name="megapixelBucket" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="12-16" <%= product.megapixelBucket === '12-16' ? 'selected' : '' %>>12-16 MP</option>
-                  <option value="16-24" <%= product.megapixelBucket === '16-24' ? 'selected' : '' %>>16-24 MP</option>
-                  <option value="24+" <%= product.megapixelBucket === '24+' ? 'selected' : '' %>>24+ MP</option>
-                </select>
+            <option value="">Select</option>
+            <option value="12-16" <%= product.megapixelBucket === '12-16' ? 'selected' : '' %>>12-16 MP</option>
+            <option value="16-24" <%= product.megapixelBucket === '16-24' ? 'selected' : '' %>>16-24 MP</option>
+            <option value="24+" <%= product.megapixelBucket === '24+' ? 'selected' : '' %>>24+ MP</option>
+          </select>
                 <label class="block text-sm font-bold text-slate-700 mb-2 mt-3">Battery Type</label>
                 <select name="batteryType" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="lithium-ion" <%= product.batteryType === 'lithium-ion' ? 'selected' : '' %>>Lithium Ion</option>
-                  <option value="rechargeable" <%= product.batteryType === 'rechargeable' ? 'selected' : '' %>>Rechargeable</option>
-                </select>
+            <option value="">Select</option>
+            <option value="lithium-ion" <%= product.batteryType === 'lithium-ion' ? 'selected' : '' %>>Lithium Ion</option>
+            <option value="rechargeable" <%= product.batteryType === 'rechargeable' ? 'selected' : '' %>>Rechargeable</option>
+          </select>
                 <label class="block text-sm font-bold text-slate-700 mb-2 mt-3">Camera Type</label>
                 <select name="cameraType" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="dslr" <%= product.cameraType === 'dslr' ? 'selected' : '' %>>DSLR</option>
-                  <option value="mirrorless" <%= product.cameraType === 'mirrorless' ? 'selected' : '' %>>Mirrorless</option>
-                  <option value="point-shoot" <%= product.cameraType === 'point-shoot' ? 'selected' : '' %>>Point & Shoot</option>
-                  <option value="action" <%= product.cameraType === 'action' ? 'selected' : '' %>>Action Camera</option>
-                  <option value="drone" <%= product.cameraType === 'drone' ? 'selected' : '' %>>Drone Camera</option>
-                </select>
-              </div>
+            <option value="">Select</option>
+            <option value="dslr" <%= product.cameraType === 'dslr' ? 'selected' : '' %>>DSLR</option>
+            <option value="mirrorless" <%= product.cameraType === 'mirrorless' ? 'selected' : '' %>>Mirrorless</option>
+            <option value="point-shoot" <%= product.cameraType === 'point-shoot' ? 'selected' : '' %>>Point & Shoot</option>
+            <option value="action" <%= product.cameraType === 'action' ? 'selected' : '' %>>Action Camera</option>
+            <option value="drone" <%= product.cameraType === 'drone' ? 'selected' : '' %>>Drone Camera</option>
+          </select>
+        </div>
 
-              <div id="lensSpecs" class="spec-group hidden">
+        <div id="lensSpecs" class="spec-group hidden">
                 <label class="block text-sm font-bold text-slate-700 mb-2">Lens Mount</label>
                 <select name="lensMount" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="canon-ef" <%= product.lensMount === 'canon-ef' ? 'selected' : '' %>>Canon EF</option>
-                  <option value="canon-rf" <%= product.lensMount === 'canon-rf' ? 'selected' : '' %>>Canon RF</option>
-                  <option value="nikon-f" <%= product.lensMount === 'nikon-f' ? 'selected' : '' %>>Nikon F</option>
-                  <option value="nikon-z" <%= product.lensMount === 'nikon-z' ? 'selected' : '' %>>Nikon Z</option>
-                  <option value="sony-e" <%= product.lensMount === 'sony-e' ? 'selected' : '' %>>Sony E</option>
-                  <option value="fujifilm-x" <%= product.lensMount === 'fujifilm-x' ? 'selected' : '' %>>Fujifilm X</option>
-                </select>
+            <option value="">Select</option>
+            <option value="canon-ef" <%= product.lensMount === 'canon-ef' ? 'selected' : '' %>>Canon EF</option>
+            <option value="canon-rf" <%= product.lensMount === 'canon-rf' ? 'selected' : '' %>>Canon RF</option>
+            <option value="nikon-f" <%= product.lensMount === 'nikon-f' ? 'selected' : '' %>>Nikon F</option>
+            <option value="nikon-z" <%= product.lensMount === 'nikon-z' ? 'selected' : '' %>>Nikon Z</option>
+            <option value="sony-e" <%= product.lensMount === 'sony-e' ? 'selected' : '' %>>Sony E</option>
+            <option value="fujifilm-x" <%= product.lensMount === 'fujifilm-x' ? 'selected' : '' %>>Fujifilm X</option>
+          </select>
                 <label class="block text-sm font-bold text-slate-700 mb-2 mt-3">Focal Length</label>
                 <select name="focalLength" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="14mm" <%= product.focalLength === '14mm' ? 'selected' : '' %>>14mm</option>
-                  <option value="24mm" <%= product.focalLength === '24mm' ? 'selected' : '' %>>24mm</option>
-                  <option value="35mm" <%= product.focalLength === '35mm' ? 'selected' : '' %>>35mm</option>
-                  <option value="50mm" <%= product.focalLength === '50mm' ? 'selected' : '' %>>50mm</option>
-                  <option value="85mm" <%= product.focalLength === '85mm' ? 'selected' : '' %>>85mm</option>
-                  <option value="100mm" <%= product.focalLength === '100mm' ? 'selected' : '' %>>100mm</option>
-                  <option value="200mm" <%= product.focalLength === '200mm' ? 'selected' : '' %>>200mm</option>
-                  <option value="300mm" <%= product.focalLength === '300mm' ? 'selected' : '' %>>300mm</option>
-                  <option value="400mm" <%= product.focalLength === '400mm' ? 'selected' : '' %>>400mm</option>
-                  <option value="600mm" <%= product.focalLength === '600mm' ? 'selected' : '' %>>600mm</option>
-                </select>
+            <option value="">Select</option>
+            <option value="14mm" <%= product.focalLength === '14mm' ? 'selected' : '' %>>14mm</option>
+            <option value="24mm" <%= product.focalLength === '24mm' ? 'selected' : '' %>>24mm</option>
+            <option value="35mm" <%= product.focalLength === '35mm' ? 'selected' : '' %>>35mm</option>
+            <option value="50mm" <%= product.focalLength === '50mm' ? 'selected' : '' %>>50mm</option>
+            <option value="85mm" <%= product.focalLength === '85mm' ? 'selected' : '' %>>85mm</option>
+            <option value="100mm" <%= product.focalLength === '100mm' ? 'selected' : '' %>>100mm</option>
+            <option value="200mm" <%= product.focalLength === '200mm' ? 'selected' : '' %>>200mm</option>
+            <option value="300mm" <%= product.focalLength === '300mm' ? 'selected' : '' %>>300mm</option>
+            <option value="400mm" <%= product.focalLength === '400mm' ? 'selected' : '' %>>400mm</option>
+            <option value="600mm" <%= product.focalLength === '600mm' ? 'selected' : '' %>>600mm</option>
+          </select>
                 <label class="block text-sm font-bold text-slate-700 mb-2 mt-3">F-Aperture</label>
                 <select name="fAperture" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="f/1.2" <%= product.fAperture === 'f/1.2' ? 'selected' : '' %>>f/1.2</option>
-                  <option value="f/1.4" <%= product.fAperture === 'f/1.4' ? 'selected' : '' %>>f/1.4</option>
-                  <option value="f/1.8" <%= product.fAperture === 'f/1.8' ? 'selected' : '' %>>f/1.8</option>
-                  <option value="f/2" <%= product.fAperture === 'f/2' ? 'selected' : '' %>>f/2</option>
-                  <option value="f/2.8" <%= product.fAperture === 'f/2.8' ? 'selected' : '' %>>f/2.8</option>
-                  <option value="f/3.5" <%= product.fAperture === 'f/3.5' ? 'selected' : '' %>>f/3.5</option>
-                  <option value="f/4" <%= product.fAperture === 'f/4' ? 'selected' : '' %>>f/4</option>
-                  <option value="f/5.6" <%= product.fAperture === 'f/5.6' ? 'selected' : '' %>>f/5.6</option>
-                  <option value="f/8" <%= product.fAperture === 'f/8' ? 'selected' : '' %>>f/8</option>
-                  <option value="f/11" <%= product.fAperture === 'f/11' ? 'selected' : '' %>>f/11</option>
-                  <option value="f/16" <%= product.fAperture === 'f/16' ? 'selected' : '' %>>f/16</option>
-                  <option value="f/22" <%= product.fAperture === 'f/22' ? 'selected' : '' %>>f/22</option>
-                </select>
+            <option value="">Select</option>
+            <option value="f/1.2" <%= product.fAperture === 'f/1.2' ? 'selected' : '' %>>f/1.2</option>
+            <option value="f/1.4" <%= product.fAperture === 'f/1.4' ? 'selected' : '' %>>f/1.4</option>
+            <option value="f/1.8" <%= product.fAperture === 'f/1.8' ? 'selected' : '' %>>f/1.8</option>
+            <option value="f/2" <%= product.fAperture === 'f/2' ? 'selected' : '' %>>f/2</option>
+            <option value="f/2.8" <%= product.fAperture === 'f/2.8' ? 'selected' : '' %>>f/2.8</option>
+            <option value="f/3.5" <%= product.fAperture === 'f/3.5' ? 'selected' : '' %>>f/3.5</option>
+            <option value="f/4" <%= product.fAperture === 'f/4' ? 'selected' : '' %>>f/4</option>
+            <option value="f/5.6" <%= product.fAperture === 'f/5.6' ? 'selected' : '' %>>f/5.6</option>
+            <option value="f/8" <%= product.fAperture === 'f/8' ? 'selected' : '' %>>f/8</option>
+            <option value="f/11" <%= product.fAperture === 'f/11' ? 'selected' : '' %>>f/11</option>
+            <option value="f/16" <%= product.fAperture === 'f/16' ? 'selected' : '' %>>f/16</option>
+            <option value="f/22" <%= product.fAperture === 'f/22' ? 'selected' : '' %>>f/22</option>
+          </select>
                 <label class="block text-sm font-bold text-slate-700 mb-2 mt-3">Lens Type</label>
                 <select name="lensType" class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20 transition-all bg-white" disabled>
-                  <option value="">Select</option>
-                  <option value="prime" <%= product.lensType === 'prime' ? 'selected' : '' %>>Prime</option>
-                  <option value="zoom" <%= product.lensType === 'zoom' ? 'selected' : '' %>>Zoom</option>
-                  <option value="macro" <%= product.lensType === 'macro' ? 'selected' : '' %>>Macro</option>
-                  <option value="telephoto" <%= product.lensType === 'telephoto' ? 'selected' : '' %>>Telephoto</option>
-                  <option value="wide-angle" <%= product.lensType === 'wide-angle' ? 'selected' : '' %>>Wide Angle</option>
-                  <option value="standard" <%= product.lensType === 'standard' ? 'selected' : '' %>>Standard</option>
-                </select>
-              </div>
-            </div>
-          </div>
+            <option value="">Select</option>
+            <option value="prime" <%= product.lensType === 'prime' ? 'selected' : '' %>>Prime</option>
+            <option value="zoom" <%= product.lensType === 'zoom' ? 'selected' : '' %>>Zoom</option>
+            <option value="macro" <%= product.lensType === 'macro' ? 'selected' : '' %>>Macro</option>
+            <option value="telephoto" <%= product.lensType === 'telephoto' ? 'selected' : '' %>>Telephoto</option>
+            <option value="wide-angle" <%= product.lensType === 'wide-angle' ? 'selected' : '' %>>Wide Angle</option>
+            <option value="standard" <%= product.lensType === 'standard' ? 'selected' : '' %>>Standard</option>
+          </select>
+        </div>
+        </div>
+      </div>
 
           <!-- Image Upload Card -->
           <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
@@ -193,37 +193,37 @@
               Product Images
             </h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <% for (let i = 0; i < 3; i++) { %>
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium">Image <%= i + 1 %></label>
-                  <input type="file" accept="image/*" class="imageInput hidden" id="imageInput<%= i %>"/>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <% for (let i = 0; i < 3; i++) { %>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Image <%= i + 1 %></label>
+            <input type="file" accept="image/*" class="imageInput hidden" id="imageInput<%= i %>"/>
                   <button type="button" onclick="document.getElementById('imageInput<%= i %>').click()" class="inline-flex items-center gap-2 px-3 py-2 bg-white border-2 border-slate-300 rounded-xl shadow-sm hover:bg-gray-50 text-sm font-semibold">
                     Choose Image
-                  </button>
+            </button>
                   <div class="border-2 border-slate-200 rounded-xl overflow-hidden w-full h-40 bg-gray-50 flex items-center justify-center">
-                    <img id="preview<%= i %>" src="<%= product.images[i] || '' %>" alt="Preview" class="max-h-full" />
-                  </div>
-                  <input type="hidden" name="croppedImages[]" id="croppedImage<%= i %>" />
-                  <input type="hidden" name="existingImages[]" value="<%= product.images[i] || '' %>" />
-                </div>
-              <% } %>
+              <img id="preview<%= i %>" src="<%= product.images[i] || '' %>" alt="Preview" class="max-h-full" />
             </div>
+            <input type="hidden" name="croppedImages[]" id="croppedImage<%= i %>" />
+            <input type="hidden" name="existingImages[]" value="<%= product.images[i] || '' %>" />
           </div>
+        <% } %>
+            </div>
+      </div>
 
           <!-- Submit Button -->
           <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
             <div class="flex items-center justify-between">
-              <div>
+      <div>
                 <h3 class="text-xl font-bold text-slate-900">Ready to update?</h3>
                 <p class="text-slate-600 font-medium">Review your changes before saving</p>
               </div>
               <button type="submit" class="px-12 py-4 text-lg font-black bg-emerald-600 text-white rounded-xl shadow-lg hover:bg-emerald-700 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
                 UPDATE PRODUCT
-              </button>
+        </button>
             </div>
-          </div>
-        </form>
+      </div>
+    </form>
       </div>
     </main>
   </div>

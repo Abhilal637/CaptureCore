@@ -68,6 +68,69 @@
                 </li>
               <% }) %>
             </ul>
+
+            <!-- Pagination -->
+            <% if (pagination && pagination.totalPages > 1) { %>
+              <div class="mt-6 flex justify-center items-center gap-2">
+                <!-- Previous Button -->
+                <% if (pagination.hasPrevPage) { %>
+                  <a href="/wallet?page=<%= pagination.currentPage - 1 %>"
+                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Previous
+                  </a>
+                <% } else { %>
+                  <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Previous
+                  </span>
+                <% } %>
+
+                <!-- Page Numbers -->
+                <div class="flex items-center gap-1">
+                  <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                    <% if (i === 1 || i === pagination.totalPages || (i >= pagination.currentPage - 1 && i <= pagination.currentPage + 1)) { %>
+                      <a href="/wallet?page=<%= i %>"
+                         class="px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                               <%= i === pagination.currentPage 
+                                    ? 'bg-blue-600 text-white' 
+                                    : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700' %>">
+                        <%= i %>
+                      </a>
+                    <% } else if (i === pagination.currentPage - 2 || i === pagination.currentPage + 2) { %>
+                      <span class="px-2 py-2 text-gray-400">...</span>
+                    <% } %>
+                  <% } %>
+                </div>
+
+                <!-- Next Button -->
+                <% if (pagination.hasNextPage) { %>
+                  <a href="/wallet?page=<%= pagination.currentPage + 1 %>"
+                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-colors">
+                    Next
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </a>
+                <% } else { %>
+                  <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+                    Next
+                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </span>
+                <% } %>
+              </div>
+
+              <!-- Transaction Count Info -->
+              <div class="mt-4 text-center text-sm text-gray-500">
+                Showing <%= ((pagination.currentPage - 1) * 10) + 1 %> to <%= Math.min(pagination.currentPage * 10, pagination.totalTransactions) %> of <%= pagination.totalTransactions %> transactions
+              </div>
+            <% } %>
           <% } else { %>
             <p class="text-gray-500 text-sm">No wallet transactions found.</p>
           <% } %>

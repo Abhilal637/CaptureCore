@@ -39,7 +39,7 @@
                   value="<%= address._id %>" 
                   class="accent-blue-600 mt-1"
                   required
-                  <%= (defaultAddress && defaultAddress === address._id.toString()) ? 'checked' : '' %>)
+                  <%= (defaultAddress && defaultAddress === address._id.toString()) ? 'checked' : '' %>
                 >
                 <div class="flex-1">
                   <h3 class="text-lg font-semibold address-name"><%= address.fullName %></h3>
@@ -376,6 +376,31 @@
           addresses[idx] = data.address;
         }
         updateAddressCard(data.address._id);
+        
+        // If the updated address is now default, auto-select it
+        if (data.address.isDefault) {
+          // Uncheck all other radio buttons
+          document.querySelectorAll('input[name="addressId"]').forEach(radio => {
+            radio.checked = false;
+          });
+          
+          // Check the updated address
+          const updatedAddressRadio = document.querySelector(`input[name="addressId"][value="${data.address._id}"]`);
+          if (updatedAddressRadio) {
+            updatedAddressRadio.checked = true;
+            
+            // Update visual feedback
+            document.querySelectorAll('.address-card').forEach(card => {
+              card.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+            
+            const selectedCard = updatedAddressRadio.closest('.address-card');
+            if (selectedCard) {
+              selectedCard.classList.add('border-blue-500', 'bg-blue-50');
+            }
+          }
+        }
+        
         closeModal();
         showNotification('Address updated.', 'success');
       } else {
@@ -427,6 +452,40 @@
     if (e.key === 'Escape' && modal.style.display !== 'none') {
       closeModal();
     }
+  });
+
+  // Auto-select default address on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('Checkout page loaded, checking for default address...');
+    const defaultAddressRadio = document.querySelector('input[name="addressId"]:checked');
+    if (defaultAddressRadio) {
+      const defaultAddressCard = defaultAddressRadio.closest('.address-card');
+      if (defaultAddressCard) {
+        // Highlight the default address card
+        defaultAddressCard.classList.add('border-blue-500', 'bg-blue-50');
+        console.log('✅ Default address auto-selected:', defaultAddressRadio.value);
+      }
+    } else {
+      console.log('⚠️ No default address found or selected');
+    }
+  });
+
+  // Handle address selection to update visual feedback
+  document.querySelectorAll('input[name="addressId"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+      // Remove highlight from all address cards
+      document.querySelectorAll('.address-card').forEach(card => {
+        card.classList.remove('border-blue-500', 'bg-blue-50');
+      });
+      
+      // Add highlight to selected address card
+      if (this.checked) {
+        const selectedCard = this.closest('.address-card');
+        if (selectedCard) {
+          selectedCard.classList.add('border-blue-500', 'bg-blue-50');
+        }
+      }
+    });
   });
 </script>
 
@@ -596,8 +655,15 @@
       });
       
       if (response.ok) {
-       
-        window.location.reload();
+        const data = await response.json();
+        
+        // If the new address is set as default, we need to reload to show it as selected
+        if (data.address && data.address.isDefault) {
+          window.location.reload();
+        } else {
+          // Otherwise, just reload to show the new address
+          window.location.reload();
+        }
       } else {
         // Handle validation errors
         const html = await response.text();

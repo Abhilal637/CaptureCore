@@ -21,6 +21,64 @@
         <h1 class="text-2xl font-bold mb-4">Order Details - <%= order.orderId %></h1>
 
         <p><strong>Status:</strong> <%= order.status %></p>
+        
+        <!-- Order Summary -->
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+          <h3 class="text-lg font-semibold mb-3">Order Summary</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span class="text-gray-600">Subtotal:</span>
+              <span class="font-medium ml-2">₹<%= order.subtotal.toFixed(2) %></span>
+            </div>
+            <div>
+              <span class="text-gray-600">Tax:</span>
+              <span class="font-medium ml-2">₹<%= order.tax.toFixed(2) %></span>
+            </div>
+            <div>
+              <span class="text-gray-600">Shipping:</span>
+              <span class="font-medium ml-2">₹<%= order.shipping.toFixed(2) %></span>
+            </div>
+            <div>
+              <span class="text-gray-600">Total:</span>
+              <span class="font-bold text-lg ml-2">₹<%= order.total.toFixed(2) %></span>
+            </div>
+          </div>
+          
+          <% 
+            const cancelledItems = order.items.filter(item => item.status === 'Cancelled' || item.isCancelled);
+            const totalCancelledAmount = cancelledItems.reduce((sum, item) => {
+              const itemPrice = item.product?.price || item.price || 0;
+              const itemQty = item.quantity || 1;
+              return sum + (itemPrice * itemQty);
+            }, 0);
+          %>
+          
+          <% if (cancelledItems.length > 0) { %>
+            <div class="mt-3 pt-3 border-t border-gray-200">
+              <div class="flex justify-between items-center">
+                <span class="text-red-600 font-medium">Cancelled Items Amount:</span>
+                <span class="text-red-600 font-bold">₹<%= totalCancelledAmount.toFixed(2) %></span>
+              </div>
+              <div class="text-xs text-gray-500 mt-1">
+                * Order total has been adjusted due to cancelled items
+              </div>
+            </div>
+          <% } %>
+        </div>
+        
+        <% if (order.status === 'Cancelled' && order.cancelReason) { %>
+          <div class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              <div>
+                <h3 class="text-sm font-semibold text-red-800 mb-1">Order Cancellation Reason</h3>
+                <p class="text-sm text-red-700 whitespace-pre-line"><%= order.cancelReason %></p>
+              </div>
+            </div>
+          </div>
+        <% } %>
 
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4">
           <% const nextStatusMap = {
@@ -34,7 +92,7 @@
           <% const allowed = nextStatusMap[order.status] || []; %>
 
           <% if (allowed.length > 0) { %>
-            <form action="/admin/orders/<%= order._id %>/update-status" method="POST" class="flex gap-3">
+            <form action="/admin/orders/<%= order._id %>/update-status" method="POST" class="flex gap-3 status-update-form">
               <select name="status" class="border border-gray-300 rounded px-2 py-1">
                 <option disabled selected value> -- Select Status -- </option>
                 <% allowed.forEach(status => { %>
@@ -76,6 +134,7 @@
                 <th class="px-4 py-2">Total</th>
                 <th class="px-4 py-2">Status</th>
                 <th class="px-4 py-2">Return Reason</th>
+                
                 <th class="px-4 py-2">Actions</th>
               </tr>
             </thead>
@@ -96,17 +155,31 @@
                       <span class="text-gray-400">-</span>
                     <% } %>
                   </td>
-                  <td class="px-4 py-2">
-                    <% if (item.status === 'Return Requested' && !item.returnApproved) { %>
-                      <form class="return-form" data-product-id="<%= item.product._id || item.product %>" data-order-id="<%= order._id %>">
-                        <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
-                          Approve Return & Refund
-                        </button>
-                      </form>
-                    <% } else { %>
-                      <span class="text-gray-500">-</span>
-                    <% } %>
-                  </td>
+                  
+                                     <td class="px-4 py-2">
+                     <div class="flex flex-col gap-2">
+                       <% if (item.status === 'Return Requested' && !item.returnApproved) { %>
+                         <form class="return-form" data-product-id="<%= item.product._id || item.product %>" data-order-id="<%= order._id %>">
+                           <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm">
+                             Approve Return & Refund
+                           </button>
+                         </form>
+                       <% } %>
+                       
+                       <% if (item.status !== 'Cancelled' && item.status !== 'Delivered' && item.status !== 'Returned' && item.status !== 'Return Requested') { %>
+                         <button class="cancel-item-btn bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm" 
+                                 data-order-id="<%= order._id %>" 
+                                 data-product-id="<%= item.product._id || item.product %>"
+                                 data-product-name="<%= item.productName %>">
+                           Cancel Item
+                         </button>
+                       <% } %>
+                       
+                       <% if (item.status === 'Cancelled' || item.status === 'Delivered' || item.status === 'Returned' || item.status === 'Return Requested') { %>
+                         <span class="text-gray-500 text-sm">-</span>
+                       <% } %>
+                     </div>
+                   </td>
                 </tr>
               <% }); %>
             </tbody>
@@ -118,35 +191,165 @@
   
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  document.querySelectorAll(".return-form").forEach(form => {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const orderId = form.dataset.orderId;
-      const productId = form.dataset.productId;
-
-      try {
-        const res = await fetch(`/admin/orders/${orderId}/items/${productId}/verify-return`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }
+  // Handle status update form submissions with cancellation reason
+  document.querySelectorAll('.status-update-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const selectEl = this.querySelector('select[name="status"]');
+      const submitBtn = this.querySelector('button[type="submit"]');
+      
+      if (!selectEl || !selectEl.value) {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'error',
+          title: 'Select a status',
+          text: 'Please choose a valid next status before updating.',
+          confirmButtonColor: '#d33'
         });
-
-        const data = await res.json();
-        if (res.ok) {
-          Swal.fire({
-            title: 'Return Approved!',
-            text: data.message,
-            icon: 'success',
-            confirmButtonText: 'OK'
-          }).then(() => window.location.reload());
-        } else {
-          Swal.fire('Error', data.message || 'Something went wrong', 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        Swal.fire('Error', 'Network or server error', 'error');
+        return;
       }
+
+      // If status is 'Cancelled', show SweetAlert for cancellation reason
+      if (selectEl.value === 'Cancelled') {
+        e.preventDefault();
+        
+        Swal.fire({
+          title: 'Cancel Order',
+          text: 'Please provide a reason for cancelling this order:',
+          input: 'textarea',
+          inputPlaceholder: 'Enter cancellation reason...',
+          inputAttributes: {
+            'aria-label': 'Cancellation reason',
+            'required': 'required'
+          },
+          showCancelButton: true,
+          confirmButtonText: 'Cancel Order',
+          cancelButtonText: 'Keep Order',
+          confirmButtonColor: '#d33',
+          cancelButtonColor: '#3085d6',
+          inputValidator: (value) => {
+            if (!value || value.trim().length === 0) {
+              return 'Please provide a cancellation reason';
+            }
+            if (value.trim().length < 10) {
+              return 'Cancellation reason must be at least 10 characters long';
+            }
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Create a hidden input for the cancellation reason
+            const reasonInput = document.createElement('input');
+            reasonInput.type = 'hidden';
+            reasonInput.name = 'cancelReason';
+            reasonInput.value = result.value.trim();
+            form.appendChild(reasonInput);
+            
+            // Submit the form
+            submitBtn.textContent = 'Cancelling...';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50');
+            form.submit();
+          }
+        });
+        return;
+      }
+
+      // For other status updates, proceed normally
+      submitBtn.textContent = 'Updating...';
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50');
     });
   });
+
+     document.querySelectorAll(".return-form").forEach(form => {
+     form.addEventListener("submit", async (e) => {
+       e.preventDefault();
+       const orderId = form.dataset.orderId;
+       const productId = form.dataset.productId;
+
+       try {
+         const res = await fetch(`/admin/orders/${orderId}/items/${productId}/verify-return`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" }
+         });
+
+         const data = await res.json();
+         if (res.ok) {
+           Swal.fire({
+             title: 'Return Approved!',
+             text: data.message,
+             icon: 'success',
+             confirmButtonText: 'OK'
+           }).then(() => window.location.reload());
+         } else {
+           Swal.fire('Error', data.message || 'Something went wrong', 'error');
+         }
+       } catch (err) {
+         console.error(err);
+         Swal.fire('Error', 'Network or server error', 'error');
+       }
+     });
+   });
+
+   // Handle individual item cancellation
+   document.querySelectorAll(".cancel-item-btn").forEach(button => {
+     button.addEventListener("click", async (e) => {
+       e.preventDefault();
+       const orderId = button.dataset.orderId;
+       const productId = button.dataset.productId;
+       const productName = button.dataset.productName;
+
+       const result = await Swal.fire({
+         title: 'Cancel Item',
+         text: `Please provide a reason for cancelling "${productName}":`,
+         input: 'textarea',
+         inputPlaceholder: 'Enter cancellation reason...',
+         inputAttributes: {
+           'aria-label': 'Cancellation reason',
+           'required': 'required'
+         },
+         showCancelButton: true,
+         confirmButtonText: 'Cancel Item',
+         cancelButtonText: 'Keep Item',
+         confirmButtonColor: '#d33',
+         cancelButtonColor: '#3085d6',
+         inputValidator: (value) => {
+           if (!value || value.trim().length === 0) {
+             return 'Please provide a cancellation reason';
+           }
+           if (value.trim().length < 10) {
+             return 'Cancellation reason must be at least 10 characters long';
+           }
+         }
+       });
+
+       if (result.isConfirmed) {
+         try {
+           const res = await fetch(`/admin/orders/${orderId}/items/${productId}/cancel`, {
+             method: "POST",
+             headers: { "Content-Type": "application/json" },
+             body: JSON.stringify({
+               cancelReason: result.value.trim()
+             })
+           });
+
+           const data = await res.json();
+           if (res.ok) {
+             Swal.fire({
+               title: 'Item Cancelled!',
+               text: data.message,
+               icon: 'success',
+               confirmButtonText: 'OK'
+             }).then(() => window.location.reload());
+           } else {
+             Swal.fire('Error', data.message || 'Failed to cancel item', 'error');
+           }
+         } catch (err) {
+           console.error(err);
+           Swal.fire('Error', 'Network or server error', 'error');
+         }
+       }
+     });
+   });
 </script>
 
 </body>

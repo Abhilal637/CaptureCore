@@ -18,29 +18,38 @@ exports.placeOrder = async (req, res) => {
 
 
     if (productId) {
-      // const buyNowQuantity = Math.min(5, parseInt(quantity) || 1);
+     
+      const buyNowQuantity = Math.min(5, parseInt(quantity) || 1);
       const product = await Product.findById(productId);
 
-      if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < quantity) {
+      if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < buyNowQuantity) {
         return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.STOCK_UNAVAILABLE);
       }
+      
+  
+      if (parseInt(quantity) > 5) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          message: 'Buy Now limit exceeded. You can only buy up to 5 items at once. For larger quantities, please add to cart.'
+        });
+      }
 
-      const itemTotal = quantity * product.price;
+      const itemTotal = buyNowQuantity * product.price;
       totalAmount = itemTotal;
 
       orderItems.push({
         product: product._id,
-        quantity: quantity,
+        quantity: buyNowQuantity,
         price: product.price,
         totalAmount: itemTotal,
         productName: product.name
       });
 
 
-      if (product.stock < quantity) {
+      if (product.stock < buyNowQuantity) {
         return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.STOCK_UNAVAILABLE);
       }
-      product.stock -= quantity;
+      product.stock -= buyNowQuantity;
       await product.save();
     } else {
 
@@ -205,6 +214,13 @@ exports.cancelOrder = async (req, res) => {
     order.cancelReason = reason || '';
     order.paymentStatus = 'Cancelled';
 
+    // Set all financial totals to 0 when entire order is cancelled
+    order.subtotal = 0;
+    order.tax = 0;
+    order.discount = 0;
+    order.shipping = 0;
+    order.total = 0;
+
     for (const item of order.items) {
       if (!item.isCancelled || item.status !== 'Cancelled') {
         item.isCancelled = true;
@@ -356,7 +372,20 @@ exports.downloadInvoice = async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.orderId}.pdf`);
   doc.pipe(res);
 
-  const formatCurrency = (amount) => `₹${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (amount) => `Rs. ${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+  // Calculate totals for invoice
+  const cancelledItems = order.items.filter(item => item.status === 'Cancelled' || item.isCancelled);
+  const activeItems = order.items.filter(item => item.status !== 'Cancelled' && !item.isCancelled);
+  
+  const totalCancelledAmount = cancelledItems.reduce((sum, item) => {
+    const itemPrice = item.product?.price || item.price || 0;
+    const itemQty = item.quantity || 1;
+    return sum + (itemPrice * itemQty);
+  }, 0);
+
+  // Calculate original subtotal (including all products)
+  const originalSubtotal = order.subtotal + totalCancelledAmount;
 
   doc
     .fontSize(24)
@@ -370,7 +399,6 @@ exports.downloadInvoice = async (req, res) => {
     .text('Email: support@capturecore.com | Phone: +91-9876543210', 50, 95)
     .text('GST: 07AABCU9603R1ZX | PAN: AABCU9603R', 50, 110);
 
-  // Title bar
   doc
     .rect(50, 120, 500, 28)
     .fill('#f3f4f6')
@@ -394,6 +422,16 @@ exports.downloadInvoice = async (req, res) => {
     .text(`Order Status: ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}`, 50, startY + 50)
     .text(`Payment Method: ${order.paymentMethod.toUpperCase()}`, 50, startY + 65);
 
+  // Show cancellation reason if order is cancelled
+  if (order.status === 'Cancelled' && order.cancelReason) {
+    doc
+      .fontSize(10)
+      .font('Helvetica-Bold')
+      .fillColor('#dc2626')
+      .text(`Cancellation Reason: ${order.cancelReason}`, 50, startY + 80)
+      .fillColor('#000');
+  }
+
   const address = order.address;
   doc
     .fontSize(12)
@@ -407,7 +445,9 @@ exports.downloadInvoice = async (req, res) => {
     .text(`Pin: ${address?.pincode || 'N/A'}`, 300, startY + 65)
     .text(`Phone: ${address?.phone || 'N/A'}`, 300, startY + 80);
 
-  doc.y = startY + 110;
+  // Adjust Y position based on whether cancellation reason was shown
+  const adjustedStartY = order.status === 'Cancelled' && order.cancelReason ? startY + 100 : startY + 110;
+  doc.y = adjustedStartY;
 
   const tableTop = doc.y;
 
@@ -419,10 +459,11 @@ exports.downloadInvoice = async (req, res) => {
   doc
     .fontSize(11)
     .font('Helvetica-Bold')
-    .text('Product', 50, tableTop + 10, { width: 250 })
-    .text('Price', 300, tableTop + 10, { width: 80, align: 'center' })
-    .text('Qty', 380, tableTop + 10, { width: 50, align: 'center' })
-    .text('Total', 430, tableTop + 10, { width: 120, align: 'right' });
+    .text('Product', 50, tableTop + 10, { width: 200 })
+    .text('Price', 250, tableTop + 10, { width: 80, align: 'center' })
+    .text('Qty', 330, tableTop + 10, { width: 50, align: 'center' })
+    .text('Status', 380, tableTop + 10, { width: 80, align: 'center' })
+    .text('Total', 460, tableTop + 10, { width: 90, align: 'right' });
 
   doc
     .moveTo(50, tableTop + 30)
@@ -433,13 +474,37 @@ exports.downloadInvoice = async (req, res) => {
   doc.font('Helvetica').fontSize(10);
 
   order.items.forEach((item, index) => {
-    doc
-      .text(item.product?.name || item.productName || 'Unknown Product', 50, currentY, { width: 250 })
-      .text(formatCurrency(item.price), 300, currentY, { width: 80, align: 'center' })
-      .text(item.quantity.toString(), 380, currentY, { width: 50, align: 'center' })
-      .text(formatCurrency(item.total || item.price * item.quantity), 430, currentY, { width: 120, align: 'right' });
+    const itemName = item.product?.name || item.productName || 'Unknown Product';
+    const itemPrice = item.product?.price || item.price || 0;
+    const itemQty = item.quantity || 1;
+    const itemTotal = item.total || (itemPrice * itemQty);
+    const itemStatus = item.status || 'Placed';
+    
+    // Set color based on status
+    if (itemStatus === 'Cancelled') {
+      doc.fillColor('#dc2626'); // Red for cancelled items
+    } else {
+      doc.fillColor('#000');
+    }
 
-    currentY += 20;
+    doc
+      .text(itemName, 50, currentY, { width: 200 })
+      .text(formatCurrency(itemPrice), 250, currentY, { width: 80, align: 'center' })
+      .text(itemQty.toString(), 330, currentY, { width: 50, align: 'center' })
+      .text(itemStatus, 380, currentY, { width: 80, align: 'center' })
+      .text(formatCurrency(itemTotal), 460, currentY, { width: 90, align: 'right' });
+
+    // Show cancellation reason for cancelled items
+    if (itemStatus === 'Cancelled' && item.cancelReason) {
+      doc
+        .fontSize(8)
+        .fillColor('#dc2626')
+        .text(`Reason: ${item.cancelReason}`, 50, currentY + 15, { width: 400 })
+        .fontSize(10);
+    }
+
+    currentY += itemStatus === 'Cancelled' && item.cancelReason ? 35 : 20;
+    doc.fillColor('#000'); // Reset color
   });
 
   doc
@@ -448,35 +513,56 @@ exports.downloadInvoice = async (req, res) => {
     .stroke();
 
   const totalsY = currentY + 20;
-  const subtotal = order.items.reduce((sum, item) => sum + (item.total || item.price * item.quantity), 0);
-  const shipping = 0;
-  const total = order.total || subtotal;
 
+  // Show original subtotal (including all products)
   doc
     .fontSize(11)
     .font('Helvetica')
-    .text('Subtotal:', 430, totalsY, { width: 70, align: 'left' })
-    .text(formatCurrency(subtotal), 500, totalsY, { width: 50, align: 'right' })
-    .text('Shipping:', 430, totalsY + 20, { width: 70, align: 'left' })
-    .text(formatCurrency(shipping), 500, totalsY + 20, { width: 50, align: 'right' });
+    .text('Subtotal (All Items):', 350, totalsY, { width: 120, align: 'left' })
+    .text(formatCurrency(originalSubtotal), 460, totalsY, { width: 90, align: 'right' });
+
+  // Show tax
+  doc
+    .text('Tax:', 350, totalsY + 20, { width: 120, align: 'left' })
+    .text(formatCurrency(order.tax || 0), 460, totalsY + 20, { width: 90, align: 'right' });
+
+  // Show shipping
+  doc
+    .text('Shipping:', 350, totalsY + 40, { width: 120, align: 'left' })
+    .text(formatCurrency(order.shipping || 0), 460, totalsY + 40, { width: 90, align: 'right' });
+
+  // Show discount
+  doc
+    .text('Discount:', 350, totalsY + 60, { width: 120, align: 'left' })
+    .text(`-${formatCurrency(order.discount || 0)}`, 460, totalsY + 60, { width: 90, align: 'right' });
+
+  // Show cancelled items amount if any
+  if (cancelledItems.length > 0) {
+    doc
+      .fillColor('#dc2626')
+      .text('Cancelled Items:', 350, totalsY + 80, { width: 120, align: 'left' })
+      .text(`-${formatCurrency(totalCancelledAmount)}`, 460, totalsY + 80, { width: 90, align: 'right' })
+      .fillColor('#000');
+  }
 
   doc
-    .moveTo(430, totalsY + 35)
-    .lineTo(550, totalsY + 35)
+    .moveTo(350, totalsY + (cancelledItems.length > 0 ? 95 : 75))
+    .lineTo(550, totalsY + (cancelledItems.length > 0 ? 95 : 75))
     .stroke();
 
+  // Show final total
   doc
     .fontSize(12)
     .font('Helvetica-Bold')
-    .text('Total:', 430, totalsY + 45, { width: 70, align: 'left' })
-    .text(formatCurrency(total), 500, totalsY + 45, { width: 50, align: 'right' });
+    .text('Total:', 350, totalsY + (cancelledItems.length > 0 ? 105 : 85), { width: 120, align: 'left' })
+    .text(formatCurrency(order.total || 0), 460, totalsY + (cancelledItems.length > 0 ? 105 : 85), { width: 90, align: 'right' });
 
   doc
-    .moveTo(430, totalsY + 65)
-    .lineTo(550, totalsY + 65)
+    .moveTo(350, totalsY + (cancelledItems.length > 0 ? 125 : 105))
+    .lineTo(550, totalsY + (cancelledItems.length > 0 ? 125 : 105))
     .stroke();
 
-  const footerY = totalsY + 90;
+  const footerY = totalsY + (cancelledItems.length > 0 ? 145 : 125);
 
   doc
     .fontSize(12)
@@ -495,6 +581,8 @@ exports.downloadInvoice = async (req, res) => {
 
   doc.end();
 };
+
+
 exports.searchOrders = async (req, res) => {
   try {
     const { query } = req.query;

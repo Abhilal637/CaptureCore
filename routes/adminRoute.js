@@ -79,6 +79,7 @@ router
   .get('/orders', adminAuth, noCache, adminordercontroller.listOrder)
   .get('/orders/:id', adminAuth, noCache, adminordercontroller.viewOrderDetails)
   .post('/orders/:id/update-status', adminAuth, noCache, adminordercontroller.updateOrderStatus)
-  .post('/orders/:orderId/items/:productId/verify-return', adminAuth, noCache, adminordercontroller.verifyReturnAndRefund);
+  .post('/orders/:orderId/items/:productId/verify-return', adminAuth, noCache, adminordercontroller.verifyReturnAndRefund)
+  .post('/orders/:orderId/items/:productId/cancel', adminAuth, noCache, adminordercontroller.cancelOrderItem);
 
 module.exports = router;

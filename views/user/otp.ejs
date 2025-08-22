@@ -58,25 +58,50 @@
 
 
 <script>
-  let timer = 60;
   const timerDiv = document.getElementById('timer');
   const resendBtn = document.getElementById('resendBtn');
+  const emailInput = document.querySelector('input[name="email"]');
+  const emailKey = (emailInput?.value || 'otp').toLowerCase();
+  const storageKey = `otpExpiry:${emailKey}`;
 
-  function updateTimer() {
-    if (timer > 0) {
-      timerDiv.textContent = `Resend OTP in ${timer}s`;
+  function getRemainingSeconds() {
+    const expiry = Number(localStorage.getItem(storageKey) || 0);
+    const now = Date.now();
+    const remainingMs = Math.max(0, expiry - now);
+    return Math.floor(remainingMs / 1000);
+  }
+
+  function startTimerLoop() {
+    const remaining = getRemainingSeconds();
+    if (remaining > 0) {
+      timerDiv.textContent = `Resend OTP in ${remaining}s`;
       if (resendBtn) resendBtn.disabled = true;
-      timer--;
-      setTimeout(updateTimer, 1000);
+      setTimeout(startTimerLoop, 1000);
     } else {
       timerDiv.textContent = 'You can now resend OTP';
       if (resendBtn) resendBtn.disabled = false;
     }
   }
-  updateTimer();
+
+  // Initialize timer only if no existing timer in localStorage
+  if (!localStorage.getItem(storageKey)) {
+    localStorage.setItem(storageKey, String(Date.now() + 60 * 1000));
+  }
+
+  if (resendBtn) {
+    resendBtn.addEventListener('click', function(){
+      // Reset timer when resend is clicked
+      localStorage.setItem(storageKey, String(Date.now() + 60 * 1000));
+      resendBtn.disabled = true;
+      timerDiv.textContent = 'Resend OTP in 60s';
+      setTimeout(startTimerLoop, 1000);
+    });
+  }
+
+  startTimerLoop();
 
   const inputs = document.querySelectorAll('input[type="text"]');
-  inputs[0].focus();
+  inputs[0]?.focus();
   inputs.forEach((input, i) => {
     input.addEventListener('input', () => {
       if (input.value.length === 1 && inputs[i + 1]) {
