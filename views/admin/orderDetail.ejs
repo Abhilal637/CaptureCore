@@ -21,6 +21,26 @@
         <h1 class="text-2xl font-bold mb-4">Order Details - <%= order.orderId %></h1>
 
         <p><strong>Status:</strong> <%= order.status %></p>
+        <div class="mt-2 flex flex-wrap gap-4 text-sm">
+          <div>
+            <span class="text-gray-600">Payment Method:</span>
+            <span class="ml-1 font-medium"><%= order.paymentMethod %></span>
+          </div>
+          <div>
+            <span class="text-gray-600">Payment Status:</span>
+            <span class="ml-1 font-medium <%= order.paymentStatus === 'Paid' ? 'text-green-600' : (order.paymentStatus === 'Cancelled' ? 'text-red-600' : 'text-gray-800') %>"><%= order.paymentStatus %></span>
+          </div>
+          <% if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid') { %>
+            <div class="text-gray-600">
+              <span class="mr-1">Razorpay Order:</span>
+              <span class="font-mono text-xs"><%= order.razorpayOrderId || '-' %></span>
+            </div>
+            <div class="text-gray-600">
+              <span class="mr-1">Payment Id:</span>
+              <span class="font-mono text-xs"><%= order.razorpayPaymentId || '-' %></span>
+            </div>
+          <% } %>
+        </div>
         
         <!-- Order Summary -->
         <div class="mt-4 p-4 bg-gray-50 rounded-lg">

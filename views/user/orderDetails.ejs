@@ -48,6 +48,12 @@
                   <%= order.paymentStatus %>
                 </span>
               </span>
+              <span class="text-sm text-gray-500">•</span>
+              <span class="text-sm text-gray-600">Method: <span class="font-medium"><%= order.paymentMethod %></span></span>
+              <% if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid') { %>
+                <span class="text-sm text-gray-500">•</span>
+                <!-- <span class="text-xs text-gray-500">Txn: <span class="font-mono"><%= order.razorpayPaymentId || '-' %></span></span>  -->
+              <% } %>
             </div>
             
                          <!-- Show cancellation reason if order is cancelled -->
@@ -269,7 +275,7 @@
               </div>
               <% if (cancelledItems.length > 0) { %>
                 <div class="text-xs text-gray-500 mt-1">
-                  <!-- * Total adjusted due to cancelled items -->
+                  
                 </div>
               <% } %>
             </div>

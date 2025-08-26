@@ -125,11 +125,19 @@
               💵 Cash on Delivery
             </div>
           </label>
+          <label class="flex items-center gap-2 cursor-pointer opacity-100" id="rzpOptionLabel">
+            <input type="radio" name="paymentMethod" value="Razorpay" class="peer hidden" id="rzpOption">
+            <div class="peer-checked:ring-2 peer-checked:ring-blue-500 bg-gray-100 p-3 rounded-full transition">
+              🧾 Razorpay (Card/UPI/Netbanking)
+            </div>
+          </label>
         </div>
+        <p id="paymentNote" class="text-xs text-gray-500 mt-2">Select Razorpay to pay online.</p>
+        <p id="rzpCapNote" class="text-xs text-red-600 mt-1 hidden"></p>
       </div>
 
       <!-- Submit Button -->
-      <button type="submit" class="w-full bg-green-600 text-white py-3 rounded text-lg hover:bg-green-700">
+      <button type="submit" id="placeOrderBtn" class="w-full bg-green-600 text-white py-3 rounded text-lg hover:bg-green-700">
         Place Order
       </button>
 
@@ -469,6 +477,138 @@
       console.log('⚠️ No default address found or selected');
     }
   });
+
+  // Razorpay checkout handling
+  (function setupRazorpay(){
+    const formEl = document.querySelector('form[action="/place-order"]');
+    const placeBtn = document.getElementById('placeOrderBtn');
+    const totalAmount = <%- JSON.stringify(finalTotal || 0) %>;
+    const isBuyNow = <%- JSON.stringify(!!isBuyNow) %>;
+    const buyNowProductId = <%- JSON.stringify(buyNowProduct ? buyNowProduct._id : null) %>;
+    const buyNowQty = <%- JSON.stringify(buyNowProduct ? buyNowProduct.quantity : null) %>;
+    const MAX_RZP_AMOUNT = 500000;
+
+    // Disable Razorpay option if total exceeds cap
+    try {
+      const rzpInput = document.getElementById('rzpOption');
+      const rzpLabel = document.getElementById('rzpOptionLabel');
+      const capNote = document.getElementById('rzpCapNote');
+      if (Number(totalAmount) > MAX_RZP_AMOUNT) {
+        if (rzpInput) {
+          rzpInput.disabled = true;
+          if (rzpInput.checked) {
+            const cod = document.querySelector('input[name="paymentMethod"][value="COD"]');
+            if (cod) cod.checked = true;
+          }
+        }
+        if (rzpLabel) rzpLabel.classList.add('opacity-50');
+        if (capNote) {
+          capNote.textContent = `Amount exceeds Razorpay limit (Rs. ${MAX_RZP_AMOUNT.toLocaleString('en-IN')}). Please use COD or split the order.`;
+          capNote.classList.remove('hidden');
+        }
+      }
+    } catch(_) {}
+
+    function paymentMethodSelected(){
+      const selected = document.querySelector('input[name="paymentMethod"]:checked');
+      return selected ? selected.value : 'COD';
+    }
+
+    async function createRazorpayOrder(amount){
+      const res = await fetch('/razorpay/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount })
+      });
+      let data; try { data = await res.json(); } catch(e) { data = { success:false, message:'Invalid server response' }; }
+      if (!res.ok || !(data && (data.sucess || data.success))) {
+        throw new Error(data && data.message ? data.message : 'Failed to create payment order');
+      }
+      return data;
+    }
+
+    function ensureRazorpayScript(){
+      return new Promise((resolve, reject) => {
+        if (window.Razorpay) return resolve();
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.onload = () => resolve();
+        s.onerror = reject;
+        document.body.appendChild(s);
+      });
+    }
+
+    async function handleRazorpayFlow(e){
+      e.preventDefault();
+      placeBtn.disabled = true;
+      try{
+        await ensureRazorpayScript();
+        const orderResp = await createRazorpayOrder(totalAmount);
+
+        const options = {
+          key: orderResp.key,
+          amount: orderResp.amount,
+          currency: orderResp.currency,
+          name: 'CaptureCore',
+          description: 'Order Payment',
+          order_id: orderResp.orderId,
+          handler: async function (response){
+            try{
+              const verifyRes = await fetch('/razorpay/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(response)
+              });
+              const verifyJson = await verifyRes.json();
+              if(verifyRes.ok && verifyJson.sucess){
+                // On success, submit the original order form to create order in DB with Razorpay method
+                const pmInput = formEl.querySelector('input[name="paymentMethod"][value="Razorpay"]');
+                if(pmInput) pmInput.checked = true;
+                // Attach payment details so backend can persist and set status Paid
+                const f = new FormData(formEl);
+                const setHidden = (name, value) => {
+                  let el = formEl.querySelector(`input[name="${name}"]`);
+                  if (!el) {
+                    el = document.createElement('input');
+                    el.type = 'hidden';
+                    el.name = name;
+                    formEl.appendChild(el);
+                  }
+                  el.value = value || '';
+                };
+                setHidden('razorpay_order_id', response.razorpay_order_id);
+                setHidden('razorpay_payment_id', response.razorpay_payment_id);
+                setHidden('razorpay_signature', response.razorpay_signature);
+                formEl.submit();
+              } else {
+                alert('Payment verification failed.');
+              }
+            }catch(err){
+              console.error(err);
+              alert('Payment verification error.');
+            } finally {
+              placeBtn.disabled = false;
+            }
+          },
+          theme: { color: '#2563eb' }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }catch(err){
+        console.error('Razorpay init error', err);
+        alert('Unable to start Razorpay checkout.');
+        placeBtn.disabled = false;
+      }
+    }
+
+    if (formEl && placeBtn){
+      formEl.addEventListener('submit', function(e){
+        if (paymentMethodSelected() === 'Razorpay') {
+          handleRazorpayFlow(e);
+        }
+      });
+    }
+  })();
 
   // Handle address selection to update visual feedback
   document.querySelectorAll('input[name="addressId"]').forEach(radio => {

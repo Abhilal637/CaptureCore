@@ -6,12 +6,17 @@ const PDFDocument = require('pdfkit');
 const { PluginConfigurationInstance } = require('twilio/lib/rest/flexApi/v1/pluginConfiguration');
 const { generateOrderId } = require('../utils/otpHelper');
 const { STATUS_CODES, MESSAGES, ORDER_STATUS } = require('../utils/constants');
+const razorpay= require('../config/razorpay');
+const { concurrency } = require('sharp');
+const crypto= require('crypto')
+const { refundToWallet } = require('../utils/wallet');
 
 
 exports.placeOrder = async (req, res) => {
   try {
     const userId = req.session.userId;
     const { addressId, paymentMethod, productId, quantity = 1 } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     let totalAmount = 0;
     const orderItems = [];
@@ -106,12 +111,18 @@ exports.placeOrder = async (req, res) => {
     const grandTotal = totalAmount + tax - discount + shipping;
 
 
+    const isRazorpay = String(paymentMethod).toLowerCase() === 'razorpay';
+
     const order = new Order({
       orderId: generateOrderId(),
       user: userId,
       address: address._id,
       items: orderItems,
       paymentMethod,
+      paymentStatus: isRazorpay ? 'Paid' : 'Pending',
+      razorpayOrderId: isRazorpay ? (razorpay_order_id || '') : undefined,
+      razorpayPaymentId: isRazorpay ? (razorpay_payment_id || '') : undefined,
+      razorpaySignature: isRazorpay ? (razorpay_signature || '') : undefined,
       status: 'Placed',
       subtotal: totalAmount,
       tax,
@@ -173,6 +184,79 @@ exports.getOrders = async (req, res) => {
 };
 
 
+exports.createRazorpayOrder = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const parsedAmount = Number(amount);
+    if (!parsedAmount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({ sucess: false, success: false, message: 'Invalid amount' });
+    }
+
+
+    const MAX_RZP_AMOUNT = 1500000; // INR
+    if (parsedAmount > MAX_RZP_AMOUNT) {
+      return res.status(400).json({
+        sucess: false,
+        success: false,
+        message: `Amount exceeds Razorpay maximum per transaction of Rs. ${MAX_RZP_AMOUNT.toLocaleString('en-IN')}.`
+      });
+    }
+
+    const amountPaise = Math.round(parsedAmount * 100);
+
+    const options = {
+      amount: amountPaise,
+      currency: 'INR',
+      receipt: 'order_rcptid_' + Date.now(),
+    };
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      sucess: true,
+      success: true,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: process.env.RAZORPAY_KEY_ID,
+    });
+  } catch (error) {
+    console.error('Razorpay order creation error:', error && (error.error || error.message || error));
+    res.status(500).json({
+      sucess: false,
+      success: false,
+      message: (error && error.error && error.error.description) || error.message || 'Payment initiation failed',
+    });
+  }
+};
+
+
+
+
+exports.verifyRazorPayment = async(req,res)=>{
+  try{
+    const {razorpay_order_id, razorpay_payment_id, razorpay_signature}= req.body
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id
+
+
+    const expectedSignature = crypto
+    .createHmac("sha256",process.env.RAZORPAY_KEY_SECRET)
+    .update(body.toString())
+    .digest('hex')
+
+    if(expectedSignature === razorpay_signature){
+      return res.json({sucess: true , message :"Payment Verified Sucessfully"})
+    }else{
+      return res.status(400).json({sucess:false , message:"Payment verification failed"})
+    }
+
+
+  }catch(error){
+    console.error('RazorPay  Verification Error:',error)
+    res.status(500).json({sucess:false , message:"Server Error"})
+  }
+}
+
 
 exports.cancelOrder = async (req, res) => {
   try {
@@ -210,16 +294,16 @@ exports.cancelOrder = async (req, res) => {
       });
     }
 
+    // Determine refund before zeroing totals
+    let refundAmount = 0;
+    if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid') {
+      refundAmount = order.total || 0;
+    }
+
     order.status = 'Cancelled';
     order.cancelReason = reason || '';
     order.paymentStatus = 'Cancelled';
-
-    // Set all financial totals to 0 when entire order is cancelled
-    order.subtotal = 0;
-    order.tax = 0;
-    order.discount = 0;
-    order.shipping = 0;
-    order.total = 0;
+    // Keep financial totals intact for record-keeping and transparency
 
     for (const item of order.items) {
       if (!item.isCancelled || item.status !== 'Cancelled') {
@@ -235,6 +319,15 @@ exports.cancelOrder = async (req, res) => {
     }
 
     await order.save();
+
+    // Refund to wallet if applicable
+    if (refundAmount > 0) {
+      try {
+        await refundToWallet(order.user, refundAmount, `Refund for cancelled order ${order.orderId}`, order.orderId);
+      } catch (walletErr) {
+        console.error('Wallet refund error (full order cancel):', walletErr);
+      }
+    }
 
     res.json({
       success: true,
@@ -290,6 +383,23 @@ exports.cancelOrderItem = async (req, res) => {
     }
 
     
+    // Calculate refund for this item if Razorpay paid
+    let refundAmount = 0;
+    if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid') {
+      if (typeof item.totalAmount === 'number' && item.totalAmount > 0) {
+        refundAmount = item.totalAmount;
+      } else {
+        const baseAmount = (item.price || 0) * (item.quantity || 1);
+        let proportionOfSubtotal = 1;
+        if (order.subtotal && order.subtotal > 0 && baseAmount > 0) {
+          proportionOfSubtotal = baseAmount / order.subtotal;
+        }
+        const discountShare = (order.discount || 0) * proportionOfSubtotal;
+        const taxShare = (order.tax || 0) * proportionOfSubtotal;
+        refundAmount = Math.max(0, +(baseAmount - discountShare + taxShare).toFixed(2));
+      }
+    }
+
     const activeItems = order.items.filter(i => !(i.isCancelled || i.status === 'Cancelled' || i.isReturned || i.status === 'Returned'));
     const newSubtotal = activeItems.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 0)), 0);
     const newTax = newSubtotal * 0.05;
@@ -310,6 +420,15 @@ exports.cancelOrderItem = async (req, res) => {
     }
 
     await order.save();
+
+    // Refund to wallet for cancelled item
+    if (refundAmount > 0) {
+      try {
+        await refundToWallet(order.user, refundAmount, `Refund for cancelled item in order ${order.orderId}`, order.orderId);
+      } catch (walletErr) {
+        console.error('Wallet refund error (item cancel):', walletErr);
+      }
+    }
 
     res.json({
       success: true,

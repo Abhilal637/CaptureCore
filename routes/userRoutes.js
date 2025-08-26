@@ -172,6 +172,11 @@ router.delete('/wishlist/clear', isUserLoggedIn, wishlistController.clearWishlis
 
 router.get('/checkout', isUserLoggedIn, userController.getCheckoutPage);
 router.post('/place-order', isUserLoggedIn, orderController.placeOrder);
+
+
+router.post('/razorpay/create-order',isUserLoggedIn,orderController.createRazorpayOrder)
+router.post("/razorpay/verify", isUserLoggedIn, orderController.verifyRazorPayment);
+
 router.get('/orders', isUserLoggedIn, orderController.getOrders);
 router.get('/orderSuccess', isUserLoggedIn, orderController.getOrderSuccess);
 router.get('/order/:id', isUserLoggedIn, orderController.getOrderDetails);

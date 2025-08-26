@@ -201,14 +201,14 @@ exports.toggleCategoryStatus = async (req, res) => {
     const active = normalizeBool(req.body.active);
 
     const cat = await Category.findById(categoryId);
-    if (!cat || cat.isDeleted) {
+    if (!cat || cat.isDeleted ) {
       return res.status(STATUS_CODES.NOT_FOUND).json({ message: 'Category not found.' });
     }
 
     const descendants = await getDescendantIds(categoryId);
     await Category.updateMany(
       { _id: { $in: [categoryId, ...descendants] } },
-      { $set: { active } }
+      { $set: { active } },
     );
 
       res.status(STATUS_CODES.OK).json({ success: true, message: 'Category status updated successfully.' });

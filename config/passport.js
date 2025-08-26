@@ -21,7 +21,6 @@ passport.use(new GoogleStrategy({
         return done(null, existingUser);
       }
 
-      // this check if the user already is there or it exists with the email
       const emailUser = await User.findOne({ email: profile.emails?.[0]?.value });
       if (emailUser && profile.emails?.[0]?.value) {
         if (emailUser.isBlocked) {
