@@ -153,7 +153,7 @@
                     <!-- Status Update -->
                     <td class="px-6 py-4">
                       <% const allowed = nextStatusMap[order.status] || []; %>
-                      <% if (allowed.length > 0) { %>
+                      <% if (allowed.length > 0 && order.paymentStatus !== 'Failed') { %>
                         <form method="POST" action="/admin/orders/<%= order._id %>/update-status" class="flex items-center status-update-form" novalidate>
                           <select name="status" class="border border-gray-300 rounded px-2 py-1 text-sm" required>
                             <option disabled selected value> -- Select Status -- </option>
@@ -163,6 +163,8 @@
                           </select>
                           <button type="submit" class="ml-2 px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Update</button>
                         </form>
+                      <% } else if (order.paymentStatus === 'Failed') { %>
+                        <span class="text-yellow-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1 text-xs">Status disabled (payment failed)</span>
                       <% } else { %>
                         <span class="text-gray-500 text-sm">No further updates</span>
                       <% } %>

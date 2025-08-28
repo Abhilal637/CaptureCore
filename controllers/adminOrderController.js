@@ -162,6 +162,13 @@ exports.updateOrderStatus = async (req, res) => {
       order.cancelReason = cancelReason.trim();
     }
 
+    // Prevent progressing orders if payment not completed
+    if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Failed') {
+      if (status !== 'Cancelled') {
+        return res.status(STATUS_CODES.BAD_REQUEST).send('Cannot update order status until payment is successful.');
+      }
+    }
+
     order.status = status;
 
 
@@ -329,116 +336,115 @@ exports.cancelOrder = async (req, res) => {
 exports.cancelOrderItem = async (req, res) => {
   try {
     const { orderId, productId } = req.params;
-    const { cancelReason } = req.body;
+    const { cancelReason } = req.body || {};
 
-    console.log(`Cancelling item ${productId} from order ${orderId}`);
-    console.log(`Cancellation reason: ${cancelReason}`);
-
-    if (!cancelReason || cancelReason.trim().length < 10) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        message: 'Cancellation reason is required and must be at least 10 characters long'
-      });
-    }
-
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate('items.product');
     if (!order) {
-      return res.status(STATUS_CODES.NOT_FOUND).json({
-        success: false,
-        message: 'Order not found'
-      });
+      return res.status(STATUS_CODES.NOT_FOUND).json({ success: false, message: 'Order not found' });
     }
 
-    const item = order.items.find(i => i.product.toString() === productId);
-    if (!item) {
-      return res.status(STATUS_CODES.NOT_FOUND).json({
-        success: false,
-        message: 'Item not found in order'
-      });
+    const item = order.items.find(i => i.product.toString() === productId || (i.product && i.product._id && i.product._id.toString() === productId));
+    if (!item || item.status === 'Cancelled') {
+      return res.status(STATUS_CODES.BAD_REQUEST).json({ success: false, message: 'Item not found or already cancelled' });
     }
-
-
-    if (['Cancelled', 'Delivered', 'Returned', 'Return Requested'].includes(item.status)) {
-      return res.status(STATUS_CODES.BAD_REQUEST).json({
-        success: false,
-        message: `Cannot cancel item with status: ${item.status}`
-      });
-    }
-
 
     item.status = 'Cancelled';
-    item.cancelReason = cancelReason.trim();
     item.isCancelled = true;
+    item.cancelReason = (cancelReason || '').trim();
 
-
+    // Restore stock
     try {
       const product = await Product.findById(productId);
       if (product) {
         product.stock += (item.quantity || 1);
         await product.save();
-        console.log(`Stock restored for product ${productId}: +${item.quantity || 1}`);
       }
     } catch (stockErr) {
       console.error('Stock restore failed:', stockErr);
     }
 
+    // Calculate refund for this item if payment was captured online
+    let refundAmount = 0;
+    if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid') {
+      const baseAmount = (item.price || 0) * (item.quantity || 1);
+      const itemTotal = typeof item.totalAmount === 'number' && item.totalAmount > 0 ? item.totalAmount : baseAmount;
 
-    const activeItems = order.items.filter(i => i.status !== 'Cancelled' && !i.isCancelled);
-    const cancelledItems = order.items.filter(i => i.status === 'Cancelled' || i.isCancelled);
-
-
-    const newSubtotal = activeItems.reduce((sum, item) => {
-      const itemPrice = item.product?.price || item.price || 0;
-      const itemQty = item.quantity || 1;
-      return sum + (itemPrice * itemQty);
-    }, 0);
-
-
-    const cancelledAmount = cancelledItems.reduce((sum, item) => {
-      const itemPrice = item.product?.price || item.price || 0;
-      const itemQty = item.quantity || 1;
-      return sum + (itemPrice * itemQty);
-    }, 0);
-
-
-    order.subtotal = newSubtotal;
-
-
-    if (order.tax && order.subtotal > 0) {
-      const originalTaxRate = order.tax / (order.subtotal + cancelledAmount);
-      order.tax = Math.round((newSubtotal * originalTaxRate) * 100) / 100;
+      let proportionOfSubtotal = 1;
+      if (order.subtotal && order.subtotal > 0 && baseAmount > 0) {
+        proportionOfSubtotal = baseAmount / order.subtotal;
+      }
+      const discountShare = (order.discount || 0) * proportionOfSubtotal;
+      const taxShare = (order.tax || 0) * proportionOfSubtotal;
+      refundAmount = Math.max(0, +(itemTotal - discountShare + taxShare).toFixed(2));
     }
 
-    order.total = newSubtotal + (order.tax || 0) + (order.shipping || 0) - (order.discount || 0);
+    // Recompute totals based on active items only (do not force to 0 if others remain)
+    const prevTotals = {
+      subtotal: order.subtotal,
+      tax: order.tax,
+      discount: order.discount,
+      shipping: order.shipping,
+      total: order.total
+    };
 
-    console.log(`Order totals recalculated: Subtotal: ${order.subtotal}, Tax: ${order.tax}, Total: ${order.total}`);
-    console.log(`Cancelled amount: ${cancelledAmount}`);
+    const activeItems = order.items.filter(i => !(i.isCancelled || i.status === 'Cancelled' || i.isReturned || i.status === 'Returned'));
+    const allItemsCancelled = order.items.every(i => i.status === 'Cancelled' || i.isCancelled);
 
-    const allItemsCancelled = order.items.every(i => i.status === 'Cancelled');
-    if (allItemsCancelled) {
-      order.status = 'Cancelled';
-      order.paymentStatus = 'Cancelled';
-      order.cancelReason = cancelReason.trim();
+    if (!allItemsCancelled) {
+      const newSubtotal = activeItems.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 0)), 0);
+      const newTax = newSubtotal * 0.05;
+      const newDiscount = newSubtotal > 1000 ? newSubtotal * 0.1 : 0;
+      const newShipping = newSubtotal > 500 ? 0 : (newSubtotal > 0 ? 50 : 0);
+      const newTotal = newSubtotal + newTax - newDiscount + newShipping;
+
+      order.subtotal = +newSubtotal.toFixed(2);
+      order.tax = +newTax.toFixed(2);
+      order.discount = +newDiscount.toFixed(2);
+      order.shipping = +newShipping.toFixed(2);
+      order.total = +newTotal.toFixed(2);
     } else {
-      console.log('Some items still active, order can continue with remaining items');
+      // Keep original totals for fully cancelled order
+      order.subtotal = prevTotals.subtotal;
+      order.tax = prevTotals.tax;
+      order.discount = prevTotals.discount;
+      order.shipping = prevTotals.shipping;
+      order.total = prevTotals.total;
+
+      order.status = 'Cancelled';
+      order.paymentStatus = refundAmount > 0 ? 'Refunded' : 'Cancelled';
+      order.cancelReason = order.cancelReason || (cancelReason || '').trim();
+    }
+
+    if (!allItemsCancelled && refundAmount > 0) {
+      // Partial refund indicates payment captured earlier
+      order.paymentStatus = 'Refunded';
     }
 
     await order.save();
 
-    console.log(`Item ${productId} cancelled successfully from order ${orderId}`);
-    console.log(`Order status: ${order.status}`);
+    if (refundAmount > 0) {
+      try {
+        await refundToWallet(order.user, refundAmount, `Refund for cancelled item in order ${order.orderId}`, order.orderId);
+      } catch (walletErr) {
+        console.error('Wallet refund error (admin item cancel):', walletErr);
+      }
+    }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      message: 'Item cancelled successfully',
-      orderStatus: order.status
+      message: allItemsCancelled ? 'Item cancelled, order fully cancelled' : 'Item cancelled successfully',
+      orderStatus: order.status,
+      paymentStatus: order.paymentStatus,
+      totals: {
+        subtotal: order.subtotal,
+        tax: order.tax,
+        discount: order.discount,
+        shipping: order.shipping,
+        total: order.total
+      }
     });
-
   } catch (err) {
     console.error('Error cancelling order item:', err);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Internal server error' });
   }
 };

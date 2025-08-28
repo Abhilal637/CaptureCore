@@ -4,6 +4,7 @@ const { check, body } = require('express-validator');
 // ====== Common Patterns ======
 const onlyLettersSpaces = /^[A-Za-z\s]+$/;
 const onlyAlphanumericAndPunctuation = /^[a-zA-Z0-9\s.,!@#$%^&*()\-_=+<>?;:'"\/\\[\]{}|`~]+$/;
+const addressPattern = /^[a-zA-Z0-9\s.,!@#$%^&*()\-_=+<>?;:'"\/\\[\]{}|`~\-]+$/;
 
 const phoneRegex = /^\d{10}$/;
 const pincodeRegex = /^\d{6}$/;
@@ -11,6 +12,26 @@ const pincodeRegex = /^\d{6}$/;
 const disallowConsecutiveDigits = (value) => {
   if (/^(\d)\1{9}$/.test(value)) {
     throw new Error('Phone number cannot have all digits the same');
+  }
+  return true;
+};
+
+const validatePhoneFormat = (value) => {
+  if (!/^\d+$/.test(value)) {
+    throw new Error('Phone number can only contain digits');
+  }
+  if (value.length !== 10) {
+    throw new Error('Phone number must be exactly 10 digits');
+  }
+  return true;
+};
+
+const validatePincodeFormat = (value) => {
+  if (!/^\d+$/.test(value)) {
+    throw new Error('Pincode can only contain digits');
+  }
+  if (value.length !== 6) {
+    throw new Error('Pincode must be exactly 6 digits');
   }
   return true;
 };
@@ -65,27 +86,33 @@ module.exports = {
   addressRules: [
     check('fullName')
       .notEmpty().withMessage('Full name is required')
-      .matches(onlyLettersSpaces).withMessage('Name can only contain letters and spaces')
-      .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
+      .trim()
+      .isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters')
+      .matches(onlyLettersSpaces).withMessage('Name can only contain letters and spaces'),
     check('phone')
       .notEmpty().withMessage('Phone number is required')
-      .matches(phoneRegex).withMessage('Phone number must be exactly 10 digits')
+      .trim()
+      .custom(validatePhoneFormat)
       .custom(disallowConsecutiveDigits),
     check('addressLine')
       .notEmpty().withMessage('Address is required')
-      .matches(onlyAlphanumericAndPunctuation).withMessage('Address contains invalid characters')
-      .isLength({ min: 5, max: 200 }).withMessage('Address must be between 5 and 200 characters'),
+      .trim()
+      .isLength({ min: 5, max: 200 }).withMessage('Address must be between 5 and 200 characters')
+      .matches(addressPattern).withMessage('Address contains invalid characters. Only letters, numbers, spaces, and common punctuation are allowed'),
     check('pincode')
       .notEmpty().withMessage('Pincode is required')
-      .matches(pincodeRegex).withMessage('Pincode must be exactly 6 digits'),
+      .trim()
+      .custom(validatePincodeFormat),
     check('state')
       .notEmpty().withMessage('State is required')
-      .matches(onlyLettersSpaces).withMessage('State can only contain letters and spaces')
-      .isLength({ min: 2, max: 50 }).withMessage('State must be between 2 and 50 characters'),
+      .trim()
+      .isLength({ min: 2, max: 50 }).withMessage('State must be between 2 and 50 characters')
+      .matches(onlyLettersSpaces).withMessage('State can only contain letters and spaces'),
     check('city')
       .notEmpty().withMessage('City is required')
-      .matches(onlyLettersSpaces).withMessage('City can only contain letters and spaces')
-      .isLength({ min: 2, max: 50 }).withMessage('City must be between 2 and 50 characters'),
+      .trim()
+      .isLength({ min: 2, max: 50 }).withMessage('City must be between 2 and 50 characters')
+      .matches(onlyLettersSpaces).withMessage('City can only contain letters and spaces'),
   ],
 
   // CATEGORY (Add/Edit)

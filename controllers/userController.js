@@ -873,7 +873,8 @@ exports.logout = (req, res) => {
         shipping,
         finalTotal,
         isBuyNow: !!productId,
-        buyNowProduct: productId ? validItems[0] : null
+        buyNowProduct: productId ? validItems[0] : null,
+        retry: req.query.retry === 'true'
       });
     } catch (error) {
       console.error('Error loading checkout page:', error);

@@ -75,6 +75,12 @@ exports.addproduct = async (req, res) => {
 
     const { name, description, price, brand, megapixelBucket, batteryType, cameraType, lensMount, focalLength, fAperture, lensType, availability, category: categoryId, stock } = req.body;
 
+    // Validate integer non-negative price
+    const parsedPrice = Number(price);
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0 || !Number.isInteger(parsedPrice)) {
+      return res.status(STATUS_CODES.BAD_REQUEST).send('Price must be a non-negative whole number');
+    }
+
     
     let category = await Category.findById(categoryId);
     if (!category) {
@@ -96,7 +102,7 @@ exports.addproduct = async (req, res) => {
     const newProduct = new product({
       name: name,
       description: description,
-      price: price,
+      price: parseInt(parsedPrice, 10),
       brand: brand,
       megapixelBucket: megapixelBucket || undefined,
       batteryType: batteryType || undefined,
@@ -148,7 +154,7 @@ exports.editProduct = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, description, stock, brand, megapixelBucket, batteryType, cameraType, lensMount, focalLength, fAperture, lensType, availability, category, croppedImages = [], existingImages = [] } = req.body;
+    const { name, description, stock, price, brand, megapixelBucket, batteryType, cameraType, lensMount, focalLength, fAperture, lensType, availability, category, croppedImages = [], existingImages = [] } = req.body;
     const productId = req.params.id;
 
     const currentProduct = await product.findById(productId);
@@ -158,6 +164,15 @@ exports.updateProduct = async (req, res) => {
       const categoryExists = await Category.findById(category);
       if (!categoryExists) {
         return res.status(STATUS_CODES.BAD_REQUEST).send('Invalid category selected');
+      }
+    }
+
+    // Validate price if provided: must be a non-negative integer
+    let parsedPrice;
+    if (typeof price !== 'undefined' && price !== '') {
+      parsedPrice = Number(price);
+      if (!Number.isFinite(parsedPrice) || parsedPrice < 0 || !Number.isInteger(parsedPrice)) {
+        return res.status(STATUS_CODES.BAD_REQUEST).send('Price must be a non-negative whole number');
       }
     }
 
@@ -173,7 +188,10 @@ exports.updateProduct = async (req, res) => {
       ...(fAperture && { fAperture }),
       ...(lensType && { lensType }),
       ...(availability && { availability }),
-      ...(stock && { stock: parseInt(stock) }),
+      // Allow stock to be set to 0 explicitly
+      ...((typeof stock !== 'undefined' && stock !== '') && { stock: parseInt(stock, 10) }),
+      // Update price when provided
+      ...((typeof parsedPrice !== 'undefined') && { price: parsedPrice }),
       ...(category && { category }),
       isListed: currentProduct.isListed,
       isActive: currentProduct.isActive,

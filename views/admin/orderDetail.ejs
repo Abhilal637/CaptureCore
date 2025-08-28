@@ -111,8 +111,8 @@
           }; %>
           <% const allowed = nextStatusMap[order.status] || []; %>
 
-          <% if (allowed.length > 0) { %>
-            <form action="/admin/orders/<%= order._id %>/update-status" method="POST" class="flex gap-3 status-update-form">
+          <% if (allowed.length > 0 && order.paymentStatus !== 'Failed') { %>
+            <form action="/admin/orders/<%= order._id %>/update-status" method="POST" class="flex gap-3 status-update-form" data-payment-status="<%= order.paymentStatus %>">
               <select name="status" class="border border-gray-300 rounded px-2 py-1">
                 <option disabled selected value> -- Select Status -- </option>
                 <% allowed.forEach(status => { %>
@@ -123,6 +123,10 @@
                 Update Status
               </button>
             </form>
+          <% } else if (order.paymentStatus === 'Failed') { %>
+            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded text-yellow-800 text-sm">
+              Status updates are disabled because the payment has failed.
+            </div>
           <% } else { %>
             <span class="text-gray-500">No further status updates available</span>
           <% } %>
@@ -211,11 +215,23 @@
   
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+  const PAYMENT_STATUS = '<%= order.paymentStatus %>';
   // Handle status update form submissions with cancellation reason
   document.querySelectorAll('.status-update-form').forEach(form => {
     form.addEventListener('submit', function(e) {
       const selectEl = this.querySelector('select[name="status"]');
       const submitBtn = this.querySelector('button[type="submit"]');
+      
+      if (PAYMENT_STATUS === 'Failed') {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'error',
+          title: 'Payment Failed',
+          text: 'Status updates are disabled because the payment has failed.',
+          confirmButtonColor: '#d33'
+        });
+        return;
+      }
       
       if (!selectEl || !selectEl.value) {
         e.preventDefault();

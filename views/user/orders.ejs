@@ -125,6 +125,8 @@
                     View Details
                   </a>
                   
+                  <!-- <% /* Retry Payment removed from list; available in Order Details */ %> -->
+
                   <% if (order.status === 'Placed') { %>
                     <button class="inline-flex items-center px-3 py-1 text-red-600 hover:text-red-800 text-sm font-medium cancel-order-btn" 
                             data-order-id="<%= order.orderId %>">

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Payment Failed | CaptureCore</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="/css/user/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+  <%- include('../partial/user/navbar') %>
+
+  <main class="min-h-screen flex items-center justify-center px-4 py-12 relative z-10 gradient-bg">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-white/95 backdrop-blur-sm card-shadow rounded-3xl p-12 text-center slide-up">
+        <div class="relative mb-8">
+          <div class="mx-auto w-24 h-24 bg-red-500 rounded-full flex items-center justify-center">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l6 6M15 9l-6 6"/>
+            </svg>
+          </div>
+        </div>
+
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Payment Failed</h1>
+        <div class="w-24 h-1 bg-gray-300 mx-auto rounded-full mb-8"></div>
+        <p class="text-lg text-gray-700 mb-2">We couldn't complete your payment.</p>
+        <p class="text-gray-600 mb-8">You can retry the payment or view your order details below.</p>
+
+        <% if (typeof orderId !== 'undefined' && orderId) { %>
+          <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8 text-left">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Order Details</h3>
+            <div class="space-y-2 text-sm text-gray-600">
+              <p><span class="font-medium">Order ID:</span> <%= orderId %></p>
+              <p><span class="font-medium">Amount:</span> ₹<%= totalAmount %></p>
+              <p><span class="font-medium">Status:</span> Payment Failed</p>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <button onclick="retryPayment()" class="group relative inline-flex items-center justify-center px-8 py-4 bg-gray-800 text-white font-semibold rounded-lg transition-all duration-300 transform hover:bg-gray-700 hover:shadow-lg">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            Retry Payment
+          </button>
+
+          <% if (typeof orderId !== 'undefined' && orderId) { %>
+            <a href="/order/<%= orderId %>" class="group inline-flex items-center justify-center px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg transition-all duration-300 hover:border-gray-500 hover:text-gray-800 hover:bg-gray-50">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              View Order Details
+            </a>
+          <% } else { %>
+            <a href="/orders" class="group inline-flex items-center justify-center px-8 py-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg transition-all duration-300 hover:border-gray-500 hover:text-gray-800 hover:bg-gray-50">View Orders</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    async function ensureRzp(){
+      if (window.Razorpay) return;
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        s.onload = resolve; s.onerror = reject; document.body.appendChild(s);
+      });
+    }
+    async function retryPayment() {
+      try {
+        await ensureRzp();
+        const params = new URLSearchParams(window.location.search);
+        const amount = Number(params.get('amount') || 0);
+        const orderId = params.get('orderId');
+        if (!amount || !orderId) { window.location.href = '/orders'; return; }
+
+        const resp = await fetch('/razorpay/create-order', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ amount }) });
+        const data = await resp.json();
+        if (!resp.ok || !(data && (data.success || data.sucess))) throw new Error(data.message || 'Unable to init payment');
+
+        const options = {
+          key: data.key,
+          amount: data.amount,
+          currency: data.currency,
+          name: 'CaptureCore',
+          description: 'Retry Payment',
+          order_id: data.orderId,
+          handler: async function (response){
+            const verify = await fetch(`/razorpay/retry/verify/${encodeURIComponent(orderId)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(response) });
+            const vj = await verify.json();
+            if (verify.ok && vj && vj.success) {
+              window.location.href = vj.redirectTo || `/order/${orderId}`;
+            } else {
+              alert((vj && vj.message) || 'Verification failed');
+            }
+          },
+          modal: { ondismiss: function(){ /* silent close */ } },
+          theme: { color: '#2563eb' }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } catch (e) {
+        alert(e && e.message ? e.message : 'Unable to start payment');
+      }
+    }
+
+    // Auto-redirect to orders page after 30 seconds if user doesn't take action
+    setTimeout(() => {
+      const currentUrl = window.location.href;
+      if (currentUrl.includes('payment-failure')) {
+        window.location.href = '/orders';
+      }
+    }, 30000);
+  </script>
+</body>
+</html>

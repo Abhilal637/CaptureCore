@@ -41,7 +41,7 @@ const orderSchema = new mongoose.Schema({
 
   paymentStatus: {
     type: String,
-    enum: ['Pending', 'Paid', 'Cancelled', 'Refunded'],
+    enum: ['Pending', 'Paid', 'Cancelled', 'Refunded', 'Failed'],
     default: 'Pending'
   },
 
@@ -56,6 +56,7 @@ const orderSchema = new mongoose.Schema({
   },
 
   cancelReason: { type: String, default: '' },
+  failureReason: { type: String, default: '' },
 
   subtotal: Number,
   tax: Number,

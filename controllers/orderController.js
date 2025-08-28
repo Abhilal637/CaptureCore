@@ -15,8 +15,7 @@ const { refundToWallet } = require('../utils/wallet');
 exports.placeOrder = async (req, res) => {
   try {
     const userId = req.session.userId;
-    const { addressId, paymentMethod, productId, quantity = 1 } = req.body;
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { addressId, paymentMethod, productId, quantity = 1, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     let totalAmount = 0;
     const orderItems = [];
@@ -140,6 +139,111 @@ exports.placeOrder = async (req, res) => {
   }
 };
 
+exports.handlePaymentFailure = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const { addressId, paymentMethod, productId, quantity = 1, amount, failureReason } = req.body;
+
+    let totalAmount = 0;
+    const orderItems = [];
+
+    if (productId) {
+      const buyNowQuantity = Math.min(5, parseInt(quantity) || 1);
+      const product = await Product.findById(productId);
+
+      if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive || product.stock < buyNowQuantity) {
+        return res.status(STATUS_CODES.BAD_REQUEST).send(MESSAGES.ERROR.STOCK_UNAVAILABLE);
+      }
+
+      const itemTotal = buyNowQuantity * product.price;
+      totalAmount = itemTotal;
+
+      orderItems.push({
+        product: product._id,
+        quantity: buyNowQuantity,
+        price: product.price,
+        totalAmount: itemTotal,
+        productName: product.name
+      });
+
+      product.stock -= buyNowQuantity;
+      await product.save();
+    } else {
+      const cart = await Cart.findOne({ user: userId }).populate('items.product');
+      if (!cart || cart.items.length === 0) {
+        return res.redirect('/cart');
+      }
+
+      for (const item of cart.items) {
+        const product = item.product;
+
+        if (!product || product.isBlocked || !product.isListed || product.isDeleted || !product.isActive) {
+          continue;
+        }
+
+        if (product.stock < item.quantity) {
+          req.session.checkoutError = `"${product.name}" has only ${product.stock} in stock. Please adjust quantity.`;
+          return res.redirect('/cart');
+        }
+
+        const itemTotal = item.quantity * product.price;
+        totalAmount += itemTotal;
+
+        orderItems.push({
+          product: product._id,
+          quantity: item.quantity,
+          price: product.price,
+          totalAmount: itemTotal,
+          productName: product.name
+        });
+
+        product.stock -= item.quantity;
+        await product.save();
+      }
+
+      cart.items = [];
+      await cart.save();
+    }
+
+    if (orderItems.length === 0) {
+      return res.redirect('/cart');
+    }
+
+    const address = await Address.findOne({ _id: addressId, user: userId });
+    if (!address) return res.status(STATUS_CODES.NOT_FOUND).send(MESSAGES.ERROR.ADDRESS_NOT_FOUND);
+
+    const tax = totalAmount * 0.05;
+    const discount = totalAmount > 1000 ? totalAmount * 0.1 : 0;
+    const shipping = totalAmount > 500 ? 0 : 50;
+    const grandTotal = totalAmount + tax - discount + shipping;
+
+    const order = new Order({
+      orderId: generateOrderId(),
+      user: userId,
+      address: address._id,
+      items: orderItems,
+      paymentMethod,
+      paymentStatus: 'Failed',
+      status: 'Placed',
+      subtotal: totalAmount,
+      tax,
+      discount,
+      shipping,
+      total: grandTotal,
+      failureReason: failureReason || 'Payment processing failed'
+    });
+
+    await order.save();
+
+    // Redirect to payment failure page with order details
+    res.redirect(`/payment-failure?orderId=${order.orderId}&amount=${grandTotal}`);
+  } catch (error) {
+    console.error('Error handling payment failure:', error);
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error');
+  }
+};
+
+
 exports.getOrderSuccess = async (req, res) => {
   try {
     res.render('user/orderSuccess', {
@@ -147,6 +251,20 @@ exports.getOrderSuccess = async (req, res) => {
     })
   } catch (error) {
     console.log('Error loading sucess Page', error)
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error')
+  }
+}
+
+exports.getPaymentFailure = async (req, res) => {
+  try {
+    const { orderId, amount } = req.query;
+    res.render('user/payment-failure', {
+      currentPage: 'orders',
+      orderId: orderId || null,
+      totalAmount: amount || null
+    })
+  } catch (error) {
+    console.log('Error loading payment failure page:', error)
     res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).send('Server Error')
   }
 }
@@ -258,6 +376,48 @@ exports.verifyRazorPayment = async(req,res)=>{
 }
 
 
+
+exports.verifyRetryPayment = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Missing payment verification data' });
+    }
+
+    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Invalid payment signature' });
+    }
+
+    const order = await Order.findOne({ orderId });
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Update payment fields
+    order.paymentStatus = 'Paid';
+    order.razorpayOrderId = razorpay_order_id;
+    order.razorpayPaymentId = razorpay_payment_id;
+    order.razorpaySignature = razorpay_signature;
+    order.failureReason = '';
+    await order.save();
+
+    return res.json({ success: true, redirectTo: `/order/${order._id}` });
+  } catch (error) {
+    console.error('Retry payment verification error:', error);
+    return res.status(500).json({ success: false, message: 'Server Error' });
+  }
+}
+
+
+
 exports.cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -294,15 +454,17 @@ exports.cancelOrder = async (req, res) => {
       });
     }
 
-    // Determine refund before zeroing totals
+    // Determine refund before changing anything
     let refundAmount = 0;
-    if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid') {
+    const isPaidOnline = order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Paid';
+    if (isPaidOnline) {
       refundAmount = order.total || 0;
     }
 
     order.status = 'Cancelled';
     order.cancelReason = reason || '';
-    order.paymentStatus = 'Cancelled';
+    // Mark payment status based on whether we will refund
+    order.paymentStatus = refundAmount > 0 ? 'Refunded' : 'Cancelled';
     // Keep financial totals intact for record-keeping and transparency
 
     for (const item of order.items) {
@@ -325,20 +487,14 @@ exports.cancelOrder = async (req, res) => {
       try {
         await refundToWallet(order.user, refundAmount, `Refund for cancelled order ${order.orderId}`, order.orderId);
       } catch (walletErr) {
-        console.error('Wallet refund error (full order cancel):', walletErr);
+        console.error('Wallet refund error (order cancel):', walletErr);
       }
     }
 
-    res.json({
-      success: true,
-      message: 'Order cancelled successfully'
-    });
+    return res.json({ success: true, message: 'Order cancelled successfully' });
   } catch (err) {
     console.error('Error cancelling order:', err);
-    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: 'Server error'
-    });
+    res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -400,23 +556,46 @@ exports.cancelOrderItem = async (req, res) => {
       }
     }
 
-    const activeItems = order.items.filter(i => !(i.isCancelled || i.status === 'Cancelled' || i.isReturned || i.status === 'Returned'));
-    const newSubtotal = activeItems.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 0)), 0);
-    const newTax = newSubtotal * 0.05;
-    const newDiscount = newSubtotal > 1000 ? newSubtotal * 0.1 : 0;
-    const newShipping = newSubtotal > 500 ? 0 : (newSubtotal > 0 ? 50 : 0);
-    const newTotal = newSubtotal + newTax - newDiscount + newShipping;
+    // Preserve previous totals to keep for fully-cancelled orders
+    const prevTotals = {
+      subtotal: order.subtotal,
+      tax: order.tax,
+      discount: order.discount,
+      shipping: order.shipping,
+      total: order.total
+    };
 
-    order.subtotal = +newSubtotal.toFixed(2);
-    order.tax = +newTax.toFixed(2);
-    order.discount = +newDiscount.toFixed(2);
-    order.shipping = +newShipping.toFixed(2);
-    order.total = +newTotal.toFixed(2);
+    const allItemsCancelled = order.items.every(i => i.isCancelled || i.status === 'Cancelled' || i.isReturned || i.status === 'Returned');
 
-    const allItemsCancelled = order.items.every(i => i.isCancelled || i.status === 'Cancelled');
-    if (allItemsCancelled) {
+    if (!allItemsCancelled) {
+      // Recompute totals based on active items only
+      const activeItems = order.items.filter(i => !(i.isCancelled || i.status === 'Cancelled' || i.isReturned || i.status === 'Returned'));
+      const newSubtotal = activeItems.reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 0)), 0);
+      const newTax = newSubtotal * 0.05;
+      const newDiscount = newSubtotal > 1000 ? newSubtotal * 0.1 : 0;
+      const newShipping = newSubtotal > 500 ? 0 : (newSubtotal > 0 ? 50 : 0);
+      const newTotal = newSubtotal + newTax - newDiscount + newShipping;
+
+      order.subtotal = +newSubtotal.toFixed(2);
+      order.tax = +newTax.toFixed(2);
+      order.discount = +newDiscount.toFixed(2);
+      order.shipping = +newShipping.toFixed(2);
+      order.total = +newTotal.toFixed(2);
+    } else {
+      // Keep original totals for a fully-cancelled order (for display/records)
+      order.subtotal = prevTotals.subtotal;
+      order.tax = prevTotals.tax;
+      order.discount = prevTotals.discount;
+      order.shipping = prevTotals.shipping;
+      order.total = prevTotals.total;
+
       order.status = 'Cancelled';
       order.cancelReason = 'All items cancelled';
+    }
+
+    // If any refund will be issued, reflect that in payment status for admin visibility
+    if (refundAmount > 0) {
+      order.paymentStatus = 'Refunded';
     }
 
     await order.save();
@@ -452,9 +631,18 @@ exports.cancelOrderItem = async (req, res) => {
 exports.getOrderDetails = async (req, res) => {
   try {
     const userId = req.session.userId;
-    const orderId = req.params.id;
+    const paramId = req.params.id;
 
-    const order = await Order.findOne({ _id: orderId, user: userId })
+    // Build query to support both Mongo _id and business orderId, and avoid invalid ObjectId casts
+    const orConditions = [{ orderId: paramId, user: userId }];
+
+    // Add _id condition only if param is a valid ObjectId
+    const mongoose = require('mongoose');
+    if (mongoose.Types.ObjectId.isValid(paramId)) {
+      orConditions.push({ _id: paramId, user: userId });
+    }
+
+    const order = await Order.findOne({ $or: orConditions })
       .populate('items.product')
       .populate('address');
 

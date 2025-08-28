@@ -413,6 +413,22 @@
             </div>
           <% } %>
 
+          <% if (order.paymentMethod === 'Razorpay' && order.paymentStatus === 'Failed') { %>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 class="text-sm font-medium text-blue-800 mb-3">Retry Payment</h3>
+              <button type="button"
+                      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                      id="retryPaymentBtn"
+                      data-order-id="<%= order.orderId %>"
+                      data-amount="<%= order.total %>">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Retry Payment
+              </button>
+            </div>
+          <% } %>
+
           <!-- Invoice - Show for delivered orders -->
           <% if (order.status === 'Delivered') { %>
             <div class="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -435,6 +451,67 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
          document.addEventListener('DOMContentLoaded', () => {
+      // Retry payment with Razorpay popup
+      const retryBtn = document.getElementById('retryPaymentBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', async () => {
+          const amount = Number(retryBtn.dataset.amount || 0);
+          if (!amount || amount <= 0) return;
+          try {
+            // Ensure Razorpay script
+            if (!window.Razorpay) {
+              await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                s.onload = resolve; s.onerror = reject; document.body.appendChild(s);
+              });
+            }
+
+            // Create a new Razorpay order for the retry amount
+            const resp = await fetch('/razorpay/create-order', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !(data && (data.success || data.sucess))) throw new Error(data.message || 'Unable to init payment');
+
+            const options = {
+              key: data.key,
+              amount: data.amount,
+              currency: data.currency,
+              name: 'CaptureCore',
+              description: 'Retry Payment',
+              order_id: data.orderId,
+              handler: async function (response){
+                try {
+                  const verifyRes = await fetch(`/razorpay/retry/verify/${encodeURIComponent(retryBtn.dataset.orderId)}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(response)
+                  });
+                  const vj = await verifyRes.json();
+                  if (verifyRes.ok && vj && vj.success) {
+                    window.location.href = vj.redirectTo || window.location.href;
+                  } else {
+                    Swal.fire('Payment Failed', (vj && vj.message) || 'Verification failed', 'error');
+                  }
+                } catch (e) {
+                  Swal.fire('Payment Error', 'Verification error', 'error');
+                }
+              },
+              modal: {
+                ondismiss: function(){
+                  Swal.fire('Payment Cancelled', 'You closed the payment window.', 'info');
+                }
+              },
+              theme: { color: '#2563eb' }
+            };
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+          } catch (err) {
+            Swal.fire('Payment Error', err && err.message ? err.message : 'Unable to start payment', 'error');
+          }
+        });
+      }
        // Handle cancel full order button
        document.querySelectorAll('.cancel-full-order-btn').forEach(button => {
          button.addEventListener('click', async (e) => {

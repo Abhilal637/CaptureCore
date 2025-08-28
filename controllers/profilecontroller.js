@@ -271,7 +271,6 @@ exports.getAddress = (req, res) => {
 };
 
 exports.postAddaddress = async (req, res) => {
-
   const isAjax = req.headers['x-requested-with'] === 'XMLHttpRequest';
 
   if (req.validationErrors) {
@@ -294,7 +293,32 @@ exports.postAddaddress = async (req, res) => {
     const userId = req.session.userId;
     const { isDefault, ...addressData } = req.body || {};
 
-   
+    // Additional validation for empty or invalid data
+    const requiredFields = ['fullName', 'phone', 'addressLine', 'city', 'state', 'pincode'];
+    const missingFields = [];
+    
+    requiredFields.forEach(field => {
+      if (!addressData[field] || addressData[field].toString().trim() === '') {
+        missingFields.push(field);
+      }
+    });
+
+    if (missingFields.length > 0) {
+      const errorMessage = `Missing required fields: ${missingFields.join(', ')}`;
+      if (isAjax) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          error: errorMessage
+        });
+      }
+      return res.render('user/add-address', {
+        currentPage: 'add-address',
+        error: errorMessage,
+        formData: req.body
+      });
+    }
+
+    // Normalize and validate data
     const normalize = (v) => (v || '').toString().trim().replace(/\s+/g, ' ');
     const normalized = {
       fullName: normalize(addressData.fullName),
@@ -306,7 +330,39 @@ exports.postAddaddress = async (req, res) => {
       country: normalize(addressData.country || 'India')
     };
 
- 
+    // Validate phone number format
+    if (!/^\d{10}$/.test(normalized.phone)) {
+      const errorMessage = 'Phone number must be exactly 10 digits';
+      if (isAjax) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          error: errorMessage
+        });
+      }
+      return res.render('user/add-address', {
+        currentPage: 'add-address',
+        error: errorMessage,
+        formData: req.body
+      });
+    }
+
+    // Validate pincode format
+    if (!/^\d{6}$/.test(normalized.pincode)) {
+      const errorMessage = 'Pincode must be exactly 6 digits';
+      if (isAjax) {
+        return res.status(STATUS_CODES.BAD_REQUEST).json({
+          success: false,
+          error: errorMessage
+        });
+      }
+      return res.render('user/add-address', {
+        currentPage: 'add-address',
+        error: errorMessage,
+        formData: req.body
+      });
+    }
+
+    // Check for existing address
     const existingAddress = await Address.findOne({
       user: userId,
       fullName: normalized.fullName,
@@ -331,7 +387,7 @@ exports.postAddaddress = async (req, res) => {
       });
     }
 
-    
+    // Set as default if requested
     const isDefaultFlag = isDefault === 'true' || isDefault === 'on' || isDefault === true;
     if (isDefaultFlag) {
       await Address.updateMany({ user: userId }, { $set: { isDefault: false } });

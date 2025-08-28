@@ -64,7 +64,7 @@
                 <label class="block text-sm font-bold text-slate-700 mb-3">Price (₹) *</label>
                 <div class="relative">
                   <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-emerald-600 font-black text-lg">₹</span>
-                  <input type="number" name="price" placeholder="0.00" required min="0" step="0.01"
+                  <input type="number" name="price" placeholder="0" required min="0" step="1" inputmode="numeric" pattern="\\d*"
                     class="w-full border-2 border-slate-300 rounded-xl pl-8 pr-4 py-3 font-medium text-lg focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" 
                     data-required />
                 </div>
@@ -80,7 +80,7 @@
 
               <div>
                 <label class="block text-sm font-bold text-slate-700 mb-3">Stock Quantity</label>
-                <input type="number" name="stock" placeholder="Available quantity..." min="0"
+                <input type="number" name="stock" placeholder="Available quantity..." min="0" step="1" inputmode="numeric" pattern="\\d*"
                   class="w-full border-2 border-slate-300 rounded-xl px-4 py-3 font-medium focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all" />
               </div>
 
@@ -591,12 +591,29 @@
     const stockInput = document.querySelector('input[name="stock"]');
     if (priceInput) priceInput.addEventListener('input', (e) => {
       const input = e.target;
-      if (Number(input.value) < 0) input.value = '0';
+      // Strip non-digits
+      input.value = input.value.replace(/[^0-9]/g, '');
     });
     if (stockInput) stockInput.addEventListener('input', (e) => {
       const input = e.target;
       if (Number(input.value) < 0) input.value = '0';
     });
+
+    // SweetAlert validation on submit
+    const form = document.getElementById('productForm');
+    if (form) {
+      form.addEventListener('submit', function(e){
+        const priceVal = priceInput ? priceInput.value : '';
+        const priceNum = Number(priceVal);
+        if (priceVal === '' || !Number.isFinite(priceNum) || priceNum < 0 || !Number.isInteger(priceNum)) {
+          e.preventDefault();
+          swal('Invalid price', 'Price must be a non-negative whole number.', 'error');
+          return;
+        }
+        // Normalize
+        priceInput.value = String(parseInt(priceNum, 10));
+      });
+    }
 
     // Drag and drop reordering helpers
     let dragSrcEl = null;

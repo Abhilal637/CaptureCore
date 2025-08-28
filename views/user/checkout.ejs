@@ -18,12 +18,27 @@
       <% } %>
     </h1>
 
+    <% if (typeof retry !== 'undefined' && retry) { %>
+      <div class="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-yellow-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          <div>
+            <h3 class="text-sm font-medium text-yellow-800">Retrying Payment</h3>
+            <p class="text-sm text-yellow-700 mt-1">Your previous payment attempt failed. Please review your details and try again.</p>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
     <!-- START FORM -->
     <form action="/place-order" method="POST">
       <% if (isBuyNow && buyNowProduct) { %>
         <input type="hidden" name="productId" value="<%= buyNowProduct._id %>">
         <input type="hidden" name="quantity" value="<%= buyNowProduct.quantity %>">
       <% } %>
+      <input type="hidden" name="totalAmount" value="<%= finalTotal %>">
 
       <!-- Address Section -->
       <div class="mb-8">
@@ -552,6 +567,11 @@
           name: 'CaptureCore',
           description: 'Order Payment',
           order_id: orderResp.orderId,
+          modal: {
+            ondismiss: function(){
+              submitPaymentFailure('User closed Razorpay before completing payment');
+            }
+          },
           handler: async function (response){
             try{
               const verifyRes = await fetch('/razorpay/verify', {
@@ -581,11 +601,17 @@
                 setHidden('razorpay_signature', response.razorpay_signature);
                 formEl.submit();
               } else {
-                alert('Payment verification failed.');
+                // Payment verification failed - redirect to payment failure page
+                const formData = new FormData(formEl);
+                const amount = formData.get('totalAmount') || totalAmount;
+                window.location.href = `/payment-failure?amount=${amount}`;
               }
             }catch(err){
               console.error(err);
-              alert('Payment verification error.');
+              // Payment verification error - redirect to payment failure page
+              const formData = new FormData(formEl);
+              const amount = formData.get('totalAmount') || totalAmount;
+              window.location.href = `/payment-failure?amount=${amount}`;
             } finally {
               placeBtn.disabled = false;
             }
@@ -593,11 +619,52 @@
           theme: { color: '#2563eb' }
         };
         const rzp = new window.Razorpay(options);
+        try {
+          rzp.on('payment.failed', function(){
+            submitPaymentFailure('Payment failed by Razorpay');
+          });
+        } catch(_) {}
         rzp.open();
       }catch(err){
         console.error('Razorpay init error', err);
-        alert('Unable to start Razorpay checkout.');
+        // Razorpay initialization failed - create failed order and redirect
+        submitPaymentFailure('Unable to initialize Razorpay');
         placeBtn.disabled = false;
+      }
+    }
+
+    function submitPaymentFailure(reason){
+      try {
+        const selectedAddress = document.querySelector('input[name="addressId"]:checked');
+        const addressId = selectedAddress ? selectedAddress.value : '';
+        const productIdInput = formEl.querySelector('input[name="productId"]');
+        const quantityInput = formEl.querySelector('input[name="quantity"]');
+        const totalInput = formEl.querySelector('input[name="totalAmount"]');
+
+        const tempForm = document.createElement('form');
+        tempForm.method = 'POST';
+        tempForm.action = '/payment-failure';
+
+        const add = (name, value) => {
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = name;
+          inp.value = value == null ? '' : value;
+          tempForm.appendChild(inp);
+        };
+
+        add('addressId', addressId);
+        add('paymentMethod', 'Razorpay');
+        if (productIdInput) add('productId', productIdInput.value);
+        if (quantityInput) add('quantity', quantityInput.value);
+        add('amount', totalInput ? totalInput.value : totalAmount);
+        add('failureReason', reason || 'Payment failed');
+
+        document.body.appendChild(tempForm);
+        tempForm.submit();
+      } catch(_) {
+        const amount = (function(){ try { return (new FormData(formEl)).get('totalAmount') || totalAmount; } catch(e){ return totalAmount; } })();
+        window.location.href = `/payment-failure?amount=${amount}`;
       }
     }
 
@@ -636,36 +703,50 @@
     <h2 class="text-2xl font-semibold mb-6">Add Address</h2>
 
     <form id="addAddressForm" action="/addresses" method="POST">
+      <!-- Error Display Area -->
+      <div id="formErrors" class="mb-4 hidden">
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          <ul id="errorList" class="list-disc list-inside text-sm"></ul>
+        </div>
+      </div>
+
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-        <input type="text" name="fullName" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
+        <input type="text" name="fullName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-required placeholder="Enter your full name (letters only)">
+        <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-        <input type="text" name="phone" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required maxlength="10" pattern="[0-9]*" inputmode="numeric">
+        <input type="text" name="phone" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-required maxlength="10" pattern="[0-9]*" inputmode="numeric" placeholder="10-digit mobile number">
+        <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-        <input type="text" name="addressLine" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
+        <input type="text" name="addressLine" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-required placeholder="Street address, apartment, suite, etc.">
+        <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
-          <input type="text" name="city" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
+          <input type="text" name="city" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-required placeholder="City name (letters only)">
+          <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
-          <input type="text" name="state" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required>
+          <input type="text" name="state" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-required placeholder="State name (letters only)">
+          <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
         </div>
       </div>
       <div class="grid grid-cols-2 gap-3 mb-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Pincode</label>
-          <input type="text" name="pincode" class="w-full border border-gray-300 rounded-md px-3 py-2" data-required maxlength="6" pattern="[0-9]*" inputmode="numeric">
+          <input type="text" name="pincode" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" data-required maxlength="6" pattern="[0-9]*" inputmode="numeric" placeholder="6-digit pincode">
+          <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Country</label>
-          <input type="text" name="country" class="w-full border border-gray-300 rounded-md px-3 py-2" value="India" data-required>
+          <input type="text" name="country" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="India" data-required placeholder="Country name">
+          <div class="field-error text-red-500 text-xs mt-1 hidden"></div>
         </div>
       </div>
       <div class="mb-6">
@@ -769,9 +850,37 @@
     });
   });
 
+  // Add validation for name fields (only letters and spaces)
+  const nameInputs = document.querySelectorAll('input[name="fullName"], input[name="city"], input[name="state"]');
+  nameInputs.forEach(input => {
+    input.addEventListener('input', function(e) {
+      // Remove any non-letter characters except spaces
+      let value = e.target.value.replace(/[^A-Za-z\s]/g, '');
+      
+      // Remove multiple consecutive spaces
+      value = value.replace(/\s+/g, ' ');
+      
+      e.target.value = value;
+    });
+  });
+
+  // Add validation for address field (allow alphanumeric, spaces, and common punctuation)
+  const addressInputs = document.querySelectorAll('input[name="addressLine"]');
+  addressInputs.forEach(input => {
+    input.addEventListener('input', function(e) {
+      // Remove any invalid characters
+      let value = e.target.value.replace(/[^a-zA-Z0-9\s.,!@#$%^&*()\-_=+<>?;:'"\/\\[\]{}|`~]/g, '');
+      
+      e.target.value = value;
+    });
+  });
+
   // Custom submit handler for add address form to stay in checkout
   addForm.addEventListener('submit', async function(e) {
     e.preventDefault();
+    
+    // Clear previous errors
+    clearErrors();
     
     // Let the inline validator handle validation first
     const isValid = validateAllFields(addForm);
@@ -797,29 +906,88 @@
       if (response.ok) {
         const data = await response.json();
         
-        // If the new address is set as default, we need to reload to show it as selected
-        if (data.address && data.address.isDefault) {
-          window.location.reload();
-        } else {
-          // Otherwise, just reload to show the new address
-          window.location.reload();
-        }
+        // Success - reload to show the new address
+        window.location.reload();
       } else {
         // Handle validation errors
-        const html = await response.text();
-        const errors = extractValidationErrors(html);
+        const errorData = await response.json();
         
-        if (errors && Object.keys(errors).length > 0) {
-          showErrors(addForm, errors);
+        if (errorData.errors && Object.keys(errorData.errors).length > 0) {
+          showValidationErrors(errorData.errors);
+        } else if (errorData.error) {
+          showGeneralError(errorData.error);
         } else {
-          alert('Failed to add address. Please try again.');
+          showGeneralError('Failed to add address. Please try again.');
         }
       }
     } catch (error) {
       console.error('Error adding address:', error);
-      alert('Network error. Please try again.');
+      showGeneralError('Network error. Please try again.');
     }
   });
+
+  // Function to clear all errors
+  function clearErrors() {
+    const formErrors = document.getElementById('formErrors');
+    const fieldErrors = document.querySelectorAll('.field-error');
+    
+    if (formErrors) formErrors.classList.add('hidden');
+    fieldErrors.forEach(error => {
+      error.classList.add('hidden');
+      error.textContent = '';
+    });
+    
+    // Remove error styling from inputs
+    const inputs = addForm.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.classList.remove('border-red-500');
+      input.classList.add('border-gray-300');
+    });
+  }
+
+  // Function to show validation errors
+  function showValidationErrors(errors) {
+    const formErrors = document.getElementById('formErrors');
+    const errorList = document.getElementById('errorList');
+    
+    if (formErrors && errorList) {
+      errorList.innerHTML = '';
+      Object.values(errors).forEach(errorArray => {
+        if (Array.isArray(errorArray)) {
+          errorArray.forEach(error => {
+            const li = document.createElement('li');
+            li.textContent = error;
+            errorList.appendChild(li);
+          });
+        }
+      });
+      formErrors.classList.remove('hidden');
+    }
+    
+    // Show field-specific errors
+    Object.keys(errors).forEach(fieldName => {
+      const input = addForm.querySelector(`[name="${fieldName}"]`);
+      const errorDiv = input ? input.parentNode.querySelector('.field-error') : null;
+      
+      if (input && errorDiv) {
+        input.classList.remove('border-gray-300');
+        input.classList.add('border-red-500');
+        errorDiv.textContent = errors[fieldName][0];
+        errorDiv.classList.remove('hidden');
+      }
+    });
+  }
+
+  // Function to show general error
+  function showGeneralError(message) {
+    const formErrors = document.getElementById('formErrors');
+    const errorList = document.getElementById('errorList');
+    
+    if (formErrors && errorList) {
+      errorList.innerHTML = `<li>${message}</li>`;
+      formErrors.classList.remove('hidden');
+    }
+  }
 </script>
 
 </body>
